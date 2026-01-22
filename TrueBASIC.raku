@@ -69,8 +69,8 @@ class TrueBASICInterpreter {
         
         for @lines.kv -> $index, $line {
             next if $line.trim eq '';
-            # Skip comment lines that start with ! or REM
-            next if $line.trim.starts-with('!') || $line.trim.starts-with('REM') || $line.trim.starts-with("'");
+            # Skip comment lines that start with ! but NOT REM lines that might have line numbers
+            next if $line.trim.starts-with('!') || $line.trim.starts-with("'");
             
             my $parsed-line = self.parse-line($line.trim, $index + 1);
             @!program-lines.push($parsed-line);
@@ -190,6 +190,7 @@ class TrueBASICInterpreter {
             when 'END' { $!running = False }
             when 'STOP' { $!running = False }
             when 'CLS' { self.execute-cls() }
+            when 'REM' { } # Comment - no operation needed
             default {
                 # Check if it's an assignment without LET
                 if @tokens.elems >= ($start-index + 3) && @tokens[$start-index + 1] eq '=' {
@@ -474,7 +475,22 @@ class TrueBASICInterpreter {
             return %!variables{$token} // 0;
         }
         
-        # Handle simple arithmetic expressions
+        # Handle simple binary expressions: A + B, A - B, etc.
+        if @tokens.elems == 3 {
+            my $left = self.evaluate-expression([@tokens[0]]);
+            my $op = @tokens[1];
+            my $right = self.evaluate-expression([@tokens[2]]);
+            
+            given $op {
+                when '+' { return $left + $right }
+                when '-' { return $left - $right }
+                when '*' { return $left * $right }
+                when '/' { return $left / $right }
+                default { return $left }
+            }
+        }
+        
+        # Handle more complex arithmetic expressions
         return self.evaluate-arithmetic(@tokens);
     }
 
