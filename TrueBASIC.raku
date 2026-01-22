@@ -69,7 +69,8 @@ class TrueBASICInterpreter {
         
         for @lines.kv -> $index, $line {
             next if $line.trim eq '';
-            next if $line.trim.starts-with('REM') || $line.trim.starts-with("'");
+            # Skip comment lines that start with ! or REM
+            next if $line.trim.starts-with('!') || $line.trim.starts-with('REM') || $line.trim.starts-with("'");
             
             my $parsed-line = self.parse-line($line.trim, $index + 1);
             @!program-lines.push($parsed-line);
@@ -77,10 +78,19 @@ class TrueBASICInterpreter {
     }
 
     method parse-line(Str $line, Int $line-num) {
+        my @tokens = self.tokenize($line);
+        my $basic-line-num = $line-num;
+        
+        # Check if line starts with a number (BASIC line number)
+        if @tokens && @tokens[0] ~~ /^\d+$/ {
+            $basic-line-num = +@tokens[0];
+        }
+        
         return {
-            line-num => $line-num,
+            line-num => $basic-line-num,
+            file-line => $line-num,
             original => $line,
-            tokens => self.tokenize($line)
+            tokens => @tokens
         };
     }
 
@@ -149,34 +159,41 @@ class TrueBASICInterpreter {
     }
 
     method execute-line(%line) {
-        my @tokens = %line<tokens>;
+        my @tokens = |%line<tokens>; # Flatten the array properly
         return unless @tokens;
 
-        my $command = @tokens[0].uc;
+        # Skip line number if present  
+        my $start-index = 0;
+        if @tokens[0] ~~ /^\d+$/ {
+            $start-index = 1;
+        }
+        
+        return unless $start-index < @tokens.elems;
+        my $command = @tokens[$start-index].uc;
 
         given $command {
-            when 'LET' { self.execute-let(@tokens[1..*]) }
-            when 'PRINT' { self.execute-print(@tokens[1..*]) }
-            when 'INPUT' { self.execute-input(@tokens[1..*]) }
-            when 'IF' { self.execute-if(@tokens[1..*]) }
-            when 'GOTO' { self.execute-goto(@tokens[1..*]) }
-            when 'GOSUB' { self.execute-gosub(@tokens[1..*]) }
+            when 'LET' { self.execute-let(@tokens[$start-index + 1..*]) }
+            when 'PRINT' { self.execute-print(@tokens[$start-index + 1..*]) }
+            when 'INPUT' { self.execute-input(@tokens[$start-index + 1..*]) }
+            when 'IF' { self.execute-if(@tokens[$start-index + 1..*]) }
+            when 'GOTO' { self.execute-goto(@tokens[$start-index + 1..*]) }
+            when 'GOSUB' { self.execute-gosub(@tokens[$start-index + 1..*]) }
             when 'RETURN' { self.execute-return() }
-            when 'FOR' { self.execute-for(@tokens[1..*]) }
-            when 'NEXT' { self.execute-next(@tokens[1..*]) }
-            when 'DO' { self.execute-do(@tokens[1..*]) }
-            when 'LOOP' { self.execute-loop(@tokens[1..*]) }
-            when 'WHILE' { self.execute-while(@tokens[1..*]) }
+            when 'FOR' { self.execute-for(@tokens[$start-index + 1..*]) }
+            when 'NEXT' { self.execute-next(@tokens[$start-index + 1..*]) }
+            when 'DO' { self.execute-do(@tokens[$start-index + 1..*]) }
+            when 'LOOP' { self.execute-loop(@tokens[$start-index + 1..*]) }
+            when 'WHILE' { self.execute-while(@tokens[$start-index + 1..*]) }
             when 'WEND' { self.execute-wend() }
-            when 'DIM' { self.execute-dim(@tokens[1..*]) }
-            when 'DEF' { self.execute-def(@tokens[1..*]) }
+            when 'DIM' { self.execute-dim(@tokens[$start-index + 1..*]) }
+            when 'DEF' { self.execute-def(@tokens[$start-index + 1..*]) }
             when 'END' { $!running = False }
             when 'STOP' { $!running = False }
             when 'CLS' { self.execute-cls() }
             default {
                 # Check if it's an assignment without LET
-                if @tokens.elems >= 3 && @tokens[1] eq '=' {
-                    self.execute-assignment(@tokens);
+                if @tokens.elems >= ($start-index + 3) && @tokens[$start-index + 1] eq '=' {
+                    self.execute-assignment(@tokens[$start-index..*]);
                 } else {
                     die "Unknown command: $command";
                 }
@@ -219,7 +236,7 @@ class TrueBASICInterpreter {
             my @expr-tokens = [];
             
             # Collect tokens until we hit a semicolon or comma
-            while $i < @tokens.elems && @tokens[$i] !~~ /^<[\;\,]>$/ {
+            while $i < @tokens.elems && @tokens[$i] ne ';' && @tokens[$i] ne ',' {
                 @expr-tokens.push(@tokens[$i]);
                 $i++;
             }
@@ -232,8 +249,8 @@ class TrueBASICInterpreter {
             # Handle separator
             if $i < @tokens.elems {
                 given @tokens[$i] {
-                    when ';' { } # No space
-                    when ',' { $output ~= "\t" } # Tab
+                    when ';' { $output ~= ' ' } # Space for semicolon
+                    when ',' { $output ~= "\t" } # Tab for comma
                 }
                 $i++;
             }
@@ -570,6 +587,24 @@ class TrueBASICInterpreter {
                 }
             }
         }
+    }
+
+    method execute-while(@tokens) {
+        # WHILE condition is handled at the WEND
+        # For now, just add to do-stack like DO
+        @!do-stack.push($!current-line);
+    }
+
+    method execute-wend() {
+        die "WEND without WHILE" unless @!do-stack;
+        # For simplicity, treat like LOOP - go back to WHILE
+        $!current-line = @!do-stack.pop;
+    }
+
+    method execute-def(@tokens) {
+        # DEF function definition - simplified implementation
+        # Format: DEF FNname(params) = expression
+        die "DEF not fully implemented yet";
     }
 
     method debug-mode(Bool $enable = True) {
