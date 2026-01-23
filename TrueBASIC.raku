@@ -27,6 +27,14 @@ class TrueBASICInterpreter {
     has @.do-stack;
     has Bool $.running = False;
     has Bool $.debug = False;
+    
+    # Graphics attributes
+    has @.plot-points = [];
+    has @.plot-lines = [];
+    has @.plot-circles = [];
+    has %.window = x-min => 0, x-max => 100, y-min => 0, y-max => 100;
+    has Str $.graphics-mode = 'svg'; # 'svg' or 'ascii'
+    has Str $.plot-file = 'plot.svg';
 
     # Built-in functions
     method initialize-builtins() {
@@ -190,6 +198,13 @@ class TrueBASICInterpreter {
             when 'END' { $!running = False }
             when 'STOP' { $!running = False }
             when 'CLS' { self.execute-cls() }
+            when 'PLOT' { self.execute-plot(@tokens[$start-index + 1..*]) }
+            when 'LINE' { self.execute-line-plot(@tokens[$start-index + 1..*]) }
+            when 'CIRCLE' { self.execute-circle(@tokens[$start-index + 1..*]) }
+            when 'WINDOW' { self.execute-window(@tokens[$start-index + 1..*]) }
+            when 'SHOW' { self.execute-show(@tokens[$start-index + 1..*]) }
+            when 'SAVE' { self.execute-save-plot(@tokens[$start-index + 1..*]) }
+            when 'GRAPHICS' { self.execute-graphics(@tokens[$start-index + 1..*]) }
             when 'REM' { } # Comment - no operation needed
             default {
                 # Check if it's an assignment without LET
@@ -372,9 +387,15 @@ class TrueBASICInterpreter {
         
         %!variables{$var} += $for-info<step>;
         
-        my $continue = $for-info<step> > 0 ?? 
-            %!variables{$var} <= $for-info<end> !!
-            %!variables{$var} >= $for-info<end>;
+        # Use a small epsilon for floating point comparison to avoid infinite loops
+        my $epsilon = 1e-10;
+        my $continue;
+        
+        if $for-info<step> > 0 {
+            $continue = %!variables{$var} <= ($for-info<end> + $epsilon);
+        } else {
+            $continue = %!variables{$var} >= ($for-info<end> - $epsilon);
+        }
             
         if $continue {
             $!current-line = $for-info<line>;
@@ -442,6 +463,11 @@ class TrueBASICInterpreter {
     method execute-cls() {
         # Clear screen (simplified)
         run 'clear';
+        # Also clear graphics if any plotting has been done
+        if @!plot-points || @!plot-lines || @!plot-circles {
+            self.clear-graphics();
+            say "Graphics cleared." if $!debug;
+        }
     }
 
     method create-array(@dimensions) {
@@ -468,11 +494,23 @@ class TrueBASICInterpreter {
         if @tokens.elems == 1 {
             my $token = @tokens[0];
             
-            # Number
-            return +$token if $token ~~ /^ \s* <[0..9+\-.e]>+ \s* $/;
+            # Number (including negative)
+            if $token ~~ /^ \s* <[+\-]>? <[0..9.]>+ \s* $/ {
+                return +$token;
+            }
             
             # Variable
             return %!variables{$token} // 0;
+        }
+        
+        # Handle unary minus: -5 becomes two tokens "-" and "5"
+        if @tokens.elems == 2 && @tokens[0] eq '-' && @tokens[1] ~~ /^ \s* <[0..9.]>+ \s* $/ {
+            return -@tokens[1];
+        }
+        
+        # Handle unary minus with variable: -X
+        if @tokens.elems == 2 && @tokens[0] eq '-' {
+            return -self.evaluate-expression([@tokens[1]]);
         }
         
         # Handle simple binary expressions: A + B, A - B, etc.
@@ -514,7 +552,7 @@ class TrueBASICInterpreter {
                 }
                 default {
                     # Number or variable
-                    if $token ~~ /^ \s* <[0..9+\-.e]>+ \s* $/ {
+                    if $token ~~ /^ \s* <[+\-]>? <[0..9.]>+ \s* $/ {
                         @stack.push(+$token);
                     } else {
                         @stack.push(%!variables{$token} // 0);
@@ -633,6 +671,242 @@ class TrueBASICInterpreter {
             say "  {$pair.key} = {$pair.value}";
         }
     }
+    
+    # Graphics and plotting methods
+    method execute-plot(@tokens) {
+        die "PLOT requires X, Y coordinates" unless @tokens.elems >= 3;
+        
+        my $x = self.evaluate-expression([@tokens[0]]);
+        die "Missing comma in PLOT statement" unless @tokens[1] eq ',';
+        my $y = self.evaluate-expression([@tokens[2]]);
+        
+        @!plot-points.push({ x => $x, y => $y });
+        say "Plotted point at ($x, $y)" if $!debug;
+    }
+    
+    method execute-line-plot(@tokens) {
+        die "LINE requires X1, Y1, X2, Y2 coordinates" unless @tokens.elems >= 7;
+        
+        my $x1 = self.evaluate-expression([@tokens[0]]);
+        die "Missing comma in LINE statement" unless @tokens[1] eq ',';
+        my $y1 = self.evaluate-expression([@tokens[2]]);
+        die "Missing comma in LINE statement" unless @tokens[3] eq ',';
+        my $x2 = self.evaluate-expression([@tokens[4]]);
+        die "Missing comma in LINE statement" unless @tokens[5] eq ',';
+        my $y2 = self.evaluate-expression([@tokens[6]]);
+        
+        @!plot-lines.push({ x1 => $x1, y1 => $y1, x2 => $x2, y2 => $y2 });
+        say "Drew line from ($x1, $y1) to ($x2, $y2)" if $!debug;
+    }
+    
+    method execute-circle(@tokens) {
+        die "CIRCLE requires X, Y, RADIUS" unless @tokens.elems >= 5;
+        
+        my $x = self.evaluate-expression([@tokens[0]]);
+        die "Missing comma in CIRCLE statement" unless @tokens[1] eq ',';
+        my $y = self.evaluate-expression([@tokens[2]]);
+        die "Missing comma in CIRCLE statement" unless @tokens[3] eq ',';
+        my $r = self.evaluate-expression([@tokens[4]]);
+        
+        @!plot-circles.push({ x => $x, y => $y, radius => $r });
+        say "Drew circle at ($x, $y) with radius $r" if $!debug;
+    }
+    
+    method execute-window(@tokens) {
+        die "WINDOW requires X1, Y1, X2, Y2" unless @tokens.elems >= 7;
+        
+        my $x1 = self.evaluate-expression([@tokens[0]]);
+        die "Missing comma in WINDOW statement" unless @tokens[1] eq ',';
+        my $y1 = self.evaluate-expression([@tokens[2]]);
+        die "Missing comma in WINDOW statement" unless @tokens[3] eq ',';
+        my $x2 = self.evaluate-expression([@tokens[4]]);
+        die "Missing comma in WINDOW statement" unless @tokens[5] eq ',';
+        my $y2 = self.evaluate-expression([@tokens[6]]);
+        
+        # Handle potential negative numbers by ensuring we have numeric values
+        try {
+            $x1 = +$x1;
+            $y1 = +$y1;
+            $x2 = +$x2;
+            $y2 = +$y2;
+        }
+        CATCH {
+            default {
+                die "Invalid numeric values in WINDOW statement: {.message}";
+            }
+        }
+        
+        %!window = x-min => $x1, y-min => $y1, x-max => $x2, y-max => $y2;
+        say "Set window to ($x1, $y1) - ($x2, $y2)" if $!debug;
+    }
+    
+    method execute-show(@tokens) {
+        if @tokens && @tokens[0].uc eq 'PLOT' {
+            if @!plot-points || @!plot-lines || @!plot-circles {
+                if $!graphics-mode eq 'ascii' {
+                    self.show-ascii-plot();
+                } else {
+                    self.generate-svg();
+                    say "Plot saved to $!plot-file";
+                }
+            } else {
+                say "No plot data to show. Use PLOT, LINE, or CIRCLE commands first.";
+            }
+        } else {
+            say "SHOW PLOT - displays the current plot";
+        }
+    }
+    
+    method execute-save-plot(@tokens) {
+        my $filename = @tokens ?? self.evaluate-expression(@tokens) !! 'plot.svg';
+        $!plot-file = $filename;
+        self.generate-svg();
+        say "Plot saved to $filename";
+    }
+    
+    method execute-graphics(@tokens) {
+        if @tokens {
+            my $mode = @tokens[0].lc;
+            if $mode eq 'svg' || $mode eq 'ascii' {
+                $!graphics-mode = $mode;
+                say "Graphics mode set to $mode";
+            } else {
+                say "Invalid graphics mode. Use 'svg' or 'ascii'";
+            }
+        } else {
+            say "Current graphics mode: $!graphics-mode";
+        }
+    }
+    
+    method clear-graphics() {
+        @!plot-points = [];
+        @!plot-lines = [];
+        @!plot-circles = [];
+    }
+    
+    method generate-svg() {
+        my $width = 400;
+        my $height = 300;
+        my $margin = 20;
+        
+        my $x-scale = ($width - 2 * $margin) / (%!window<x-max> - %!window<x-min>);
+        my $y-scale = ($height - 2 * $margin) / (%!window<y-max> - %!window<y-min>);
+        
+        sub transform-x($x) {
+            return $margin + ($x - %!window<x-min>) * $x-scale;
+        }
+        
+        sub transform-y($y) {
+            return $height - $margin - ($y - %!window<y-min>) * $y-scale;
+        }
+        
+        my @svg-content = [
+            qq[<?xml version="1.0" encoding="UTF-8"?>],
+            qq[<svg width="$width" height="$height" xmlns="http://www.w3.org/2000/svg">],
+            qq[<rect width="$width" height="$height" fill="white" stroke="black" stroke-width="1"/>],
+        ];
+        
+        # Draw coordinate axes
+        if %!window<x-min> <= 0 <= %!window<x-max> {
+            my $x-axis = transform-x(0);
+            @svg-content.push(qq[<line x1="$x-axis" y1="$margin" x2="$x-axis" y2="{$height - $margin}" stroke="gray" stroke-width="1"/>]);
+        }
+        
+        if %!window<y-min> <= 0 <= %!window<y-max> {
+            my $y-axis = transform-y(0);
+            @svg-content.push(qq[<line x1="$margin" y1="$y-axis" x2="{$width - $margin}" y2="$y-axis" stroke="gray" stroke-width="1"/>]);
+        }
+        
+        # Draw points
+        for @!plot-points -> $point {
+            my $x = transform-x($point<x>);
+            my $y = transform-y($point<y>);
+            @svg-content.push(qq[<circle cx="$x" cy="$y" r="2" fill="blue"/>]);
+        }
+        
+        # Draw lines
+        for @!plot-lines -> $line {
+            my $x1 = transform-x($line<x1>);
+            my $y1 = transform-y($line<y1>);
+            my $x2 = transform-x($line<x2>);
+            my $y2 = transform-y($line<y2>);
+            @svg-content.push(qq[<line x1="$x1" y1="$y1" x2="$x2" y2="$y2" stroke="blue" stroke-width="2"/>]);
+        }
+        
+        # Draw circles
+        for @!plot-circles -> $circle {
+            my $cx = transform-x($circle<x>);
+            my $cy = transform-y($circle<y>);
+            my $r = $circle<radius> * $x-scale; # Scale radius
+            @svg-content.push(qq[<circle cx="$cx" cy="$cy" r="$r" fill="none" stroke="blue" stroke-width="2"/>]);
+        }
+        
+        @svg-content.push("</svg>");
+        
+        $!plot-file.IO.spurt(@svg-content.join("\n"));
+    }
+    
+    method show-ascii-plot() {
+        my $width = 60;
+        my $height = 20;
+        my @grid;
+        
+        # Initialize grid
+        for 0..^$height -> $y {
+            @grid[$y] = [' ' xx $width];
+        }
+        
+        my $x-scale = $width / (%!window<x-max> - %!window<x-min>);
+        my $y-scale = $height / (%!window<y-max> - %!window<y-min>);
+        
+        sub ascii-x($x) {
+            my $pos = (($x - %!window<x-min>) * $x-scale).round;
+            return max(0, min($width - 1, $pos));
+        }
+        
+        sub ascii-y($y) {
+            my $pos = $height - 1 - (($y - %!window<y-min>) * $y-scale).round;
+            return max(0, min($height - 1, $pos));
+        }
+        
+        # Draw coordinate axes
+        if %!window<x-min> <= 0 <= %!window<x-max> {
+            my $x-axis = ascii-x(0);
+            for 0..^$height -> $y {
+                @grid[$y][$x-axis] = '|';
+            }
+        }
+        
+        if %!window<y-min> <= 0 <= %!window<y-max> {
+            my $y-axis = ascii-y(0);
+            for 0..^$width -> $x {
+                @grid[$y-axis][$x] = '-';
+            }
+        }
+        
+        # Plot points
+        for @!plot-points -> $point {
+            my $x = ascii-x($point<x>);
+            my $y = ascii-y($point<y>);
+            @grid[$y][$x] = '*';
+        }
+        
+        # Draw lines (simplified - just endpoints)
+        for @!plot-lines -> $line {
+            my $x1 = ascii-x($line<x1>);
+            my $y1 = ascii-y($line<y1>);
+            my $x2 = ascii-x($line<x2>);
+            my $y2 = ascii-y($line<y2>);
+            @grid[$y1][$x1] = '+';
+            @grid[$y2][$x2] = '+';
+        }
+        
+        # Print the grid
+        say "ASCII Plot (Window: {%!window<x-min>},{%!window<y-min>} to {%!window<x-max>},{%!window<y-max>}):";
+        for @grid -> $row {
+            say $row.join('');
+        }
+    }
 }
 
 # Main program
@@ -667,6 +941,15 @@ sub MAIN(Str $program-file?, Bool :$debug = False) {
                     say "  run      - Run loaded program";
                     say "  debug    - Toggle debug mode";
                     say "  quit     - Exit interpreter";
+                    say "";
+                    say "Graphics Commands:";
+                    say "  PLOT x,y      - Plot a point";
+                    say "  LINE x1,y1,x2,y2 - Draw a line";
+                    say "  CIRCLE x,y,r  - Draw a circle";
+                    say "  WINDOW x1,y1,x2,y2 - Set coordinate window";
+                    say "  SHOW PLOT     - Display/save current plot";
+                    say "  GRAPHICS mode - Set graphics mode (svg/ascii)";
+                    say "  CLS           - Clear screen and graphics";
                 }
                 when 'list' { $interpreter.list-variables() }
                 when 'clear' { 
