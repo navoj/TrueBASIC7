@@ -12,7 +12,6 @@ Based on work by SHIRAISHI Kazuo
 =end pod
 
 use v6.d;
-use lib '.';
 use Base;
 
 # Variable type tags
@@ -20,7 +19,6 @@ enum IdTag is export <undeterm intern extern IdShare IdPublic>;
 
 # Forward declarations
 class Substance { ... }
-class Variable { ... }
 
 # Abstract base class for expressions (corresponding to TPrincipal)
 role Principal is export {
@@ -222,37 +220,63 @@ class Substance does PointingVariable is export {
     method PopStack() {
         # Pop variable from stack
     }
+    
+    # Implement required Principal methods with defaults
+    method evalN($n is rw) { die "Not implemented in base class" }
+    method evalX() returns Num { die "Not implemented in base class" }
+    method evalF() returns Num { die "Not implemented in base class" }
+    method evalC($c is rw) { die "Not implemented in base class" }
+    method evalR($r is rw) { die "Not implemented in base class" }
+    method evalS() returns Str { die "Not implemented in base class" }
+    method evalBool() returns Bool { die "Not implemented in base class" }
+    method evalInteger() returns Int { die "Not implemented in base class" }
+    method evalLongint() returns Int { die "Not implemented in base class" }
+    method str() returns Str { die "Not implemented in base class" }
+    method str2() returns Str { die "Not implemented in base class" }
+    method format(Str $form, Int $index is rw, Int $code is rw) returns Str { return self.str() }
+    method compare(Principal $exp) returns Int { die "Not implemented in base class" }
+    
+    # Implement required Variable methods with defaults
+    method sign() returns Int { die "Not implemented in base class" }
+    method substS(Str $s) { die "Not implemented in base class" }
+    method substOne() { die "Not implemented in base class" }
+    method assign(Principal $exp) { die "Not implemented in base class" }
+    method assignwithNoRound(Principal $exp) { die "Not implemented in base class" }
+    method assignX(Num $x) { die "Not implemented in base class" }
+    method assignLongint(Int $i) { die "Not implemented in base class" }
 }
 
 # Numeric variable (corresponding to TNVari)
 class NVari is Substance is export {
+    has $.ptr is rw;  # Override to make it writable in this class
+    
     method getVar2() {
         # Implementation for numeric variable getter
     }
     
     method evalN($n is rw) {
         # Evaluate as number
-        $n = $!ptr // 0;
+        $n = $.ptr // 0;
     }
     
     method evalX() returns Num {
-        return ($!ptr // 0).Num;
+        return ($.ptr // 0).Num;
     }
     
     method evalInteger() returns Int {
-        return ($!ptr // 0).Int;
+        return ($.ptr // 0).Int;
     }
     
     method evalLongint() returns Int {
-        return ($!ptr // 0).Int;
+        return ($.ptr // 0).Int;
     }
     
     method str() returns Str {
-        return (~($!ptr // 0));
+        return (~($.ptr // 0));
     }
     
     method str2() returns Str {
-        return (~($!ptr // 0));
+        return (~($.ptr // 0));
     }
     
     method compare(Principal $exp) returns Int {
@@ -268,27 +292,27 @@ class NVari is Substance is export {
     
     method add(Substance $p) {
         # Add another substance to this one
-        $!ptr = self.evalX() + $p.evalX();
+        $.ptr = self.evalX() + $p.evalX();
     }
     
     method substOne() {
-        $!ptr = 1;
+        $.ptr = 1;
     }
     
     method assign(Principal $exp) {
-        $!ptr = $exp.evalX();
+        $.ptr = $exp.evalX();
     }
     
     method assignwithNoRound(Principal $exp) {
-        $!ptr = $exp.evalX();
+        $.ptr = $exp.evalX();
     }
     
     method assignX(Num $x) {
-        $!ptr = $x;
+        $.ptr = $x;
     }
     
     method assignLongint(Int $i) {
-        $!ptr = $i;
+        $.ptr = $i;
     }
     
     # Implement required Principal methods
@@ -303,32 +327,34 @@ class NVari is Substance is export {
 
 # Float variable (corresponding to TFVari) 
 class FVari is Substance is export {
+    has $.ptr is rw;  # Override to make it writable in this class
+    
     method getVar2() {
         # Implementation for float variable getter
     }
     
     method evalX() returns Num {
-        return ($!ptr // 0e0).Num;
+        return ($.ptr // 0e0).Num;
     }
     
     method evalF() returns Num {
-        return ($!ptr // 0e0).Num;
+        return ($.ptr // 0e0).Num;
     }
     
     method evalInteger() returns Int {
-        return ($!ptr // 0e0).Int;
+        return ($.ptr // 0e0).Int;
     }
     
     method evalLongint() returns Int {
-        return ($!ptr // 0e0).Int;
+        return ($.ptr // 0e0).Int;
     }
     
     method str() returns Str {
-        return (~($!ptr // 0e0));
+        return (~($.ptr // 0e0));
     }
     
     method str2() returns Str {
-        return (~($!ptr // 0e0));
+        return (~($.ptr // 0e0));
     }
     
     method compare(Principal $exp) returns Int {
@@ -343,27 +369,27 @@ class FVari is Substance is export {
     }
     
     method add(Substance $p) {
-        $!ptr = self.evalF() + $p.evalF();
+        $.ptr = self.evalF() + $p.evalF();
     }
     
     method substOne() {
-        $!ptr = 1e0;
+        $.ptr = 1e0;
     }
     
     method assign(Principal $exp) {
-        $!ptr = $exp.evalF();
+        $.ptr = $exp.evalF();
     }
     
     method assignwithNoRound(Principal $exp) {
-        $!ptr = $exp.evalF();
+        $.ptr = $exp.evalF();
     }
     
     method assignX(Num $x) {
-        $!ptr = $x;
+        $.ptr = $x;
     }
     
     method assignLongint(Int $i) {
-        $!ptr = $i.Num;
+        $.ptr = $i.Num;
     }
     
     # Implement required Principal methods
@@ -378,17 +404,19 @@ class FVari is Substance is export {
 
 # Complex variable (corresponding to TCVari)
 class CVari is Substance is export {
+    has $.ptr is rw;  # Override to make it writable in this class
+    
     method getVar2() {
         # Implementation for complex variable getter
     }
     
     method evalX() returns Num {
-        my $c = $!ptr // Complex.new(0e0, 0e0);
+        my $c = $.ptr // Complex.new(0e0, 0e0);
         return $c.x;
     }
     
     method evalC($c is rw) {
-        $c = $!ptr // Complex.new(0e0, 0e0);
+        $c = $.ptr // Complex.new(0e0, 0e0);
     }
     
     method evalInteger() returns Int {
@@ -400,7 +428,7 @@ class CVari is Substance is export {
     }
     
     method str() returns Str {
-        my $c = $!ptr // Complex.new(0e0, 0e0);
+        my $c = $.ptr // Complex.new(0e0, 0e0);
         return $c.Str();
     }
     
@@ -412,40 +440,40 @@ class CVari is Substance is export {
         # Complex comparison based on magnitude
         my $other-c;
         $exp.evalC($other-c);
-        my $self-c = $!ptr // Complex.new(0e0, 0e0);
+        my $self-c = $.ptr // Complex.new(0e0, 0e0);
         return $self-c.abs() <=> $other-c.abs();
     }
     
     method sign() returns Int {
-        my $c = $!ptr // Complex.new(0e0, 0e0);
+        my $c = $.ptr // Complex.new(0e0, 0e0);
         return $c.x <=> 0;
     }
     
     method add(Substance $p) {
         my $other-c;
         $p.evalC($other-c);
-        my $self-c = $!ptr // Complex.new(0e0, 0e0);
-        $!ptr = $self-c.add($other-c);
+        my $self-c = $.ptr // Complex.new(0e0, 0e0);
+        $.ptr = $self-c.add($other-c);
     }
     
     method substOne() {
-        $!ptr = Complex.new(1e0, 0e0);
+        $.ptr = Complex.new(1e0, 0e0);
     }
     
     method assign(Principal $exp) {
-        $exp.evalC($!ptr);
+        $exp.evalC($.ptr);
     }
     
     method assignwithNoRound(Principal $exp) {
-        $exp.evalC($!ptr);
+        $exp.evalC($.ptr);
     }
     
     method assignX(Num $x) {
-        $!ptr = Complex.new($x, 0e0);
+        $.ptr = Complex.new($x, 0e0);
     }
     
     method assignLongint(Int $i) {
-        $!ptr = Complex.new($i.Num, 0e0);
+        $.ptr = Complex.new($i.Num, 0e0);
     }
     
     # Implement required Principal methods
@@ -460,12 +488,14 @@ class CVari is Substance is export {
 
 # String variable (corresponding to TSVari)
 class SVari is Substance is export {
+    has $.ptr is rw;  # Override to make it writable in this class
+    
     method getVar2() {
         # Implementation for string variable getter
     }
     
     method evalS() returns Str {
-        return ~($!ptr // '');
+        return ~($.ptr // '');
     }
     
     method str() returns Str {
@@ -483,15 +513,15 @@ class SVari is Substance is export {
     }
     
     method substS(Str $s) {
-        $!ptr = $s;
+        $.ptr = $s;
     }
     
     method assign(Principal $exp) {
-        $!ptr = $exp.evalS();
+        $.ptr = $exp.evalS();
     }
     
     method assignwithNoRound(Principal $exp) {
-        $!ptr = $exp.evalS();
+        $.ptr = $exp.evalS();
     }
     
     # Implement required Principal methods but these don't make sense for strings
@@ -508,7 +538,7 @@ class SVari is Substance is export {
     method substOne() { die "Cannot substitute 1 to string" }
     method assignX(Num $x) { die "Cannot assign number to string" }
     method assignLongint(Int $i) { die "Cannot assign integer to string" }
-    method add(Substance $p) { $!ptr = self.evalS() ~ $p.evalS() }
+    method add(Substance $p) { $.ptr = self.evalS() ~ $p.evalS() }
 }
 
 # Array variable classes (corresponding to TNAVari, TFAVari, etc.)

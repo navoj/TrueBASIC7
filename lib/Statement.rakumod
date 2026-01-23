@@ -12,7 +12,6 @@ Based on work by SHIRAISHI Kazuo
 =end pod
 
 use v6.d;
-use lib '.';
 use Base;
 use Variable;
 use Expression;
@@ -167,12 +166,50 @@ class Statement is export {
     }
 }
 
+# When exception handling (corresponding to TWhenException)
+class WhenException is Statement is export {
+    has Statement $.block;
+    has Statement $.use-block;
+    has Int $.svextype;
+    has Statement $.sv-statement-ex;
+    
+    method new(Statement $prev?, Statement $eld?) {
+        self.bless: previous => $prev, eldest => $eld;
+    }
+    
+    method collect-label-info(LabelNumberTable $table) {
+        callsame();
+        # Collect from blocks
+    }
+    
+    method exec() {
+        # Execute exception handling
+        $!block.exec() if $!block.defined;
+    }
+    
+    method run-handler(Statement $statement-ex) returns Bool {
+        # Run exception handler
+        return True; # Normal completion
+    }
+    
+    method exec-handler() returns Statement {
+        # Execute handler and return next statement
+        return Statement; # Undefined
+    }
+    
+    method set-breakpoint(Int $line, Bool $enable) returns Bool {
+        my $result = callsame();
+        $result ||= $!block.set-breakpoint($line, $enable) if $!block.defined;
+        return $result;
+    }
+}
+
 # Terminal statement (marks end of statement sequence)
 class Terminal is Statement is export {
     has Statement $.statement;
     
     method exec() {
-        $!statement.exec() if $!statement.defined;
+        $.statement.exec() if $.statement.defined;
     }
 }
 
@@ -204,7 +241,7 @@ class GotoStatement is Statement is export {
 class ExitStatement is Statement is export {
     has $.exception-type;
     
-    method new(Statement $prev?, Statement $eld?, $exception-type) {
+    method new($exception-type, Statement :$prev?, Statement :$eld?) {
         self.bless: previous => $prev, eldest => $eld, :$exception-type;
     }
     
@@ -349,13 +386,17 @@ class ForStatement is Statement is export {
     has Statement $.body;
     
     method new(Statement $prev?, Statement $eld?, Variable :$control-variable, Principal :$start-value, Principal :$end-value, Principal :$step-value?, Statement :$body) {
+        # Create a simple numeric constant for default step value
+        my $default-step = NVari.new(IdRec.new('const'), 'n', 0, False);
+        $default-step.assignX(1e0);
+        
         self.bless: 
             previous => $prev, 
             eldest => $eld, 
             :$control-variable, 
             :$start-value, 
             :$end-value, 
-            step-value => $step-value // NConst(1),
+            step-value => $step-value // $default-step,
             :$body;
     }
     

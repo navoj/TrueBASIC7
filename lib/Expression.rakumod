@@ -12,13 +12,11 @@ Based on work by SHIRAISHI Kazuo
 =end pod
 
 use v6.d;
-use lib '.';
 use Base;
 use Variable;
 
 # Forward declarations
 class Matrix { ... }
-class Logical { ... }
 
 # Type definitions for function operations
 subset UnaryOperation of Code;
@@ -101,19 +99,24 @@ class LogicalBiOp does Logical is export {
     method new(Principal $e1, Principal $e2) {
         self.bless: exp1 => $e1, exp2 => $e2;
     }
+    
+    # Default implementation - override in subclasses
+    method evalBool() returns Bool {
+        die "evalBool must be implemented in subclass";
+    }
 }
 
 # Disjunction (OR operation, corresponding to TDisjunction)
 class Disjunction is LogicalBiOp is export {
     method evalBool() returns Bool {
-        return $!exp1.evalBool() || $!exp2.evalBool();
+        return $.exp1.evalBool() || $.exp2.evalBool();
     }
 }
 
 # Conjunction (AND operation, corresponding to TConjunction)
 class Conjunction is LogicalBiOp is export {
     method evalBool() returns Bool {
-        return $!exp1.evalBool() && $!exp2.evalBool();
+        return $.exp1.evalBool() && $.exp2.evalBool();
     }
 }
 
@@ -126,7 +129,7 @@ class Negation does Logical is export {
     }
     
     method evalBool() returns Bool {
-        return !$!exp.evalBool();
+        return !$.exp.evalBool();
     }
 }
 
@@ -139,25 +142,25 @@ class Comparison is LogicalBiOp is export {
     }
     
     method evalBool() returns Bool {
-        return $!op.($!exp1.compare($!exp2));
+        return $.op.($.exp1.compare($.exp2));
     }
 }
 
 # Numeric comparison (corresponding to TComparisonN)
 class ComparisonN is Comparison is export {
     method evalBool() returns Bool {
-        my $val1 = $!exp1.evalX();
-        my $val2 = $!exp2.evalX();
-        return $!op.($val1 <=> $val2);
+        my $val1 = $.exp1.evalX();
+        my $val2 = $.exp2.evalX();
+        return $.op.($val1 <=> $val2);
     }
 }
 
 # String comparison (corresponding to TComparisonS)
 class ComparisonS is Comparison is export {
     method evalBool() returns Bool {
-        my $val1 = $!exp1.evalS();
-        my $val2 = $!exp2.evalS();
-        return $!op.($val1 cmp $val2);
+        my $val1 = $.exp1.evalS();
+        my $val2 = $.exp2.evalS();
+        return $.op.($val1 cmp $val2);
     }
 }
 
@@ -275,7 +278,7 @@ class LogicalNumeric does Logical is export {
     }
     
     method evalBool() returns Bool {
-        return $!exp.evalX() != 0;
+        return $.exp.evalX() != 0;
     }
 }
 

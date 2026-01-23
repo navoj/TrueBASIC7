@@ -11,7 +11,6 @@ Based on work by SHIRAISHI Kazuo
 =end pod
 
 use v6.d;
-use lib 'lib';
 use Base;
 use Variable;
 use Expression;
