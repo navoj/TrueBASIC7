@@ -1,0 +1,199 @@
+object OptionAC: TOptionAC
+  Left = 525
+  Height = 585
+  Hint = 'Auto correctiton on compiling'
+  Top = 178
+  Width = 435
+  HelpContext = 46
+  HorzScrollBar.Page = 432
+  HorzScrollBar.Range = 400
+  VertScrollBar.Page = 414
+  VertScrollBar.Range = 393
+  ActiveControl = CheckListBox1
+  BorderStyle = bsDialog
+  Caption = 'Automatic Correction'
+  ClientHeight = 585
+  ClientWidth = 435
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  ParentFont = True
+  Position = poScreenCenter
+  ShowHint = True
+  LCLVersion = '2.0.8.0'
+  object Label1: TLabel
+    Left = 8
+    Height = 15
+    Top = -1
+    Width = 85
+    BorderSpacing.Left = 4
+    BorderSpacing.Top = 4
+    Caption = 'Microsoft BASIC'
+    ParentColor = False
+  end
+  object Label2: TLabel
+    AnchorSideTop.Control = CheckListBox1
+    AnchorSideTop.Side = asrBottom
+    Left = 8
+    Height = 15
+    Top = 330
+    Width = 130
+    BorderSpacing.Left = 4
+    BorderSpacing.Top = 4
+    Caption = 'Obsolete Minimal BASIC '
+    ParentColor = False
+  end
+  object Label3: TLabel
+    AnchorSideTop.Control = CheckListBox2
+    AnchorSideTop.Side = asrBottom
+    Left = 10
+    Height = 15
+    Top = 413
+    Width = 130
+    BorderSpacing.Left = 4
+    BorderSpacing.Top = 4
+    Caption = 'Insert OPTION statement'
+    ParentColor = False
+  end
+  object Label4: TLabel
+    AnchorSideTop.Control = CheckListBox3
+    AnchorSideTop.Side = asrBottom
+    Left = 11
+    Height = 15
+    Top = 469
+    Width = 30
+    BorderSpacing.Left = 4
+    BorderSpacing.Top = 4
+    Caption = 'Other'
+    ParentColor = False
+  end
+  object Button1: TButton
+    Left = 334
+    Height = 31
+    Top = 24
+    Width = 94
+    BorderSpacing.Right = 4
+    BorderSpacing.InnerBorder = 4
+    Caption = 'OK'
+    Default = True
+    ModalResult = 1
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 2
+  end
+  object Button2: TButton
+    Left = 334
+    Height = 31
+    Top = 63
+    Width = 94
+    BorderSpacing.Right = 4
+    BorderSpacing.InnerBorder = 4
+    Cancel = True
+    Caption = 'Cancel'
+    ModalResult = 2
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 3
+  end
+  object Help1: TButton
+    Left = 334
+    Height = 31
+    Top = 104
+    Width = 94
+    BorderSpacing.Right = 4
+    BorderSpacing.InnerBorder = 4
+    Caption = '&Help'
+    OnClick = Help1Click
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 4
+  end
+  object CheckListBox1: TCheckListBox
+    AnchorSideTop.Control = Label1
+    AnchorSideTop.Side = asrBottom
+    Left = 11
+    Height = 312
+    Top = 14
+    Width = 321
+    BorderSpacing.Left = 4
+    BorderStyle = bsNone
+    Color = clForm
+    IntegralHeight = True
+    Items.Strings = (
+      'LET'
+      'INPUT'
+      'PRINT USING'
+      'NEXT without variable'
+      'String Concat operator'
+      ''' Comment'
+      'Expressions'
+      'WHILE WEND'
+      'Nested simple IFs, and Multi-statements'
+      'END'
+    )
+    ItemHeight = 17
+    TabOrder = 0
+    Data = {
+      0A00000000000000000000000000
+    }
+  end
+  object CheckListBox2: TCheckListBox
+    AnchorSideTop.Control = Label2
+    AnchorSideTop.Side = asrBottom
+    Left = 8
+    Height = 64
+    Top = 345
+    Width = 321
+    BorderSpacing.Left = 4
+    BorderStyle = bsNone
+    Color = clForm
+    IntegralHeight = True
+    Items.Strings = (
+      'Insert DIM statements'
+      'Insert OPTION BASE 0'
+    )
+    ItemHeight = 17
+    TabOrder = 1
+    Data = {
+      020000000000
+    }
+  end
+  object CheckListBox3: TCheckListBox
+    AnchorSideTop.Control = Label3
+    AnchorSideTop.Side = asrBottom
+    Left = 11
+    Height = 37
+    Top = 428
+    Width = 321
+    BorderSpacing.Left = 4
+    BorderStyle = bsNone
+    Color = clForm
+    IntegralHeight = True
+    Items.Strings = (
+      'OPTION ARITHMETIC'
+    )
+    ItemHeight = 17
+    TabOrder = 5
+    Data = {
+      0100000000
+    }
+  end
+  object CheckListBox4: TCheckListBox
+    AnchorSideTop.Control = Label4
+    AnchorSideTop.Side = asrBottom
+    Left = 11
+    Height = 36
+    Top = 484
+    Width = 321
+    BorderSpacing.Left = 4
+    Color = clForm
+    IntegralHeight = True
+    Items.Strings = (
+      'Indent'
+    )
+    ItemHeight = 17
+    TabOrder = 6
+    Data = {
+      0100000000
+    }
+  end
+end

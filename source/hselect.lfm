@@ -1,0 +1,52 @@
+object HelpSelector: THelpSelector
+  Left = 418
+  Height = 265
+  Top = 608
+  Width = 249
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'BASIC Help'
+  ClientHeight = 265
+  ClientWidth = 249
+  FormStyle = fsStayOnTop
+  Position = poDefault
+  LCLVersion = '0.9.29'
+  object RadioGroup1: TRadioGroup
+    AnchorSideBottom.Control = Button1
+    Left = 8
+    Height = 222
+    Top = 8
+    Width = 225
+    Anchors = [akTop, akLeft, akBottom]
+    AutoFill = True
+    AutoSize = True
+    BorderSpacing.Right = 4
+    BorderSpacing.Bottom = 2
+    Caption = 'RadioGroup1'
+    ChildSizing.LeftRightSpacing = 6
+    ChildSizing.TopBottomSpacing = 6
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.EnlargeVertical = crsHomogenousChildResize
+    ChildSizing.ShrinkHorizontal = crsScaleChilds
+    ChildSizing.ShrinkVertical = crsScaleChilds
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 1
+    TabOrder = 0
+  end
+  object Button1: TButton
+    AnchorSideTop.Control = RadioGroup1
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Side = asrBottom
+    Left = 169
+    Height = 30
+    Top = 232
+    Width = 75
+    Anchors = [akRight, akBottom]
+    Caption = 'Ok'
+    Default = True
+    ModalResult = 1
+    OnClick = Button1Click
+    OnEnter = Button1Enter
+    TabOrder = 1
+  end
+end

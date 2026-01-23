@@ -1,0 +1,109 @@
+inherited TraceForm: TTraceForm
+  Left = 0
+  Top = 734
+  Caption = 'Trace'
+  Position = poDesigned
+  inherited Memo1: TMemo
+  end
+  inherited StatusBar1: TStatusBar
+    Panels = <    
+      item
+        Alignment = taCenter
+        Text = 'Insert'
+        Width = 61
+      end    
+      item
+        Width = 50
+      end>
+  end
+  inherited MainMenu1: TMainMenu
+    top = 8
+    inherited File1: TMenuItem
+      inherited Close1: TMenuItem
+      end
+      inherited N3: TMenuItem
+      end
+      inherited Save1: TMenuItem
+      end
+      inherited SaveAs1: TMenuItem
+      end
+      inherited N2: TMenuItem
+      end
+      inherited Print1: TMenuItem
+      end
+      inherited N1: TMenuItem
+      end
+      inherited Exit1: TMenuItem
+      end
+    end
+    inherited Edit1: TMenuItem
+      inherited Cut1: TMenuItem
+      end
+      inherited Copy1: TMenuItem
+      end
+      inherited Paste1: TMenuItem
+      end
+      inherited Delete1: TMenuItem
+      end
+      inherited Undo1: TMenuItem
+      end
+      inherited N4: TMenuItem
+      end
+      inherited SelectAll1: TMenuItem
+      end
+      inherited N6: TMenuItem
+      end
+      inherited Find1: TMenuItem
+      end
+      inherited Repalce1: TMenuItem
+      end
+      inherited FindNext1: TMenuItem
+      end
+      inherited KS1: TMenuItem
+        inherited FromTop: TMenuItem
+        end
+        inherited FromCurrent: TMenuItem
+        end
+      end
+      inherited N5: TMenuItem
+      end
+      inherited WordWrap1: TMenuItem
+      end
+      inherited protected1: TMenuItem
+      end
+    end
+    inherited Run1: TMenuItem
+      inherited Break1: TMenuItem
+      end
+    end
+    inherited Show1: TMenuItem
+      inherited E1: TMenuItem
+      end
+    end
+    inherited Option1: TMenuItem
+      inherited Font1: TMenuItem
+      end
+      inherited M1: TMenuItem
+        Visible = False
+      end
+      inherited N7: TMenuItem
+        Visible = False
+      end
+      inherited RunOption1: TMenuItem
+        Visible = False
+        inherited K1: TMenuItem
+        end
+        inherited K2: TMenuItem
+        end
+      end
+    end
+  end
+  inherited SaveDialog1: TSaveDialog
+  end
+  inherited FontDialog1: TFontDialog
+  end
+  inherited FindDialog1: TFindDialog
+  end
+  inherited ReplaceDialog1: TReplaceDialog
+  end
+end

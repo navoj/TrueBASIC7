@@ -1,0 +1,27 @@
+object CharInput: TCharInput
+  Left = 0
+  Height = 1
+  Hint = 'CHARACTER INPUT'
+  Top = 0
+  Width = 1
+  HelpContext = 135
+  BorderIcons = []
+  Caption = 'Character Input'
+  ClientHeight = 1
+  ClientWidth = 1
+  Color = clNone
+  OnCreate = FormCreate
+  OnKeyPress = FormKeyPress
+  ParentFont = True
+  ShowHint = True
+  LCLVersion = '0.9.30.4'
+  object Label1: TLabel
+    Left = 0
+    Height = 1
+    Top = 0
+    Width = 1
+    Align = alClient
+    ParentColor = False
+    Visible = False
+  end
+end

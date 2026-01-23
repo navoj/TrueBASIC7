@@ -1,0 +1,162 @@
+object ToolBox: TToolBox
+  Left = 432
+  Height = 512
+  Top = 132
+  Width = 390
+  HelpContext = 25
+  HorzScrollBar.Page = 389
+  VertScrollBar.Page = 511
+  VertScrollBar.Range = 32
+  ActiveControl = PageControl1
+  BorderIcons = [biSystemMenu]
+  BorderStyle = bsDialog
+  Caption = 'Keyword catalog'
+  ClientHeight = 512
+  ClientWidth = 390
+  OnActivate = FormActivate
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  ParentFont = True
+  ShowHint = True
+  LCLVersion = '0.9.29'
+  object PageControl1: TPageControl
+    Left = 0
+    Height = 480
+    Top = 0
+    Width = 390
+    ActivePage = TabSheet1
+    Align = alClient
+    TabIndex = 0
+    TabOrder = 0
+    object TabSheet1: TTabSheet
+      Caption = 'Statements'
+      ClientHeight = 449
+      ClientWidth = 382
+      object Label1: TLabel
+        Left = 0
+        Height = 28
+        Top = 421
+        Width = 382
+        Align = alBottom
+        AutoSize = False
+        ParentColor = False
+      end
+      object ListBox1: TListBox
+        AnchorSideBottom.Control = Label1
+        Left = 0
+        Height = 421
+        Top = 0
+        Width = 382
+        Align = alTop
+        Anchors = [akTop, akLeft, akRight, akBottom]
+        BorderStyle = bsNone
+        ExtendedSelect = False
+        ItemHeight = 0
+        OnClick = ListBox1Click
+        OnDblClick = ListBox1DblClick
+        TabOrder = 0
+      end
+    end
+    object TabSheet2: TTabSheet
+      Caption = 'Functions'
+      ClientHeight = 0
+      ClientWidth = 0
+      object Label2: TLabel
+        Left = 0
+        Height = 28
+        Top = 420
+        Width = 386
+        Align = alBottom
+        AutoSize = False
+        ParentColor = False
+      end
+      object ListBox2: TListBox
+        AnchorSideBottom.Control = Label2
+        Left = 0
+        Height = 420
+        Top = 0
+        Width = 386
+        Align = alTop
+        Anchors = [akTop, akLeft, akRight, akBottom]
+        BorderStyle = bsNone
+        ExtendedSelect = False
+        ItemHeight = 0
+        OnClick = ListBox2Click
+        OnDblClick = ListBox2DblClick
+        TabOrder = 0
+      end
+    end
+    object TabSheet3: TTabSheet
+      Caption = 'letters'
+      ClientHeight = 0
+      ClientWidth = 0
+      object ListBox3: TListBox
+        Left = 0
+        Height = 448
+        Top = 0
+        Width = 386
+        Align = alClient
+        Anchors = [akTop, akLeft, akRight]
+        ItemHeight = 0
+        OnClick = ListBox3Click
+        OnDblClick = ListBox3DblClick
+        TabOrder = 0
+      end
+    end
+  end
+  object Panel1: TPanel
+    Left = 0
+    Height = 32
+    Top = 480
+    Width = 390
+    Align = alBottom
+    ClientHeight = 32
+    ClientWidth = 390
+    TabOrder = 1
+    object OkBtn: TBitBtn
+      Left = 1
+      Height = 29
+      Top = 1
+      Width = 110
+      Caption = 'Paste'
+      Default = True
+      Kind = bkOK
+      Margin = 2
+      NumGlyphs = 0
+      OnClick = OkBtnClick
+      Spacing = 5
+      TabOrder = 0
+    end
+    object HelpBtn: TBitBtn
+      Left = 111
+      Height = 29
+      Top = 1
+      Width = 110
+      Caption = 'Help'
+      Kind = bkHelp
+      Margin = 2
+      NumGlyphs = 0
+      OnClick = HelpBtnClick
+      ParentShowHint = False
+      ShowHint = True
+      Spacing = 5
+      TabOrder = 1
+    end
+    object CancelBtn: TBitBtn
+      Left = 222
+      Height = 29
+      Top = 1
+      Width = 110
+      Cancel = True
+      Caption = 'Close(ESC)'
+      Kind = bkCancel
+      Margin = 2
+      NumGlyphs = 0
+      OnClick = CancelBtnClick
+      ParentShowHint = False
+      ShowHint = True
+      Spacing = 5
+      TabOrder = 2
+    end
+  end
+end

@@ -1,0 +1,194 @@
+object PaintForm: TPaintForm
+  Left = 336
+  Height = 565
+  Top = 161
+  Width = 515
+  BorderIcons = [biSystemMenu, biMinimize]
+  Caption = ' '
+  ClientHeight = 545
+  ClientWidth = 515
+  DefaultMonitor = dmMainForm
+  Font.Height = -13
+  Font.Name = 'Consolas'
+  Font.Pitch = fpFixed
+  Menu = MainMenu1
+  OnClose = FormClose
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnResize = FormResize
+  LCLVersion = '1.6.0.4'
+  Visible = True
+  object PaintBox1: TPaintBox
+    Left = 0
+    Height = 513
+    Top = 0
+    Width = 507
+    Font.Height = -13
+    Font.Name = 'Consolas'
+    Font.Pitch = fpFixed
+    ParentFont = False
+    PopupMenu = PopupMenu1
+    OnClick = PaintBox1Click
+    OnMouseDown = PaintBox1MouseDown
+    OnMouseMove = PaintBox1MouseMove
+    OnMouseUp = PaintBox1MouseUp
+    OnPaint = PaintBox1Paint
+  end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Height = 24
+    Top = 521
+    Width = 515
+    Panels = <    
+      item
+        Width = 145
+      end    
+      item
+        Width = 145
+      end    
+      item
+        Width = 50
+      end>
+    SimplePanel = False
+  end
+  object MainMenu1: TMainMenu
+    left = 12
+    top = 4
+    object File1: TMenuItem
+      Caption = '&File'
+      HelpContext = 18
+      object Open1: TMenuItem
+        Caption = '&Open'
+        OnClick = Open1Click
+      end
+      object Close1: TMenuItem
+        Caption = '&Close'
+        OnClick = Close1Click
+      end
+      object N4: TMenuItem
+        Caption = '-'
+      end
+      object Save1: TMenuItem
+        Caption = '&Save'
+        HelpContext = 18
+        OnClick = Save1Click
+      end
+      object SaveAs1: TMenuItem
+        Caption = 'Save &As'
+        HelpContext = 18
+        OnClick = SaveAs1Click
+      end
+      object N3: TMenuItem
+        Caption = '-'
+      end
+      object Print1: TMenuItem
+        Caption = '&Print'
+        OnClick = Print1Click
+      end
+      object N2: TMenuItem
+        Caption = '-'
+      end
+      object Exit1: TMenuItem
+        Caption = 'E&XIT'
+        OnClick = Exit1Click
+      end
+    end
+    object Edit1: TMenuItem
+      Caption = '&Edit'
+      GroupIndex = 2
+      HelpContext = 20
+      object Copy1: TMenuItem
+        Caption = '&Copy'
+        HelpContext = 90
+        OnClick = Copy1Click
+      end
+      object Paste1: TMenuItem
+        Caption = '&Paste'
+        OnClick = Paste1Click
+      end
+    end
+    object Run1: TMenuItem
+      Caption = '&Break'
+      GroupIndex = 2
+      HelpContext = 61
+      object Break1: TMenuItem
+        Caption = '&Break'
+        Enabled = False
+        ShortCut = 16450
+        OnClick = Break1Click
+      end
+    end
+    object Show1: TMenuItem
+      Caption = '&Window'
+      GroupIndex = 2
+      object E1: TMenuItem
+        Caption = 'Program &Editor'
+        OnClick = E1Click
+      end
+    end
+    object Option1: TMenuItem
+      Caption = '&Option'
+      GroupIndex = 2
+      HelpContext = 50
+      object Size1: TMenuItem
+        Caption = '&Size'
+        HelpContext = 51
+        OnClick = Size1Click
+      end
+      object Color1: TMenuItem
+        Caption = '&Color index'
+        HelpContext = 55
+        OnClick = Color1Click
+      end
+      object Font1: TMenuItem
+        Caption = '&Font'
+        HelpContext = 57
+        OnClick = Font1Click
+      end
+      object RunOption1: TMenuItem
+        Caption = 'Erase before running'
+        HelpContext = 59
+        object K1: TMenuItem
+          Caption = 'Erase'
+          Checked = True
+          OnClick = K1Click
+        end
+        object K2: TMenuItem
+          Caption = 'Do not erase'
+          OnClick = K2Click
+        end
+      end
+    end
+  end
+  object SaveDialog1: TSaveDialog
+    Title = '(&N):'
+    DefaultExt = '.BMP'
+    Filter = 'BitMap |*.bmp|PNG|*.png|JPEG|*.jpg|TIFF|*.tiff'
+    FilterIndex = 0
+    Options = [ofOverwritePrompt, ofPathMustExist, ofEnableSizing, ofViewDetail]
+    left = 128
+    top = 88
+  end
+  object FontDialog1: TFontDialog
+    Font.Height = 17
+    Font.Name = '*'
+    Font.Pitch = fpFixed
+    MinFontSize = 0
+    MaxFontSize = 0
+    left = 200
+    top = 16
+  end
+  object OpenDialog1: TOpenDialog
+    FilterIndex = 0
+    left = 88
+    top = 48
+  end
+  object PopupMenu1: TPopupMenu
+    left = 329
+    top = 127
+    object Copy2: TMenuItem
+      Caption = 'Copy'
+      OnClick = Copy2Click
+    end
+  end
+end

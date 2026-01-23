@@ -1,0 +1,45 @@
+object ListForm: TListForm
+  Left = 370
+  Height = 216
+  Top = 182
+  Width = 345
+  HorzScrollBar.Page = 344
+  VertScrollBar.Page = 215
+  VertScrollBar.Range = 41
+  ActiveControl = RadioGroup1
+  Caption = 'BASIC Help'
+  Color = clBackground
+  object Panel1: TPanel
+    Height = 41
+    Top = 175
+    Width = 345
+    Align = alBottom
+    TabOrder = 1
+    object Button1: TButton
+      Left = 248
+      Height = 25
+      Top = 8
+      Width = 75
+      BorderSpacing.InnerBorder = 4
+      Caption = 'Ok'
+      Default = True
+      ModalResult = 1
+      TabOrder = 0
+    end
+  end
+  object RadioGroup1: TRadioGroup
+    Height = 175
+    Width = 345
+    Align = alClient
+    AutoFill = True
+    ChildSizing.LeftRightSpacing = 6
+    ChildSizing.TopBottomSpacing = 6
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.EnlargeVertical = crsHomogenousChildResize
+    ChildSizing.ShrinkHorizontal = crsScaleChilds
+    ChildSizing.ShrinkVertical = crsScaleChilds
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 1
+    TabOrder = 0
+  end
+end

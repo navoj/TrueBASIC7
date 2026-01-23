@@ -1,0 +1,87 @@
+object OptionSizeDlg: TOptionSizeDlg
+  Left = 371
+  Height = 312
+  Top = 137
+  Width = 289
+  HelpContext = 51
+  HorzScrollBar.Page = 288
+  HorzScrollBar.Range = 265
+  VertScrollBar.Page = 311
+  VertScrollBar.Range = 265
+  ActiveControl = RadioGroup1
+  BorderStyle = bsDialog
+  Caption = 'Size Option'
+  OnCreate = FormCreate
+  ParentFont = True
+  Position = poScreenCenter
+  object OKBtn: TBitBtn
+    Left = 172
+    Height = 31
+    Top = 8
+    Width = 93
+    Caption = 'OK'
+    Default = True
+    Margin = 30
+    ModalResult = 1
+    NumGlyphs = 2
+    Spacing = 2
+    TabOrder = 1
+  end
+  object CancelBtn: TBitBtn
+    Left = 172
+    Height = 31
+    Top = 48
+    Width = 93
+    Cancel = True
+    Caption = 'Cancel'
+    Margin = 20
+    ModalResult = 2
+    NumGlyphs = 2
+    Spacing = 2
+    TabOrder = 2
+  end
+  object HelpBtn: TBitBtn
+    Left = 172
+    Height = 31
+    Top = 88
+    Width = 93
+    HelpContext = 50
+    Caption = '&Help'
+    Margin = 10
+    NumGlyphs = 2
+    OnClick = HelpBtnClick
+    Spacing = 2
+    TabOrder = 3
+  end
+  object RadioGroup1: TRadioGroup
+    Left = 8
+    Height = 257
+    Top = 8
+    Width = 153
+    HelpContext = 50
+    AutoFill = True
+    Caption = 'BitMap Size'
+    ChildSizing.LeftRightSpacing = 6
+    ChildSizing.TopBottomSpacing = 6
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.EnlargeVertical = crsHomogenousChildResize
+    ChildSizing.ShrinkHorizontal = crsScaleChilds
+    ChildSizing.ShrinkVertical = crsScaleChilds
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 1
+    Items.Strings = (
+      ' 640x 400'
+      ' 640x 480'
+      ' 321x 321'
+      ' 401x 401'
+      ' 501x 501'
+      ' 641x 641'
+      ' 801x 801'
+      '1001x1001'
+      '1281x1281'
+      '1601x1601'
+      '2001x2001'
+    )
+    TabOrder = 0
+  end
+end

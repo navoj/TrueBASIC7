@@ -1,0 +1,2299 @@
+object FrameForm: TFrameForm
+  Left = 15
+  Height = 383
+  Top = 16
+  Width = 574
+  ActiveControl = Memo1
+  Caption = 'BASIC'
+  ClientHeight = 360
+  ClientWidth = 574
+  Menu = MainMenu1
+  OnClose = FormClose
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnShow = FormShow
+  ShowHint = True
+  LCLVersion = '2.0.8.0'
+  object StatusBar1: TStatusBar
+    Left = 0
+    Height = 25
+    Top = 335
+    Width = 574
+    Panels = <    
+      item
+        Alignment = taCenter
+        Text = 'INSERT'
+        Width = 50
+      end    
+      item
+        Alignment = taRightJustify
+        Width = 98
+      end    
+      item
+        Alignment = taCenter
+        Bevel = pbNone
+        Width = 40
+      end    
+      item
+        Width = 50
+      end>
+    SimpleText = 'Running Now...Ctrl-B to Break'
+    SimplePanel = False
+  end
+  object ToolBar1: TToolBar
+    Left = 0
+    Height = 25
+    Top = 0
+    Width = 574
+    HelpContext = 2
+    AutoSize = True
+    BorderWidth = 1
+    ButtonHeight = 23
+    ButtonWidth = 23
+    Color = clBtnFace
+    Images = ToolbarImages
+    ParentColor = False
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 0
+    object tbNew: TToolButton
+      Left = 9
+      Hint = 'New'
+      Top = 2
+      Caption = 'tbNew'
+      ImageIndex = 7
+      OnClick = tbNewClick
+    end
+    object TBOpen: TToolButton
+      Left = 32
+      Hint = 'Open'
+      Top = 2
+      Caption = 'TBOpen'
+      ImageIndex = 0
+      OnClick = TBOpenClick
+    end
+    object TBSave: TToolButton
+      Left = 55
+      Hint = 'Save'
+      Top = 2
+      Caption = 'TBSave'
+      ImageIndex = 1
+      OnClick = TBSaveClick
+    end
+    object TBPrint: TToolButton
+      Left = 78
+      Hint = 'Print'
+      Top = 2
+      Caption = 'TBPrint'
+      ImageIndex = 2
+      OnClick = TBPrintClick
+    end
+    object ToolButton15: TToolButton
+      Left = 101
+      Height = 23
+      Top = 2
+      Caption = 'ToolButton15'
+      ImageIndex = 14
+      Style = tbsSeparator
+    end
+    object TBCut: TToolButton
+      Left = 109
+      Hint = 'Cut'
+      Top = 2
+      Caption = 'TBCut'
+      ImageIndex = 4
+      OnClick = TBCutClick
+    end
+    object TBCopy: TToolButton
+      Left = 132
+      Hint = 'Copy'
+      Top = 2
+      Caption = 'TBCopy'
+      ImageIndex = 5
+      OnClick = TBCopyClick
+    end
+    object TBPaste: TToolButton
+      Left = 155
+      Hint = 'Paste'
+      Top = 2
+      Caption = 'TBPaste'
+      ImageIndex = 6
+      OnClick = TBPasteClick
+    end
+    object TBUndo: TToolButton
+      Left = 178
+      Hint = 'Undo'
+      Top = 2
+      Caption = 'TBUndo'
+      ImageIndex = 3
+      OnClick = TBUndoClick
+    end
+    object ToolButton12: TToolButton
+      Left = 201
+      Height = 23
+      Top = 2
+      Caption = 'ToolButton12'
+      ImageIndex = 12
+      Style = tbsSeparator
+    end
+    object TBRun: TToolButton
+      Left = 209
+      Hint = 'Run'
+      Top = 2
+      Caption = 'TBRun'
+      ImageIndex = 8
+      OnClick = TBRunClick
+    end
+    object TBStep: TToolButton
+      Left = 232
+      Hint = 'Step'
+      Top = 2
+      Caption = 'TBStep'
+      ImageIndex = 10
+      OnClick = TBStepClick
+    end
+    object TBBreak: TToolButton
+      Left = 255
+      Hint = 'Break'
+      Top = 2
+      Caption = 'TBBreak'
+      ImageIndex = 11
+      OnClick = TBBreakClick
+    end
+    object ToolButton16: TToolButton
+      Left = 278
+      Height = 23
+      Top = 2
+      Caption = 'ToolButton16'
+      ImageIndex = 14
+      Style = tbsSeparator
+    end
+    object TBDecimal: TToolButton
+      Left = 286
+      Hint = 'Decimal'
+      Top = 2
+      Caption = 'TBDecimal'
+      Grouped = True
+      ImageIndex = 12
+      OnClick = TBDecimalClick
+      Style = tbsCheck
+    end
+    object TBHighPrecision: TToolButton
+      Left = 309
+      Hint = 'Decmal 1000digits'
+      Top = 2
+      Caption = 'TBHighPrecision'
+      Grouped = True
+      ImageIndex = 13
+      OnClick = TBHighPrecisionClick
+      Style = tbsCheck
+    end
+    object TBBinary: TToolButton
+      Left = 332
+      Hint = 'Binary'
+      Top = 2
+      Caption = 'TBBinary'
+      Grouped = True
+      ImageIndex = 14
+      OnClick = TBBinaryClick
+      Style = tbsCheck
+    end
+    object TBComplex: TToolButton
+      Left = 355
+      Hint = 'Complex'
+      Top = 2
+      Caption = 'TBComplex'
+      Grouped = True
+      ImageIndex = 16
+      OnClick = TBComplexClick
+      Style = tbsCheck
+    end
+    object TBRational: TToolButton
+      Left = 378
+      Hint = 'Rational'
+      Top = 2
+      Caption = 'TBRational'
+      Grouped = True
+      ImageIndex = 17
+      OnClick = TBRationalClick
+      Style = tbsCheck
+    end
+    object ToolButton6: TToolButton
+      Left = 401
+      Height = 23
+      Top = 2
+      Caption = 'ToolButton6'
+      ImageIndex = 12
+      Style = tbsSeparator
+    end
+    object TBDeg: TToolButton
+      Left = 409
+      Hint = 'insert OPTION ANGLE DEGREES'
+      Top = 2
+      Caption = 'TBDeg'
+      ImageIndex = 15
+      OnClick = TBDegClick
+      Style = tbsCheck
+    end
+    object ToolButton3: TToolButton
+      Left = 432
+      Height = 23
+      Top = 2
+      Caption = 'ToolButton3'
+      ImageIndex = 11
+      Style = tbsSeparator
+    end
+    object TBHelp: TToolButton
+      Left = 440
+      Hint = 'Help'
+      Top = 2
+      Caption = 'TBHelp'
+      ImageIndex = 9
+      OnClick = TBHelpClick
+    end
+    object ToolButton5: TToolButton
+      Left = 1
+      Height = 23
+      Top = 2
+      Caption = 'ToolButton5'
+      ImageIndex = 11
+      Style = tbsSeparator
+      Wrap = True
+    end
+  end
+  inline Memo1: TSynEdit
+    Left = 0
+    Height = 310
+    Top = 25
+    Width = 574
+    Align = alClient
+    Font.Color = clBlack
+    Font.Height = -15
+    Font.Name = 'Monospace'
+    Font.Pitch = fpFixed
+    Font.Quality = fqAntialiased
+    ParentColor = False
+    ParentFont = False
+    PopupMenu = PopupMenu1
+    TabOrder = 2
+    OnKeyDown = Memo1KeyDown
+    OnKeyUp = Memo1KeyUp
+    OnMouseUp = Memo1MouseUp
+    Gutter.Color = clWhite
+    Gutter.Visible = False
+    Gutter.Width = 0
+    Gutter.MouseActions = <    
+      item
+        ClickCount = ccAny
+        ClickDir = cdDown
+        Command = emcOnMainGutterClick
+      end    
+      item
+        Button = mbRight
+        Command = emcContextMenu
+      end>
+    RightGutter.Visible = False
+    RightGutter.Width = 0
+    RightGutter.MouseActions = <    
+      item
+        ClickCount = ccAny
+        ClickDir = cdDown
+        Command = emcOnMainGutterClick
+      end    
+      item
+        Button = mbRight
+        Command = emcContextMenu
+      end>
+    Highlighter = SynAnySyn1
+    Keystrokes = <    
+      item
+        Command = ecUp
+        ShortCut = 38
+      end    
+      item
+        Command = ecSelUp
+        ShortCut = 8230
+      end    
+      item
+        Command = ecScrollUp
+        ShortCut = 16422
+      end    
+      item
+        Command = ecDown
+        ShortCut = 40
+      end    
+      item
+        Command = ecSelDown
+        ShortCut = 8232
+      end    
+      item
+        Command = ecScrollDown
+        ShortCut = 16424
+      end    
+      item
+        Command = ecLeft
+        ShortCut = 37
+      end    
+      item
+        Command = ecSelLeft
+        ShortCut = 8229
+      end    
+      item
+        Command = ecWordLeft
+        ShortCut = 16421
+      end    
+      item
+        Command = ecSelWordLeft
+        ShortCut = 24613
+      end    
+      item
+        Command = ecRight
+        ShortCut = 39
+      end    
+      item
+        Command = ecSelRight
+        ShortCut = 8231
+      end    
+      item
+        Command = ecWordRight
+        ShortCut = 16423
+      end    
+      item
+        Command = ecSelWordRight
+        ShortCut = 24615
+      end    
+      item
+        Command = ecPageDown
+        ShortCut = 34
+      end    
+      item
+        Command = ecSelPageDown
+        ShortCut = 8226
+      end    
+      item
+        Command = ecPageBottom
+        ShortCut = 16418
+      end    
+      item
+        Command = ecSelPageBottom
+        ShortCut = 24610
+      end    
+      item
+        Command = ecPageUp
+        ShortCut = 33
+      end    
+      item
+        Command = ecSelPageUp
+        ShortCut = 8225
+      end    
+      item
+        Command = ecPageTop
+        ShortCut = 16417
+      end    
+      item
+        Command = ecSelPageTop
+        ShortCut = 24609
+      end    
+      item
+        Command = ecLineStart
+        ShortCut = 36
+      end    
+      item
+        Command = ecSelLineStart
+        ShortCut = 8228
+      end    
+      item
+        Command = ecEditorTop
+        ShortCut = 16420
+      end    
+      item
+        Command = ecSelEditorTop
+        ShortCut = 24612
+      end    
+      item
+        Command = ecLineEnd
+        ShortCut = 35
+      end    
+      item
+        Command = ecSelLineEnd
+        ShortCut = 8227
+      end    
+      item
+        Command = ecEditorBottom
+        ShortCut = 16419
+      end    
+      item
+        Command = ecSelEditorBottom
+        ShortCut = 24611
+      end    
+      item
+        Command = ecToggleMode
+        ShortCut = 45
+      end    
+      item
+        Command = ecCopy
+        ShortCut = 16429
+      end    
+      item
+        Command = ecPaste
+        ShortCut = 8237
+      end    
+      item
+        Command = ecDeleteChar
+        ShortCut = 46
+      end    
+      item
+        Command = ecCut
+        ShortCut = 8238
+      end    
+      item
+        Command = ecDeleteLastChar
+        ShortCut = 8
+      end    
+      item
+        Command = ecDeleteLastChar
+        ShortCut = 8200
+      end    
+      item
+        Command = ecDeleteLastWord
+        ShortCut = 16392
+      end    
+      item
+        Command = ecUndo
+        ShortCut = 32776
+      end    
+      item
+        Command = ecRedo
+        ShortCut = 40968
+      end    
+      item
+        Command = ecLineBreak
+        ShortCut = 13
+      end    
+      item
+        Command = ecSelectAll
+        ShortCut = 16449
+      end    
+      item
+        Command = ecCopy
+        ShortCut = 16451
+      end    
+      item
+        Command = ecBlockIndent
+        ShortCut = 24649
+      end    
+      item
+        Command = ecLineBreak
+        ShortCut = 16461
+      end    
+      item
+        Command = ecInsertLine
+        ShortCut = 16462
+      end    
+      item
+        Command = ecDeleteWord
+        ShortCut = 16468
+      end    
+      item
+        Command = ecBlockUnindent
+        ShortCut = 24661
+      end    
+      item
+        Command = ecPaste
+        ShortCut = 16470
+      end    
+      item
+        Command = ecCut
+        ShortCut = 16472
+      end    
+      item
+        Command = ecDeleteLine
+        ShortCut = 16473
+      end    
+      item
+        Command = ecDeleteEOL
+        ShortCut = 24665
+      end    
+      item
+        Command = ecUndo
+        ShortCut = 16474
+      end    
+      item
+        Command = ecRedo
+        ShortCut = 24666
+      end    
+      item
+        Command = ecGotoMarker0
+        ShortCut = 16432
+      end    
+      item
+        Command = ecGotoMarker1
+        ShortCut = 16433
+      end    
+      item
+        Command = ecGotoMarker2
+        ShortCut = 16434
+      end    
+      item
+        Command = ecGotoMarker3
+        ShortCut = 16435
+      end    
+      item
+        Command = ecGotoMarker4
+        ShortCut = 16436
+      end    
+      item
+        Command = ecGotoMarker5
+        ShortCut = 16437
+      end    
+      item
+        Command = ecGotoMarker6
+        ShortCut = 16438
+      end    
+      item
+        Command = ecGotoMarker7
+        ShortCut = 16439
+      end    
+      item
+        Command = ecGotoMarker8
+        ShortCut = 16440
+      end    
+      item
+        Command = ecGotoMarker9
+        ShortCut = 16441
+      end    
+      item
+        Command = ecSetMarker0
+        ShortCut = 24624
+      end    
+      item
+        Command = ecSetMarker1
+        ShortCut = 24625
+      end    
+      item
+        Command = ecSetMarker2
+        ShortCut = 24626
+      end    
+      item
+        Command = ecSetMarker3
+        ShortCut = 24627
+      end    
+      item
+        Command = ecSetMarker4
+        ShortCut = 24628
+      end    
+      item
+        Command = ecSetMarker5
+        ShortCut = 24629
+      end    
+      item
+        Command = ecSetMarker6
+        ShortCut = 24630
+      end    
+      item
+        Command = ecSetMarker7
+        ShortCut = 24631
+      end    
+      item
+        Command = ecSetMarker8
+        ShortCut = 24632
+      end    
+      item
+        Command = ecSetMarker9
+        ShortCut = 24633
+      end    
+      item
+        Command = EcFoldLevel1
+        ShortCut = 41009
+      end    
+      item
+        Command = EcFoldLevel2
+        ShortCut = 41010
+      end    
+      item
+        Command = EcFoldLevel1
+        ShortCut = 41011
+      end    
+      item
+        Command = EcFoldLevel1
+        ShortCut = 41012
+      end    
+      item
+        Command = EcFoldLevel1
+        ShortCut = 41013
+      end    
+      item
+        Command = EcFoldLevel6
+        ShortCut = 41014
+      end    
+      item
+        Command = EcFoldLevel7
+        ShortCut = 41015
+      end    
+      item
+        Command = EcFoldLevel8
+        ShortCut = 41016
+      end    
+      item
+        Command = EcFoldLevel9
+        ShortCut = 41017
+      end    
+      item
+        Command = EcFoldLevel0
+        ShortCut = 41008
+      end    
+      item
+        Command = EcFoldCurrent
+        ShortCut = 41005
+      end    
+      item
+        Command = EcUnFoldCurrent
+        ShortCut = 41003
+      end    
+      item
+        Command = EcToggleMarkupWord
+        ShortCut = 32845
+      end    
+      item
+        Command = ecNormalSelect
+        ShortCut = 24654
+      end    
+      item
+        Command = ecColumnSelect
+        ShortCut = 24643
+      end    
+      item
+        Command = ecLineSelect
+        ShortCut = 24652
+      end    
+      item
+        Command = ecTab
+        ShortCut = 9
+      end    
+      item
+        Command = ecShiftTab
+        ShortCut = 8201
+      end    
+      item
+        Command = ecMatchBracket
+        ShortCut = 24642
+      end    
+      item
+        Command = ecColSelUp
+        ShortCut = 40998
+      end    
+      item
+        Command = ecColSelDown
+        ShortCut = 41000
+      end    
+      item
+        Command = ecColSelLeft
+        ShortCut = 40997
+      end    
+      item
+        Command = ecColSelRight
+        ShortCut = 40999
+      end    
+      item
+        Command = ecColSelPageDown
+        ShortCut = 40994
+      end    
+      item
+        Command = ecColSelPageBottom
+        ShortCut = 57378
+      end    
+      item
+        Command = ecColSelPageUp
+        ShortCut = 40993
+      end    
+      item
+        Command = ecColSelPageTop
+        ShortCut = 57377
+      end    
+      item
+        Command = ecColSelLineStart
+        ShortCut = 40996
+      end    
+      item
+        Command = ecColSelLineEnd
+        ShortCut = 40995
+      end    
+      item
+        Command = ecColSelEditorTop
+        ShortCut = 57380
+      end    
+      item
+        Command = ecColSelEditorBottom
+        ShortCut = 57379
+      end>
+    MouseActions = <    
+      item
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Button = mbRight
+        Command = emcContextMenu
+      end    
+      item
+        ClickCount = ccDouble
+        ClickDir = cdDown
+        Command = emcSelectWord
+        MoveCaret = True
+      end    
+      item
+        ClickCount = ccTriple
+        ClickDir = cdDown
+        Command = emcSelectLine
+        MoveCaret = True
+      end    
+      item
+        ClickCount = ccQuad
+        ClickDir = cdDown
+        Command = emcSelectPara
+        MoveCaret = True
+      end    
+      item
+        Button = mbMiddle
+        ClickDir = cdDown
+        Command = emcPasteSelection
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssCtrl]
+        ShiftMask = [ssShift, ssAlt, ssCtrl]
+        Command = emcMouseLink
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        ClickDir = cdDown
+        Command = emcStartColumnSelections
+        MoveCaret = True
+        Option = 1
+      end>
+    MouseTextActions = <>
+    MouseSelActions = <    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end    
+      item
+        ClickDir = cdDown
+        Command = emcStartDragMove
+      end>
+    Lines.Strings = (
+      ''
+      'END'
+      ''
+    )
+    Options = [eoAutoIndent, eoBracketHighlight, eoGroupUndo, eoSmartTabs, eoTabsToSpaces, eoTrimTrailingSpaces, eoAltSetsColumnMode, eoDragDropEditing]
+    MouseOptions = [emAltSetsColumnMode, emDragDropEditing]
+    VisibleSpecialChars = [vscSpace, vscTabAtLast]
+    SelectedColor.BackPriority = 50
+    SelectedColor.ForePriority = 50
+    SelectedColor.FramePriority = 50
+    SelectedColor.BoldPriority = 50
+    SelectedColor.ItalicPriority = 50
+    SelectedColor.UnderlinePriority = 50
+    SelectedColor.StrikeOutPriority = 50
+    BracketHighlightStyle = sbhsBoth
+    BracketMatchColor.Background = clNone
+    BracketMatchColor.Foreground = clNone
+    BracketMatchColor.Style = [fsBold]
+    FoldedCodeColor.Background = clNone
+    FoldedCodeColor.Foreground = clGray
+    FoldedCodeColor.FrameColor = clGray
+    MouseLinkColor.Background = clNone
+    MouseLinkColor.Foreground = clBlue
+    LineHighlightColor.Background = clNone
+    LineHighlightColor.Foreground = clNone
+    inline TSynGutterPartList
+    end
+  end
+  object MainMenu1: TMainMenu
+    left = 56
+    top = 96
+    object File1: TMenuItem
+      Caption = '&File'
+      HelpContext = 15
+      object New1: TMenuItem
+        Caption = '&New'
+        HelpContext = 15
+        OnClick = New1Click
+      end
+      object Open1: TMenuItem
+        Caption = '&Open'
+        HelpContext = 15
+        OnClick = Open1Click
+      end
+      object N3: TMenuItem
+        Caption = '-'
+      end
+      object merge1: TMenuItem
+        Caption = '&Merge'
+        OnClick = merge1Click
+      end
+      object Save1: TMenuItem
+        Caption = '&Save'
+        OnClick = Save1Click
+      end
+      object SaveAs1: TMenuItem
+        Caption = 'Save &As'
+        OnClick = SaveAs1Click
+      end
+      object N2: TMenuItem
+        Caption = '-'
+      end
+      object Print1: TMenuItem
+        Caption = '&Print'
+        OnClick = Print1Click
+      end
+      object N1: TMenuItem
+        Caption = '-'
+      end
+      object Exit1: TMenuItem
+        Caption = 'E&XIT'
+        HelpContext = 10
+        OnClick = Close1Click
+      end
+    end
+    object Edit1: TMenuItem
+      Caption = '&Edit'
+      HelpContext = 20
+      object Cut1: TMenuItem
+        Caption = 'Cu&T'
+        HelpContext = 21
+        OnClick = Cut1Click
+      end
+      object Copy1: TMenuItem
+        Caption = '&Copy'
+        HelpContext = 21
+        OnClick = Copy1Click
+      end
+      object Paste1: TMenuItem
+        Caption = '&Paste'
+        HelpContext = 21
+        OnClick = Paste1Click
+      end
+      object Delete1: TMenuItem
+        Caption = 'De&Lete'
+        HelpContext = 21
+        OnClick = Delete1Click
+      end
+      object Undo1: TMenuItem
+        Caption = '&Undo'
+        HelpContext = 21
+        OnClick = Undo1Click
+      end
+      object N4: TMenuItem
+        Caption = '-'
+      end
+      object SelectAll1: TMenuItem
+        Caption = 'Sellect &All'
+        HelpContext = 21
+        OnClick = SelectAll1Click
+      end
+      object Find1: TMenuItem
+        Caption = '&Find'
+        HelpContext = 23
+        OnClick = Find1Click
+      end
+      object Repalce1: TMenuItem
+        Caption = '&Replace'
+        HelpContext = 23
+        OnClick = Repalce1Click
+      end
+      object FindNext1: TMenuItem
+        Caption = 'Find &Next'
+        Enabled = False
+        HelpContext = 23
+        ShortCut = 114
+        OnClick = FindNext1Click
+      end
+      object N5: TMenuItem
+        Caption = '-'
+      end
+      object ToolBox1: TMenuItem
+        Caption = '&Keyword'
+        HelpContext = 25
+        Hint = 'Catalog of Keywords'
+        ShortCut = 113
+        OnClick = ToolBox1Click
+      end
+      object deleteLabelNumber1: TMenuItem
+        Caption = '&Delete Line Numbers'
+        HelpContext = 26
+        OnClick = deleteLabelNumber1Click
+      end
+      object AddLabelNumber1: TMenuItem
+        Caption = '&Supplement Line Numbers'
+        HelpContext = 26
+        OnClick = AddLabelNumber1Click
+      end
+      object CaseChange1: TMenuItem
+        Caption = 'Chan&Ge Case'
+        HelpContext = 26
+        OnClick = CaseChange1Click
+      end
+      object WordWrap1: TMenuItem
+        Caption = '&Wordwrap'
+        HelpContext = 29
+        OnClick = WordWrap1Click
+      end
+      object MenuItem1: TMenuItem
+        Caption = '-'
+      end
+      object Commentize1: TMenuItem
+        Caption = 'Commentize'
+        OnClick = Commentize1Click
+      end
+      object Uncommentize1: TMenuItem
+        Caption = 'Uncommentize'
+        OnClick = Uncommentize1Click
+      end
+    end
+    object Option1: TMenuItem
+      Caption = '&Option'
+      HelpContext = 40
+      object Syntax1: TMenuItem
+        Caption = '&Syntax'
+        HelpContext = 44
+        OnClick = Syntax1Click
+      end
+      object N10: TMenuItem
+        Caption = '-'
+      end
+      object option2: TMenuItem
+        Caption = '&Precision'
+        HelpContext = 41
+        OnClick = option2Click
+      end
+      object GraphOpt1: TMenuItem
+        Caption = 'Graphics'
+        OnClick = GraphOpt1Click
+      end
+      object Compatibility1: TMenuItem
+        Caption = '&Compatibility'
+        HelpContext = 48
+        OnClick = compatibility1Click
+      end
+      object MenuItem2: TMenuItem
+        Caption = '-'
+      end
+      object AutoCorrect1: TMenuItem
+        Caption = '&Auto correct'
+        HelpContext = 46
+        OnClick = AutoCorrect1Click
+      end
+      object AutoFormat1: TMenuItem
+        Caption = '&Editor Option'
+        HelpContext = 43
+        OnClick = AutoFormat1Click
+      end
+      object N6: TMenuItem
+        Caption = '-'
+      end
+      object Font1: TMenuItem
+        Caption = '&Font(Editor)'
+        HelpContext = 39
+        OnClick = Font1Click
+      end
+      object Debug1: TMenuItem
+        Caption = 'Font(&Debug)'
+        HelpContext = 39
+        OnClick = Debug1Click
+      end
+      object N8: TMenuItem
+        Caption = '-'
+      end
+      object N9: TMenuItem
+        Caption = 'Function &Keys'
+        HelpContext = 47
+        OnClick = N9Click
+      end
+      object N7: TMenuItem
+        Caption = '-'
+      end
+      object S1: TMenuItem
+        Caption = 'Option Se&ttings'
+        HelpContext = 49
+        object I1: TMenuItem
+          Caption = 'Initialize'
+          HelpContext = 49
+          OnClick = I1Click
+        end
+      end
+    end
+    object Run1: TMenuItem
+      Caption = '&Run'
+      HelpContext = 60
+      object Run2: TMenuItem
+        Caption = '&Run'
+        HelpContext = 60
+        ShortCut = 120
+        OnClick = Run2Click
+      end
+      object Trace1: TMenuItem
+        Caption = '&Trace'
+        HelpContext = 60
+        ShortCut = 119
+        Visible = False
+      end
+      object step1: TMenuItem
+        Caption = '&Step'
+        HelpContext = 60
+        ShortCut = 121
+        OnClick = step1Click
+      end
+      object Break1: TMenuItem
+        Caption = '&Break'
+        Enabled = False
+        ShortCut = 16450
+        OnClick = Break1Click
+      end
+    end
+    object Window1: TMenuItem
+      Caption = 'Sho&w'
+      HelpContext = 80
+      object TextOut1: TMenuItem
+        Caption = 'Text &Outputs'
+        OnClick = TextOut1Click
+      end
+      object Graphic1: TMenuItem
+        Caption = '&Graphics'
+        OnClick = Graphic1Click
+      end
+      object L1: TMenuItem
+        Caption = 'Trace &Log'
+        OnClick = L1Click
+      end
+      object ShowToolBar1: TMenuItem
+        Caption = 'Tool &Bar'
+        OnClick = ShowToolBar1Click
+      end
+      object ButtonFrame1: TMenuItem
+        Caption = 'Button &Frame'
+        OnClick = ButtonFrame1Click
+      end
+      object MultiByteCharEdit: TMenuItem
+        Caption = 'MultiByte Char Edit'
+        OnClick = MultiByteCharEditClick
+      end
+    end
+    object Help1: TMenuItem
+      Caption = '&Help'
+      HelpContext = 2
+      object Contents1: TMenuItem
+        Caption = '&Contents'
+        OnClick = Contents1Click
+      end
+      object About1: TMenuItem
+        Caption = '&About'
+        OnClick = About1Click
+      end
+    end
+  end
+  object OpenDialog1: TOpenDialog
+    Title = 'Save As'
+    DefaultExt = '.bas'
+    Filter = 'BASIC Program|*.bas|Text File|*.txt'
+    FilterIndex = 0
+    Options = [ofHideReadOnly, ofPathMustExist, ofFileMustExist, ofEnableSizing]
+    left = 208
+    top = 144
+  end
+  object FontDialog1: TFontDialog
+    Font.Height = 13
+    Font.Name = '*'
+    Font.Pitch = fpFixed
+    MinFontSize = 0
+    MaxFontSize = 0
+    left = 496
+    top = 136
+  end
+  object SaveDialog1: TSaveDialog
+    Title = '(&N):'
+    Filter = 'Text File|*.txt|All Files|*.*'
+    FilterIndex = 0
+    Options = [ofOverwritePrompt, ofHideReadOnly, ofPathMustExist, ofNoReadOnlyReturn, ofEnableSizing]
+    left = 328
+    top = 144
+  end
+  object FindDialog1: TFindDialog
+    HelpContext = 23
+    Options = [frDown, frHideUpDown, frHideEntireScope, frHidePromptOnReplace]
+    OnFind = FindDialog1Find
+    left = 440
+    top = 136
+  end
+  object ReplaceDialog1: TReplaceDialog
+    HelpContext = 23
+    Options = [frDown, frHideUpDown, frHideEntireScope, frHidePromptOnReplace]
+    OnFind = ReplaceDialog1Find
+    OnReplace = ReplaceDialog1Replace
+    left = 440
+    top = 184
+  end
+  object PopupMenu1: TPopupMenu
+    OnPopup = PopupMenu1Popup
+    left = 56
+    top = 152
+    object Cut2: TMenuItem
+      Caption = 'Cut'
+      OnClick = Cut2Click
+    end
+    object copy2: TMenuItem
+      Caption = 'Copy'
+      OnClick = copy2Click
+    end
+    object paste2: TMenuItem
+      Caption = 'Paste'
+      OnClick = paste2Click
+    end
+    object Delete2: TMenuItem
+      Caption = 'Delete'
+      OnClick = Delete2Click
+    end
+    object SelectAll2: TMenuItem
+      Caption = 'Select All'
+      OnClick = SelectAll2Click
+    end
+    object N12: TMenuItem
+      Caption = '-'
+    end
+    object Commentize2: TMenuItem
+      Caption = 'Commentize'
+      OnClick = Commentize2Click
+    end
+    object Uncommentize2: TMenuItem
+      Caption = 'Uncommentize'
+      OnClick = Uncommentize2Click
+    end
+    object N15: TMenuItem
+      Caption = '-'
+    end
+    object popupRun1: TMenuItem
+      Caption = 'Run'
+      OnClick = popupRun1Click
+    end
+    object Popupstep1: TMenuItem
+      Caption = 'Step'
+      OnClick = Popupstep1Click
+    end
+    object PopUpBreak1: TMenuItem
+      Caption = 'Break'
+      Enabled = False
+      OnClick = PopUpBreak1Click
+    end
+  end
+  object ToolbarImages: TImageList
+    left = 112
+    top = 96
+    Bitmap = {
+      4C69120000001000000010000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000000000000000000000000000FF000000FF000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000FF00FFFFFF00FFFFFF00FFFFFF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000000000
+      0000000000000000000000000000000000FF00FFFFFF00FFFFFF00FFFFFF00FF
+      FFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF000000FF000000000000
+      0000000000000000000000000000000000FF00FFFFFF00FFFFFF00FFFFFF00FF
+      FFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF000000FF000000000000
+      0000000000000000000000000000000000FF00FFFFFF00FFFFFF00FFFFFF00FF
+      FFFF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF00FFFFFF00FFFFFF00FFFFFF0000
+      00FF008080FF008080FF008080FF008080FF008080FF008080FF008080FF0080
+      80FF008080FF000000FF00000000000000FF00FFFFFF00FFFFFF000000FF0080
+      80FF008080FF008080FF008080FF008080FF008080FF008080FF008080FF0080
+      80FF000000FF0000000000000000000000FF00FFFFFF000000FF008080FF0080
+      80FF008080FF008080FF008080FF008080FF008080FF008080FF008080FF0000
+      00FF000000000000000000000000000000FF000000FF008080FF008080FF0080
+      80FF008080FF008080FF008080FF008080FF008080FF008080FF000000FF0000
+      0000000000000000000000000000000000FF000000FF000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FFFFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FF00FFFFFF008080FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FFFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FF008080FF00FFFFFF0080
+      80FF00FFFFFF008080FF00FFFFFF008080FF00FFFFFF000000FFFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FF00FFFFFF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FFFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FF008080FF000000FF0080
+      80FF008080FF008080FF008080FF008080FF008080FF008080FF000000FF0000
+      00FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FF00FFFFFF008080FF0000
+      00FF008080FF008080FF008080FF008080FF008080FF008080FF008080FF0000
+      00FF000000FFFFFFFF00FFFFFF00FFFFFF00000000FF008080FF00FFFFFF0000
+      00FF000000FF7F7F7FFF008080FF008080FF008080FF008080FF008080FF0080
+      80FF000000FFFFFFFF00FFFFFF00FFFFFF00000000FF00FFFFFF008080FF0000
+      00FF008080FF008080FF008080FF7F7F7FFF008080FF008080FF008080FF0000
+      00FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FF008080FF000000FF0080
+      80FF008080FF008080FF008080FF008080FF008080FF008080FF000000FFFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FF000000FF008080FF0080
+      80FF008080FF008080FF008080FF008080FF008080FF008080FFFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FF000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FFFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FF000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FFFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FFFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FFFFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FF000000FFFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FF000000FFFFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FFFFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00000000FF7F7F7FFF7F7F7FFF7F7F
+      7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF000000FF0000
+      00FFFFFFFF00FFFFFF00FFFFFF00000000FF000000FF7F7F7FFF7F7F7FFF7F7F
+      7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF0000
+      00FF000000FFFFFFFF00FFFFFF00000000FF000000FF000000FF000000FF7F7F
+      7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF7F7F7FFF0000
+      00FF000000FFFFFFFF00FFFFFF00000000FF808080FF808080FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00FF000000FF000000FFFFFFFF00000000FF808080FF808080FF808080FF0000
+      00FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00000000FF000000FFFFFFFF00000000FF000000FF000000FF000000FF0000
+      00FF000000FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00000000FFFFFFFF00FFFFFF00000000FF808080FF808080FF8080
+      80FF808080FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00FF000000FF000000FFFFFFFF00FFFFFF00FFFFFF00000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00FFFFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFFFF00FFFF
+      FF00FFFFFF00FFFFFF00FFFFFF00000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000080FF000080FF000080FF000080FF0000
+      00000000000000000000000000000000000000000000000080FF000000000000
+      000000000000000080FF000080FF000000000000000000000000000000000000
+      80FF0000000000000000000000000000000000000000000080FF000080FF0000
+      0000000080FF0000000000000000000000000000000000000000000000000000
+      0000000080FF00000000000000000000000000000000000080FF000080FF0000
+      80FF000000000000000000000000000000000000000000000000000000000000
+      0000000080FF00000000000000000000000000000000000080FF000080FF0000
+      80FF000080FF0000000000000000000000000000000000000000000000000000
+      0000000080FF00000000000000000000000000000000000080FF000080FF0000
+      80FF000080FF000080FF00000000000000000000000000000000000000000000
+      80FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000000000000000000000000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000000000000000000000000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000000000000000000000000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000FF00000000000000FF000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000FF00000000000000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000FF000000FF000000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000FF0000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000FF000000FF000000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000FF00000000000000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000FF000000FF000000FF00000000000000FF000000FF000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF0000000000000000000000FF00000000000000FF00000000000000000000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      00FF0000000000000000000000FF00000000000000FF00000000000000000000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      00FF0000000000000000000000FF00000000000000FF00000000000000000000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      0000000000FF000000FF000000000000000000000000000000FF000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000808000FF808000FF808000FF808000FF808000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000808000FF808000FF808000FF808000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000808000FF808000FF808000FF808000FF808000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000808000FF000000000000000000000000808000FF808000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000808000FF0000000000000000000000000000000000000000808000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000000000000000000000000000FF000000FF000000FF0000
+      00FF808000FF000000FF000000FF000000FF0000000000000000000000000000
+      000000000000000000000000000000000000000000FF00000000000000000000
+      0000000000000000000000000000000000FF0000000000000000000000000000
+      000000000000000000000000000000000000000000FF00000000000000000000
+      0000808000FF0000000000000000000000FF000000FF00000000000000000000
+      000000000000000000000000000000000000000000FF00000000000000000000
+      000000000000000000000000000000000000000000FF00000000000000000000
+      000000000000000000000000000000000000000000FF00000000000000FF0000
+      00FF000000FF000000FF000000FF00000000000000FF00000000000000000000
+      000000000000000000000000000000000000000000FF00000000000000000000
+      000000000000000000000000000000000000000000FF00000000000000000000
+      000000000000000000000000000000000000000000FF00000000000000FF0000
+      00FF000000FF000000FF000000FF00000000000000FF00000000000000000000
+      000000000000000000000000000000000000000000FF00000000000000000000
+      000000000000000000000000000000000000000000FF00000000000000000000
+      000000000000000000000000000000000000000000FF000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000FF0000FFFF0000FFFF0000FF0000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000FF0000FFFF0000FFFF0000FFFF0000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000FF0000FFFF0000FFFF0000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000000000000000000000FF0000FFFF0000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000000000000000000000FF0000FFFF0000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000FF0000FFFF0000FF00000000FF0000FFFF0000FF00000000FF00
+      00FFFF0000FF0000000000000000000000000000000000000000000000000000
+      00000000000000000000FF0000FFFF0000FFFF0000FFFF0000FFFF0000FFFF00
+      00FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000FF0000FFFF0000FFFF0000FFFF0000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000FF000000FFFF0000FFFF0000FF000000FF0000
+      00FF000000FF0000000000000000000000000000000000000000000000000000
+      000000000000000000FF0000000000000000FF0000FF00000000000000000000
+      00FF00000000000000FF00000000000000000000000000000000000000000000
+      000000000000000000FF00000000000000FF000000FF000000FF000000000000
+      00FF000000FF000000FF000000FF000000000000000000000000000000000000
+      000000000000000000FF00000000000000000000000000000000000000000000
+      00000000000000000000000000FF000000000000000000000000000000000000
+      000000000000000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00FF000000FF00000000000000FF000000000000000000000000000000000000
+      000000000000000000FF000000FF000000000000000000000000000000000000
+      00000000000000000000000000FF000000000000000000000000000000000000
+      000000000000000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF00000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000000000
+      000000000000000000000000000000000000000000FF000000FF000000000000
+      00000000000000000000000000000000000000000000000000FF000000000000
+      000000000000000000000000000000000000000000FF000000FF000000FF0000
+      00000000000000000000000000000000000000000000000000FF000000000000
+      000000000000000000000000000000000000000000FF00000000000000FF0000
+      00FF0000000000000000000000000000000000000000000000FF000000000000
+      000000000000000000000000000000000000000000FF00000000000000000000
+      00FF000000FF00000000000000000000000000000000000000FF000000000000
+      000000000000000000000000000000000000000000FF00000000000000000000
+      0000000000FF00000000000000000000000000000000000000FF000000000000
+      000000000000000000000000000000000000000000FF000000FF000000FF0000
+      00FF000000FF000000FF000000000000000000000000000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000000000000000000000000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000000000000000000000000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000000000000000000000000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000000000000000000000000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000000000000000000000000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000000000000000000000000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000000000000000000000000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000000000000000000000000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00FF000000FF000000FF00000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      00FF000000FF0000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF00000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00FF000000FF00000000000000000000000000000000000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00FF000000FF00000000000000000000000000000000000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF00000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      00FF000000FF0000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000FF000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF808080FF000000FF000000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000FF808080FF000000FF800080FF800080FF000000FF000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF808080FF000000FF800080FF800080FF800080FF800080FF800080FF0000
+      00FF000000FF0000000000000000000000000000000000000000000000FF8080
+      80FF000000FF800080FF800080FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF8000
+      80FF800080FF000000FF000000FF0000000000000000000000FF808080FF0000
+      00FF800080FF800080FF00FFFFFF00FFFFFF800080FF800080FF00FFFFFF00FF
+      FFFF800080FF800080FF000000FF00000000000000FF808080FF000000FF8000
+      80FF800080FF800080FF800080FF800080FF800080FF800080FF00FFFFFF00FF
+      FFFF800080FF000000FF000000FF000000FF808080FF000000FF800080FF8000
+      80FF800080FF800080FF800080FF00FFFFFF00FFFFFF00FFFFFF00FFFFFF8000
+      80FF000000FF808080FF000000FF808080FF000000FF800080FF800080FF8000
+      80FF800080FF800080FF00FFFFFF00FFFFFF800080FF800080FF800080FF0000
+      00FF808080FF808080FF000000FF000000FF000000FF800080FF800080FF8000
+      80FF800080FF800080FF800080FF800080FF800080FF800080FF000000FF8080
+      80FF808080FF000000FF000000000000000000000000000000FF000000FF8000
+      80FF800080FF00FFFFFF800080FF800080FF800080FF000000FF808080FF8080
+      80FF000000FF0000000000000000000000000000000000000000000000000000
+      00FF000000FF800080FF800080FF800080FF000000FF808080FF808080FF0000
+      00FF000000000000000000000000000000FF000000FF00000000000000000000
+      000000000000000000FF000000FF000000FF808080FF808080FF000000FF0000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      0000000000000000000000000000000000FF808080FF000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF000000FF0000000000000000000000FF000000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000FF000000FF0000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      000000000000000000FF000000FF000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      000000000000000000FF000000FF000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      000000000000000000FF000000FF0000000000000000000000FF000000FF0000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      000000000000000000FF000000FF0000000000000000000000FF000000FF0000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      000000000000000000FF000000FF0000000000000000000000FF000000FF0000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      000000000000000000FF000000FF0000000000000000000000FF000000FF0000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      000000000000000000FF000000FF000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      000000000000000000FF000000FF000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF000080FF0000000000000000000080FF000080FF000080FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF000080FF0000000000000000000080FF000080FF000080FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF000080FF0000000000000000000080FF000080FF000080FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF000080FF0000000000000000000080FF000080FF000080FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF000080FF0000000000000000000080FF000080FF000080FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF000080FF0000000000000000000080FF000080FF000080FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF000080FF0000000000000000000080FF000080FF000080FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF000080FF0000000000000000000080FF000080FF000080FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF000080FF0000000000000000000080FF000080FF000080FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF000080FF0000000000000000000080FF000080FF000080FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF000080FF0000000000000000000080FF000080FF000080FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF000080FF0000000000000000000080FF000080FF000080FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF000000FF000000000000000000000000000000FF000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000FF0000
+      00FF000000FF0000000000000000000000FF000000FF000000FF000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF000000FF00000000000000FF000000FF0000000000000000000000FF0000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      00FF000000FF00000000000000FF000000FF0000000000000000000000FF0000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      00FF000000FF00000000000000FF000000FF0000000000000000000000FF0000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      00FF000000FF00000000000000FF000000FF0000000000000000000000FF0000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      00FF000000FF00000000000000FF000000FF0000000000000000000000FF0000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      00FF000000FF00000000000000FF000000FF0000000000000000000000FF0000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      00FF000000FF00000000000000FF000000FF0000000000000000000000FF0000
+      00FF00000000000000000000000000000000800080FF800080FF000000000000
+      00FF000000FF0000000000000000000000FF000000FF000000FF000000FF0000
+      0000800080FF800080FF00000000800080FF800080FF00000000000000000000
+      00FF000000FF000000000000000000000000000000FF000000FF000000000000
+      000000000000800080FF800080FF800080FF0000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000800080FF800080FF0000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000800080FF800080FF800080FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000800080FF800080FF00000000800080FF800080FF800080FF0000
+      0000000000000000000000000000000000000000000000000000000000008000
+      80FF800080FF800080FF000000000000000000000000800080FF800080FF8000
+      80FF800080FF800080FF800080FF800080FF800080FF800080FF800080FF8000
+      80FF800080FF0000000000000000000000000000000000000000000000000000
+      0000000000FF000000000000000000000000000000FF000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF000000FF0000000000000000000000FF0000000000000000000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000FF0000000000000000000000FF0000000000000000000000FF0000
+      00000000000000000000000000000000000000000000000080FF000000000000
+      0000000000FF0000000000000000000000FF0000000000000000000000FF0000
+      80FF00000000000000000000000000000000000080FF00000000000000000000
+      0000000000FF0000000000000000000000FF0000000000000000000000FF0000
+      0000000080FF000000000000000000000000000080FF00000000000000000000
+      0000000000FF000000000000000000000000000000FF000000FF000000000000
+      0000000080FF000000000000000000000000000080FF000080FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF00000000000000000000000000000000000080FF000080FF0000
+      80FF000080FF000080FF000080FF000080FF000080FF000080FF000080FF0000
+      80FF000000000000000000000000000000000000000000000000000080FF0000
+      80FF000080FF000080FF000080FF000080FF000080FF000080FF000080FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000000000000000000000000000FF00000000000000000000
+      00FF000000000000000000000000000000FF0000000000000000000000000000
+      00FF00000000000000000000000000000000000000FF00000000000000FF0000
+      0000000000FF00000000000000FF00000000000000FF00000000000000FF0000
+      0000000000FF000000000000000000000000000000FF00000000000000FF0000
+      0000000000FF00000000000000FF00000000000000FF00000000000000FF0000
+      0000000000FF000000000000000000000000000000FF00000000000000FF0000
+      0000000000FF00000000000000FF00000000000000FF00000000000000FF0000
+      0000000000FF000000000000000000000000000000FF00000000000000000000
+      00FF000000000000000000000000000000FF0000000000000000000000000000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000FF000000FF000000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000FF000000FF000000FF000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000FF00000000000000000000000000000000000000FF000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000FF0000000000000000000000000000000000000000000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000FF0000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000000000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000FF000000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000FF000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF00000000000000000000000000000000000000000000
+      000000000000000000000000000000000000808000FF808000FF000000000000
+      0000000000FF0000000000000000000000000000000000000000000000000000
+      0000808000FF808000FF00000000808000FF808000FF00000000000000000000
+      0000000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      000000000000808000FF808000FF808000FF808000FF00000000000000000000
+      0000000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      000000000000808000FF808000FF808000FF808000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000808000FF808000FF00000000808000FF808000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000808000FF808000FF000000000000000000000000808000FF808000FF8080
+      00FF000000000000000000000000000000000000000000000000808000FF8080
+      00FF808000FF0000000000000000000000000000000000000000000000008080
+      00FF808000FF808000FF808000FF808000FF808000FF808000FF808000FF0000
+      0000000000000000000000000000000000FF000000FF000000FF000000000000
+      000000000000000000FF000000FF000000FF000000FF000000FF000000000000
+      0000000000FF000000FF00000000000000FF0000000000000000000000FF0000
+      000000000000000000FF00000000000000000000000000000000000000000000
+      00FF0000000000000000000000FF000000FF0000000000000000000000000000
+      00FF00000000000000FF00000000000000000000000000000000000000FF0000
+      0000000000000000000000000000000000FF0000000000000000000000000000
+      00FF00000000000000FF000000FF000000FF000000FF00000000000000FF0000
+      000000000000000000FF000000FF000000FF0000000000000000000000000000
+      00FF00000000000000FF00000000000000000000000000000000000000FF0000
+      00000000000000000000000000FF000000FF0000000000000000000000FF0000
+      000000000000000000FF00000000000000000000000000000000000000000000
+      00FF0000000000000000000000FF000000FF000000FF000000FF000000000000
+      000000000000000000FF000000FF000000FF000000FF000000FF000000000000
+      0000000000FF000000FF00000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      000000000000000080FF000080FF000080FF000080FF000080FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      80FF000080FF0000000000000000000080FF0000000000000000000080FF0000
+      80FF000000000000000000000000000000000000000000000000000080FF0000
+      0000000000000000000000000000000080FF0000000000000000000000000000
+      0000000080FF00000000000000000000000000000000000080FF000000000000
+      80FF000000000000000000000000000080FF0000000000000000000000000000
+      80FF00000000000080FF000000000000000000000000000080FF000000000000
+      0000000080FF0000000000000000000080FF0000000000000000000080FF0000
+      000000000000000080FF0000000000000000000080FF00000000000000000000
+      000000000000000080FF00000000000080FF00000000000080FF000000000000
+      00000000000000000000000080FF00000000000080FF00000000000000000000
+      00000000000000000000000080FF000080FF000080FF00000000000000000000
+      00000000000000000000000080FF00000000000080FF000080FF000080FF0000
+      80FF000080FF000080FF000080FF000080FF000080FF000080FF000080FF0000
+      80FF000080FF000080FF000080FF000000000000000000000000000000000000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000FF0000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF0000000000000000000000000000000000000000808000FF808000FF8080
+      00FF000000000000000000000000000000000000000000000000000000000000
+      00FF00000000000000000000000000000000808000FF808000FF000000000000
+      0000808000FF0000000000000000000000000000000000000000000000000000
+      00FF00000000000000000000000000000000808000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF00000000000000000000000000000000808000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF00000000000000000000000000000000808000FF808000FF000000000000
+      0000808000FF0000000000000000000000000000000000000000000000000000
+      00FF0000000000000000000000000000000000000000808000FF808000FF8080
+      00FF000000000000000000000000000000000000000000000000000000000000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF00000000000000FF000000FF000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000
+      00FF000000FF000000FF000000FF000000000000000000000000000000000000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000FF0000FFFF0000FFFF00
+      00FFFF0000FF0000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000FF0000FF000000000000
+      0000FF0000FF0000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000FF0000FF000000000000
+      0000FF0000FF0000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000FF0000FFFF0000FFFF00
+      00FFFF0000FF0000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000FF0000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000FF0000FF000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      00FF000000FF000000FF000000FF0000000000000000FF0000FF000000000000
+      000000000000000000000000000000000000000000FF000000FF000000FF0000
+      00FF000000000000000000000000000000000000000000000000000000000000
+      000000000000000000FF000000FF000000FF000000FF00000000000000000000
+      0000000000000000000000000000000000000000000000000000000000FF0000
+      00FF000000FF000000FF00000000000000000000000000000000000000000000
+      0000000000000000000000000000000000FF000000FF000000FF000000FF0000
+      00000000000000000000000000000000000000000000FF0000FFFF0000FFFF00
+      00FFFF0000FF0000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000FF0000FF000000000000
+      0000FF0000FF0000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000FF0000FF000000000000
+      0000FF0000FF0000000000000000000000000000000000000000000000000000
+      00000000000000000000000000000000000000000000FF0000FFFF0000FFFF00
+      00FFFF0000FF0000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000FF0000FF0000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000FF0000FF0000000000000000000000000000000000000000000000000000
+      0000000000000000000000000000000000000000000000000000000000000000
+      0000FF0000FFFF0000FF00000000
+    }
+  end
+  object SynAnySyn1: TSynAnySyn
+    Enabled = False
+    Comments = []
+    DetectPreprocessor = False
+    IdentifierChars = '!"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~'
+    StringAttri.Foreground = clNavy
+    StringDelim = sdDoubleQuote
+    Markup = False
+    Entity = False
+    DollarVariables = False
+    ActiveDot = False
+    left = 432
+    top = 48
+  end
+  object OpenDialog2: TOpenDialog
+    left = 264
+    top = 144
+  end
+end

@@ -1,0 +1,3 @@
+GOSUB
+GOTO
+ON { @ GOTO GOSUB }

@@ -1,0 +1,81 @@
+object PrintDialog1: TPrintDialog1
+  Left = 502
+  Height = 160
+  Top = 508
+  Width = 325
+  ActiveControl = OkButton
+  BorderIcons = [biSystemMenu]
+  Caption = 'Print'
+  ClientHeight = 160
+  ClientWidth = 325
+  FormStyle = fsStayOnTop
+  OnShow = onFormShow
+  Position = poScreenCenter
+  LCLVersion = '0.9.29'
+  object OkButton: TBitBtn
+    Left = 199
+    Height = 34
+    Top = 80
+    Width = 106
+    Caption = 'Ok'
+    Default = True
+    Kind = bkOK
+    ModalResult = 1
+    NumGlyphs = 0
+    TabOrder = 3
+  end
+  object cancelButton: TBitBtn
+    Left = 199
+    Height = 34
+    Top = 120
+    Width = 106
+    Cancel = True
+    Caption = 'Close'
+    Kind = bkCancel
+    ModalResult = 2
+    NumGlyphs = 0
+    TabOrder = 4
+  end
+  object PrinterButton: TButton
+    Left = 199
+    Height = 33
+    Top = 3
+    Width = 106
+    BorderSpacing.InnerBorder = 4
+    Caption = '&Printer setting'
+    OnClick = PrinterButtonClick
+    TabOrder = 0
+  end
+  object FontButton: TButton
+    Left = 199
+    Height = 33
+    Top = 40
+    Width = 106
+    BorderSpacing.InnerBorder = 4
+    Caption = '&Font'
+    OnClick = FontButtonClick
+    TabOrder = 1
+  end
+  object ListBox1: TListBox
+    Left = 16
+    Height = 144
+    Top = 8
+    Width = 168
+    ItemHeight = 0
+    OnSelectionChange = ListBox1SelectionChange
+    TabOrder = 2
+  end
+  object FontDialog1: TFontDialog
+    Font.Height = 12
+    Font.Name = '*'
+    Font.Pitch = fpFixed
+    MinFontSize = 0
+    MaxFontSize = 0
+    left = 144
+    top = 8
+  end
+  object PrinterSetupDialog1: TPrinterSetupDialog
+    left = 156
+    top = 114
+  end
+end

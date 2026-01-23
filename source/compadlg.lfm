@@ -1,0 +1,411 @@
+object compatibilityDialog: TcompatibilityDialog
+  Left = 474
+  Height = 511
+  Top = 210
+  Width = 433
+  HelpContext = 48
+  HorzScrollBar.Page = 432
+  HorzScrollBar.Range = 416
+  VertScrollBar.Page = 415
+  VertScrollBar.Range = 369
+  ActiveControl = OKBtn
+  BorderStyle = bsDialog
+  Caption = 'Compatibility'
+  ClientHeight = 511
+  ClientWidth = 433
+  ParentFont = True
+  Position = poScreenCenter
+  LCLVersion = '2.0.8.0'
+  object OKBtn: TButton
+    Left = 332
+    Height = 33
+    Top = 8
+    Width = 84
+    BorderSpacing.InnerBorder = 4
+    Caption = 'OK'
+    Default = True
+    ModalResult = 1
+    TabOrder = 1
+  end
+  object CancelBtn: TButton
+    Left = 332
+    Height = 33
+    Top = 46
+    Width = 84
+    BorderSpacing.InnerBorder = 4
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 2
+  end
+  object HelpBtn: TButton
+    Left = 332
+    Height = 33
+    Top = 84
+    Width = 84
+    BorderSpacing.InnerBorder = 4
+    Caption = '&Help'
+    OnClick = HelpBtnClick
+    TabOrder = 3
+  end
+  object PageControl1: TPageControl
+    Left = 8
+    Height = 511
+    Top = 0
+    Width = 320
+    ActivePage = TabSheet1
+    TabIndex = 0
+    TabOrder = 0
+    object TabSheet1: TTabSheet
+      Caption = 'Syntax'
+      ClientHeight = 480
+      ClientWidth = 316
+      object RadioGroup4: TRadioGroup
+        Left = 4
+        Height = 66
+        Top = 8
+        Width = 301
+        AutoFill = True
+        Caption = 'DIM parameters'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 47
+        ClientWidth = 297
+        Items.Strings = (
+          'Allow Variables'
+          'Only Constants (ISO)'
+        )
+        TabOrder = 0
+      end
+      object RadioGroup5: TRadioGroup
+        Left = 4
+        Height = 66
+        Top = 82
+        Width = 301
+        AutoFill = True
+        Caption = 'External Function Declarations'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 47
+        ClientWidth = 297
+        ItemIndex = 0
+        Items.Strings = (
+          'Omissible'
+          'Non-omissible (ISO)'
+        )
+        TabOrder = 1
+      end
+      object RadioGroup13: TRadioGroup
+        Left = 4
+        Height = 66
+        Top = 326
+        Width = 301
+        AutoFill = True
+        Caption = 'PLOT LINES statements'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 47
+        ClientWidth = 297
+        ItemIndex = 0
+        Items.Strings = (
+          'Allow abbreviated form (PLOT x, y)'
+          'Abbreviated form not allowed (ISO) '
+        )
+        TabOrder = 2
+      end
+      object RadioGroup14: TRadioGroup
+        Left = 4
+        Height = 66
+        Top = 156
+        Width = 301
+        AutoFill = True
+        Caption = 'External SUB (PICTURE) Declaration'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 47
+        ClientWidth = 297
+        ItemIndex = 0
+        Items.Strings = (
+          'Omissible'
+          'Non-omissible (ISO)'
+        )
+        TabOrder = 3
+      end
+      object CheckGroup1: TCheckGroup
+        Left = 4
+        Height = 66
+        Top = 400
+        Width = 301
+        AutoFill = True
+        Caption = 'Identifier characters'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 47
+        ClientWidth = 297
+        Items.Strings = (
+          'include Greek'
+          'include Kanji'
+        )
+        TabOrder = 4
+        Data = {
+          020000000202
+        }
+      end
+      object RadioGroup7: TRadioGroup
+        Left = 4
+        Height = 88
+        Top = 230
+        Width = 301
+        AutoFill = True
+        Caption = 'On OPTION ARITHMETIC omitted procedure'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 69
+        ClientWidth = 297
+        ItemIndex = 0
+        Items.Strings = (
+          'Inherit from Main Program'
+          'Take over Tool-Bar Setting'
+          'Regard as DECIMAL (ISO)'
+        )
+        OnClick = RadioGroup7Click
+        TabOrder = 5
+      end
+    end
+    object TabSheet2: TTabSheet
+      Caption = 'behavior'
+      ClientHeight = 480
+      ClientWidth = 316
+      object RadioGroup1: TRadioGroup
+        Left = 2
+        Height = 73
+        Top = 10
+        Width = 282
+        AutoFill = True
+        Caption = 'Format String with #s'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 54
+        ClientWidth = 278
+        Items.Strings = (
+          'do not generate succeeding spaces'
+          'Generate succeeding spaces (ISO)'
+        )
+        TabOrder = 0
+      end
+      object RadioGroup2: TRadioGroup
+        Left = 2
+        Height = 73
+        Top = 83
+        Width = 282
+        AutoFill = True
+        Caption = 'Unit of String manipulation'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 54
+        ClientWidth = 278
+        Items.Strings = (
+          'Character '
+          'Byte'
+        )
+        TabOrder = 1
+      end
+      object RadioGroup6: TRadioGroup
+        Left = 2
+        Height = 73
+        Top = 156
+        Width = 282
+        AutoFill = True
+        Caption = 'Parameters of a DEF statement'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 54
+        ClientWidth = 278
+        Items.Strings = (
+          'Allow to be passed by Refference'
+          'passed by Value(ISO)'
+        )
+        TabOrder = 2
+      end
+      object RadioGroup9: TRadioGroup
+        Left = 2
+        Height = 73
+        Top = 232
+        Width = 282
+        AutoFill = True
+        Caption = 'Own variables of FOR-NEXT blocks'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 54
+        ClientWidth = 278
+        Items.Strings = (
+          'Local'
+          'Belong to the program unit(ISO)'
+        )
+        TabOrder = 3
+      end
+      object RadioGroup12: TRadioGroup
+        Left = 2
+        Height = 73
+        Top = 307
+        Width = 282
+        AutoFill = True
+        Caption = 'Defined Function Name'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 54
+        ClientWidth = 278
+        ItemIndex = 0
+        Items.Strings = (
+          'Local on every call'
+          'Global  (ISO)'
+        )
+        TabOrder = 4
+      end
+      object RadioGroup15: TRadioGroup
+        Left = 2
+        Height = 73
+        Top = 383
+        Width = 282
+        AutoFill = True
+        Caption = 'Arrays of size zero'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 54
+        ClientWidth = 278
+        Font.CharSet = ANSI_CHARSET
+        Font.Color = clWindowText
+        Font.Height = -12
+        ItemIndex = 0
+        Items.Strings = (
+          'Allowed'
+          'Denied (ISO)'
+        )
+        ParentFont = False
+        TabOrder = 5
+      end
+    end
+    object TabSheet3: TTabSheet
+      Caption = 'Drawing'
+      ClientHeight = 480
+      ClientWidth = 316
+      object RadioGroup3: TRadioGroup
+        Left = 5
+        Height = 65
+        Top = 173
+        Width = 290
+        AutoFill = True
+        Caption = 'Initial Beam Mode'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 46
+        ClientWidth = 286
+        ItemIndex = 0
+        Items.Strings = (
+          'IMMORTAL'
+          'RIGOROUS (ISO)'
+        )
+        TabOrder = 0
+      end
+      object RadioGroup11: TRadioGroup
+        Left = 5
+        Height = 75
+        Top = 245
+        Width = 289
+        AutoFill = True
+        Caption = 'TEXT Figure'
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.TopBottomSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 56
+        ClientWidth = 285
+        ItemIndex = 0
+        Items.Strings = (
+          'Physical Coordinate (ISO)'
+          'Problem Coordinate '
+        )
+        TabOrder = 1
+      end
+    end
+  end
+end

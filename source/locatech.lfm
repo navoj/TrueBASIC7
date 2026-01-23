@@ -1,0 +1,43 @@
+object LocateChoiceForm: TLocateChoiceForm
+  Left = 212
+  Height = 144
+  Top = 684
+  Width = 137
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'LOCATE CHOICE'
+  ClientHeight = 144
+  ClientWidth = 137
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Times New Roman'
+  OnClose = FormClose
+  Position = poScreenCenter
+  LCLVersion = '1.8.4.0'
+  object OkBtn: TButton
+    Left = 78
+    Height = 25
+    Top = 119
+    Width = 58
+    Anchors = [akRight, akBottom]
+    Caption = 'Ok'
+    Default = True
+    ModalResult = 1
+    OnClick = OkBtnClick
+    TabOrder = 0
+  end
+  object ListBox1: TListBox
+    Left = 0
+    Height = 97
+    Top = 0
+    Width = 137
+    Align = alTop
+    Font.Color = clWindowText
+    Font.Height = -14
+    Font.Name = 'Times New Roman'
+    ItemHeight = 0
+    ParentFont = False
+    TabOrder = 1
+  end
+end

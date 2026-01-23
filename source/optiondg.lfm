@@ -1,0 +1,120 @@
+object OptionDlg: TOptionDlg
+  Left = 448
+  Height = 259
+  Top = 331
+  Width = 416
+  HelpContext = 41
+  HorzScrollBar.Page = 415
+  HorzScrollBar.Range = 384
+  VertScrollBar.Page = 258
+  VertScrollBar.Range = 235
+  ActiveControl = RadioGroup1
+  BorderStyle = bsDialog
+  Caption = 'Numerals'
+  ClientHeight = 259
+  ClientWidth = 416
+  OnShow = FormShow
+  ParentFont = True
+  Position = poScreenCenter
+  LCLVersion = '0.9.30.4'
+  object Label1: TLabel
+    Left = 14
+    Height = 13
+    Top = 232
+    Width = 281
+    Caption = 'Nemerals on the case OPTION ARITHMETIC is absent'
+    ParentColor = False
+  end
+  object OKBtn: TBitBtn
+    Left = 290
+    Height = 31
+    Top = 12
+    Width = 94
+    Caption = 'OK'
+    Default = True
+    Margin = 25
+    ModalResult = 1
+    NumGlyphs = 2
+    Spacing = 4
+    TabOrder = 1
+  end
+  object CancelBtn: TBitBtn
+    Left = 290
+    Height = 31
+    Top = 56
+    Width = 94
+    Cancel = True
+    Caption = 'Cancel'
+    Margin = 15
+    ModalResult = 2
+    NumGlyphs = 2
+    Spacing = 4
+    TabOrder = 2
+  end
+  object HelpBtn: TBitBtn
+    Left = 290
+    Height = 31
+    Top = 97
+    Width = 94
+    HelpContext = 41
+    Caption = '&Help'
+    Margin = 10
+    NumGlyphs = 2
+    OnClick = HelpBtnClick
+    Spacing = 4
+    TabOrder = 3
+  end
+  object RadioGroup1: TRadioGroup
+    Left = 6
+    Height = 143
+    Top = 18
+    Width = 259
+    AutoFill = True
+    Caption = '&Precision'
+    ChildSizing.LeftRightSpacing = 6
+    ChildSizing.TopBottomSpacing = 6
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.EnlargeVertical = crsHomogenousChildResize
+    ChildSizing.ShrinkHorizontal = crsScaleChilds
+    ChildSizing.ShrinkVertical = crsScaleChilds
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 1
+    ClientHeight = 123
+    ClientWidth = 255
+    Items.Strings = (
+      '&Decimal 15digits (ISO)'
+      'Decimal 1000 digits (&T)'
+      '&Binary about 16 digits'
+      '&Complex (binary)'
+      'Rational (&Q)'
+    )
+    OnClick = RadioGroup1Click
+    TabOrder = 0
+  end
+  object CheckListBox1: TCheckListBox
+    Left = 22
+    Height = 29
+    Top = 171
+    Width = 344
+    BorderStyle = bsNone
+    Color = clForm
+    Items.Strings = (
+      'Use transcendental functions (17digits)'
+    )
+    ItemHeight = 19
+    TabOrder = 4
+    Visible = False
+    Data = {
+      0100000000
+    }
+  end
+  object CheckBox1: TCheckBox
+    Left = 25
+    Height = 22
+    Top = 192
+    Width = 150
+    Caption = 'More Digits on display'
+    TabOrder = 5
+    Visible = False
+  end
+end

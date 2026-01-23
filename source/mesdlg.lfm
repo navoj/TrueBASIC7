@@ -1,0 +1,62 @@
+object MessageDialog: TMessageDialog
+  Left = 447
+  Height = 147
+  Top = 519
+  Width = 282
+  AutoSize = True
+  BorderStyle = bsDialog
+  Caption = 'BASIC'
+  ClientHeight = 147
+  ClientWidth = 282
+  LCLVersion = '0.9.29'
+  object Label1: TLabel
+    Left = 12
+    Height = 88
+    Top = 12
+    Width = 258
+    Align = alClient
+    BorderSpacing.Left = 6
+    BorderSpacing.Top = 6
+    BorderSpacing.Right = 6
+    BorderSpacing.Bottom = 6
+    BorderSpacing.Around = 6
+    Caption = 'Label1'
+    Layout = tlCenter
+    ParentColor = False
+    WordWrap = True
+  end
+  object Panel1: TPanel
+    Left = 0
+    Height = 35
+    Top = 112
+    Width = 282
+    Align = alBottom
+    BevelOuter = bvNone
+    Caption = 'Panel1'
+    ClientHeight = 35
+    ClientWidth = 282
+    TabOrder = 0
+    object OkBtn: TBitBtn
+      Left = 120
+      Height = 30
+      Top = 2
+      Width = 75
+      Caption = '&OK'
+      Default = True
+      Kind = bkOK
+      ModalResult = 1
+      TabOrder = 0
+    end
+    object HelpBtn: TBitBtn
+      Left = 200
+      Height = 30
+      Top = 2
+      Width = 75
+      BorderSpacing.Right = 4
+      Caption = '&Help'
+      Kind = bkHelp
+      OnClick = HelpBtnClick
+      TabOrder = 1
+    end
+  end
+end

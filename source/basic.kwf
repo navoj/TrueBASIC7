@@ -1,0 +1,87 @@
+" Numerical Functions",,400
+ABS(!),"ABSolute value",400
+SQR(!),"SQuare Root",400
+INT(!),"the largest integer not greater than",400
+"MOD(!, )","MOD(x,y) x modulo y ,i.e., x-y*INT(x/y)",400
+CEIL(!),"the smallest integer not less than",400
+"ROUND(!, )","ROUND(x,n) rounded to n decimal digits",400
+ROUND(!),"ROUND(x) rounded to an integer",400
+FP(!),"Fractiona Part",400
+IP(!),"Integer Part",400
+"REMAINDER(!, )","REMAINDER(x,y)=x-y*IP(x/y)",400
+"TRUNCATE(!, )","TRUNCATE(x,n) trancated to n decimal digits",400
+SGN(!),sign,400
+" Exponetial and Logarithmic functions",,0
+EXP(!),exponential,410
+LOG(!),"natural logarithm",410
+LOG2(!),"logarithm with base 2",410
+LOG10(!),"common logarithm",410
+" Trigonometric Functions","OPTION ANGLE DEGREES is valid for the functions below",420
+SIN(!),sine,420
+COS(!),cosine,420
+TAN(!),tangent,420
+ASIN(!),arcsine,420
+ACOS(!),arccosine,420
+ATN(!),arctangent,420
+"ANGLE(!, )",,420
+SEC(!),secant,420
+CSC(!),cosecant,420
+COT(!),cotangent,420
+" Misc.",,0
+PI,"the ratio of the circumference of a circle to its diameter",470
+DEG(!),degrees,470
+RAD(!),radians,470
+TIME,"elapsed since previous midnight, in second",450
+DATE,"current date in decimal form YYDDD",450
+DATE$,"current date in form YYYYMMDD",450
+TIME$,"current time in form HH:MM:SS",450
+"MAX(!, )",larger,470
+"MIN(!, )",smaller,470
+MAXNUM,"the largest number manupulable",471
+EPS(!),epsilon,471
+RND,"pseudorandom number, 0<=RND<=1",440
+"BVAL(""!"",2)","BVAL(s$,2) the integer s$ repesents with radix 2",485
+"BVAL(""!"",16)","BVAL(s$,2) the integer s$ repesents with radix 16",485
+"BSTR$(!,2)","BSTR$(n,2) the representsation of n with radix 2",485
+"BSTR$(!,16)","BSTR$(n,2) the representsation of n with radix 2",485
+SINH(!),"hyperbolic sine",430
+COSH(!),"hyperbolic cosine",430
+TANH(!),"hyperbolic tangent",430
+UBOUND(!),"upper bound",460
+LBOUND(!),"lower bound",460
+DET(!),determinant,460
+"DOT(!, )","inner prduct of vectors",460
+EXTYPE,"exception type",475
+TAB(!),tabulator,120
+" String functions",,0
+"POS(!,)","POS(a$,b$) position of b$ in a$",480
+LEN(!),"LEN(s$) the number of characters in s$",480
+VAL(!),"VAL(s$) numeric value of s$",480
+STR$(!),"STR$(n) string of n",480
+CHR$(!),"CHR$(n) the character whose ordinal is n",480
+ORD(!),"ORD(s$) ordinal of s$, s$ should have one charactor.",480
+"REPEAT$(!, )","REPEAT$(a$,m) m copies of a$",480
+"USING$(!, )","USING$(a$,x) Formated string of x using a$",480
+LCASE$(!),"lower case",480
+UCASE$(!),"upper case",480
+LTRIM$(!),"left trimed string",480
+RTRIM$(!),"right trimed string",480
+" Combinatrics","outside of standard",0
+FACT(!),factorial,820
+"PERM(!, )","number of permutation",820
+"COMB(!, )","number of combination",820
+" Original Graphics Functions ","outside of standard",0
+PIXELX(!),"pixel x-coordinate",811
+PIXELY(!),"pixel y-coordinate",811
+PROBLEMX(!),"problem x-coordinate",811
+PROBLEMY(!),"problem y-coordinate",811
+" Transform Functions",,340
+"SHIFT(!, )",translate,340
+"SCALE(!, )",scale,340
+ROTATE(!),rotate,340
+SHEAR(!),shear,340
+TRANSFORM,"current transform",345
+" Logical Operations",,170
+"NOT ",,170
+"AND ",,170
+"OR ",,170

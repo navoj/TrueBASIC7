@@ -1,0 +1,194 @@
+object DebugDlg: TDebugDlg
+  Left = 620
+  Height = 319
+  Top = 34
+  Width = 355
+  HelpContext = 99
+  ActiveControl = CheckBox1
+  BorderIcons = []
+  Caption = 'Debug'
+  ClientHeight = 319
+  ClientWidth = 355
+  DefaultMonitor = dmMainForm
+  FormStyle = fsStayOnTop
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  OnResize = FormResize
+  OnWindowStateChange = FormWindowStateChange
+  ParentFont = True
+  LCLVersion = '1.8.4.0'
+  object BackButton: TSpeedButton
+    Left = 286
+    Height = 32
+    Hint = 'History (back)'
+    Top = 283
+    Width = 32
+    Glyph.Data = {
+      66010000424D6601000000000000760000002800000014000000140000000100
+      040000000000F000000000000000000000001000000000000000000000000000
+      80000080000000808000800000008000800080800000C0C0C000808080000000
+      FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333333
+      3333333300003333333333333333333300003333333333333333333300003333
+      3333333333333333000033333333333033333333000033333333330033333333
+      0000333333333000333333330000333333330000333333330000333333300000
+      3333333300003333330000003333333300003333333000003333333300003333
+      3333000033333333000033333333300033333333000033333333330033333333
+      0000333333333330333333330000333333333333333333330000333333333333
+      3333333300003333333333333333333300003333333333333333333300003333
+      33333333333333330000
+    }
+    OnClick = BackButtonClick
+    ShowHint = True
+    ParentShowHint = False
+  end
+  object ForwardButton: TSpeedButton
+    Left = 319
+    Height = 32
+    Hint = 'History (Forward)'
+    Top = 283
+    Width = 32
+    Glyph.Data = {
+      66010000424D6601000000000000760000002800000014000000140000000100
+      040000000000F000000000000000000000001000000000000000000000000000
+      80000080000000808000800000008000800080800000C0C0C000808080000000
+      FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333333
+      3333333300003333333333333333333300003333333333333333333300003333
+      3333333333333333000033333330333333333333000033333330033333333333
+      0000333333300033333333330000333333300003333333330000333333300000
+      3333333300003333333000000333333300003333333000003333333300003333
+      3330000333333333000033333330003333333333000033333330033333333333
+      0000333333303333333333330000333333333333333333330000333333333333
+      3333333300003333333333333333333300003333333333333333333300003333
+      33333333333333330000
+    }
+    OnClick = ForwardButtonClick
+    ShowHint = True
+    ParentShowHint = False
+  end
+  object BackButton2: TSpeedButton
+    Left = 253
+    Height = 32
+    Top = 283
+    Width = 32
+    Glyph.Data = {
+      66010000424D6601000000000000760000002800000014000000140000000100
+      040000000000F000000000000000000000001000000000000000000000000000
+      80000080000000808000800000008000800080800000C0C0C000808080000000
+      FF0000FF000000FFFF00FF000000FF00FF00FFFF0000FFFFFF00333333333333
+      3333333300003333333333333333333300003333333333333333333300003333
+      3333333333333333000033300333330333330333000033300333300333300333
+      0000333003330003330003330000333003300003300003330000333003000003
+      0000033300003330000000000000033300003330030000030000033300003330
+      0330000330000333000033300333000333000333000033300333300333300333
+      0000333003333303333303330000333333333333333333330000333333333333
+      3333333300003333333333333333333300003333333333333333333300003333
+      33333333333333330000
+    }
+    OnClick = BackButton2Click
+  end
+  object Label2: TLabel
+    Left = 9
+    Height = 1
+    Hint = 'Routine Name'
+    Top = 3
+    Width = 1
+    ParentColor = False
+    ParentShowHint = False
+    ShowHint = True
+  end
+  object HelpBtn: TBitBtn
+    Left = 253
+    Height = 33
+    Top = 216
+    Width = 99
+    Caption = 'Help'
+    Kind = bkHelp
+    OnClick = HelpBtnClick
+    Spacing = 1
+    TabOrder = 4
+  end
+  object cancel1: TBitBtn
+    Left = 253
+    Height = 33
+    Top = 183
+    Width = 99
+    Cancel = True
+    Caption = 'Abort (Esc)'
+    Kind = bkCancel
+    Margin = 0
+    ModalResult = 2
+    OnClick = cancel1Click
+    Spacing = 2
+    TabOrder = 3
+  end
+  object OKBtn: TBitBtn
+    Left = 253
+    Height = 33
+    Top = 150
+    Width = 99
+    Caption = 'OK'
+    Default = True
+    Kind = bkOK
+    Margin = 12
+    ModalResult = 1
+    OnClick = OKBtnClick
+    Spacing = 16
+    TabOrder = 2
+  end
+  object RadioGroup1: TRadioGroup
+    Left = 247
+    Height = 102
+    Top = 49
+    Width = 112
+    AutoFill = True
+    ChildSizing.LeftRightSpacing = 6
+    ChildSizing.TopBottomSpacing = 6
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.EnlargeVertical = crsHomogenousChildResize
+    ChildSizing.ShrinkHorizontal = crsScaleChilds
+    ChildSizing.ShrinkVertical = crsScaleChilds
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 1
+    ClientHeight = 82
+    ClientWidth = 108
+    Items.Strings = (
+      '&Cancel'
+      '&Step'
+      'Step (&Local)'
+      '&Go on'
+    )
+    OnEnter = RadioGroup1Enter
+    TabOrder = 1
+  end
+  object BreakPoint1: TButton
+    Left = 253
+    Height = 33
+    Hint = 'Set and Reset break points'
+    Top = 249
+    Width = 98
+    BorderSpacing.InnerBorder = 4
+    Caption = 'Break Points'
+    OnClick = BreakPoint1Click
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 5
+  end
+  object ListBox1: TListBox
+    Left = 3
+    Height = 292
+    Top = 24
+    Width = 245
+    ItemHeight = 0
+    ScrollWidth = 243
+    TabOrder = 6
+  end
+  object CheckBox1: TCheckBox
+    Left = 257
+    Height = 19
+    Top = 24
+    Width = 48
+    Caption = '&Trace'
+    TabOrder = 0
+  end
+end

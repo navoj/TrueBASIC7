@@ -1,0 +1,6 @@
+! Simple test
+10 PRINT "Hello"
+20 LINE 1, 1, 5, 5
+25 GRAPHICS popup
+30 SHOW PLOT
+40 END

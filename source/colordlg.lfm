@@ -1,0 +1,79 @@
+object ColorIndexDlg: TColorIndexDlg
+  Left = 244
+  Height = 147
+  Top = 129
+  Width = 471
+  HelpContext = 55
+  HorzScrollBar.Page = 470
+  HorzScrollBar.Range = 362
+  VertScrollBar.Page = 146
+  VertScrollBar.Range = 121
+  ActiveControl = OKBtn
+  BorderStyle = bsDialog
+  Caption = 'Option Setting'
+  OnCreate = FormCreate
+  ParentFont = True
+  Position = poScreenCenter
+  object OKBtn: TBitBtn
+    Left = 376
+    Height = 31
+    Top = 8
+    Width = 82
+    Caption = 'OK'
+    Default = True
+    Margin = 20
+    ModalResult = 1
+    NumGlyphs = 2
+    Spacing = 2
+    TabOrder = 0
+  end
+  object CancelBtn: TBitBtn
+    Left = 376
+    Height = 31
+    Top = 48
+    Width = 82
+    Cancel = True
+    Caption = 'Cancel'
+    Margin = 10
+    ModalResult = 2
+    NumGlyphs = 2
+    Spacing = 2
+    TabOrder = 1
+  end
+  object HelpBtn: TBitBtn
+    Left = 376
+    Height = 31
+    Top = 88
+    Width = 82
+    HelpContext = 55
+    Caption = '&Help'
+    Margin = 5
+    NumGlyphs = 2
+    OnClick = HelpBtnClick
+    Spacing = 2
+    TabOrder = 2
+  end
+  object RadioGroup1: TRadioGroup
+    Left = 8
+    Height = 120
+    Top = 8
+    Width = 353
+    HelpContext = 55
+    AutoFill = True
+    Caption = 'Color Index'
+    ChildSizing.LeftRightSpacing = 6
+    ChildSizing.TopBottomSpacing = 6
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.EnlargeVertical = crsHomogenousChildResize
+    ChildSizing.ShrinkHorizontal = crsScaleChilds
+    ChildSizing.ShrinkVertical = crsScaleChilds
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 1
+    Items.Strings = (
+      '0 White 1 Black 2 Blue 3 Green 4 Red ....'
+      '0 Black 1 Blue 2 Green .. 4 Red .. 7 White'
+      '0 Black 1 Blue 2 Red .. 4 Green .. 7 White'
+    )
+    TabOrder = 3
+  end
+end

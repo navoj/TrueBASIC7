@@ -1,0 +1,232 @@
+object AutoFormatDlg: TAutoFormatDlg
+  Left = 145
+  Height = 400
+  Top = 112
+  Width = 438
+  HelpContext = 43
+  ActiveControl = CheckListBox1
+  BorderStyle = bsDialog
+  Caption = 'Editor Option'
+  ClientHeight = 400
+  ClientWidth = 438
+  ParentFont = True
+  Position = poDefault
+  LCLVersion = '1.6.4.0'
+  object OKBtn: TButton
+    Left = 344
+    Height = 25
+    Top = 8
+    Width = 82
+    BorderSpacing.InnerBorder = 4
+    Caption = 'OK'
+    Default = True
+    ModalResult = 1
+    TabOrder = 1
+  end
+  object CancelBtn: TButton
+    Left = 344
+    Height = 25
+    Top = 37
+    Width = 82
+    BorderSpacing.InnerBorder = 4
+    Cancel = True
+    Caption = 'Cancel'
+    ModalResult = 2
+    TabOrder = 2
+  end
+  object HelpBtn: TButton
+    Left = 344
+    Height = 25
+    Top = 71
+    Width = 82
+    BorderSpacing.InnerBorder = 4
+    Caption = '&Help'
+    OnClick = HelpBtnClick
+    TabOrder = 3
+  end
+  object CheckListBox1: TCheckListBox
+    Left = 16
+    Height = 72
+    Top = 8
+    Width = 304
+    BorderStyle = bsNone
+    Color = clForm
+    Items.Strings = (
+      'Convert Keywords into Uppercase'
+      'Color the Keywords on inputing'
+    )
+    ItemHeight = 17
+    ItemIndex = 0
+    MultiSelect = True
+    OnClickCheck = CheckListBox1ClickCheck
+    TabOrder = 0
+    Data = {
+      020000000000
+    }
+  end
+  object programCharset1: TRadioGroup
+    Left = 16
+    Height = 72
+    Top = 320
+    Width = 245
+    AutoFill = True
+    Caption = 'Program File Charset'
+    ChildSizing.LeftRightSpacing = 6
+    ChildSizing.TopBottomSpacing = 6
+    ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+    ChildSizing.EnlargeVertical = crsHomogenousChildResize
+    ChildSizing.ShrinkHorizontal = crsScaleChilds
+    ChildSizing.ShrinkVertical = crsScaleChilds
+    ChildSizing.Layout = cclLeftToRightThenTopToBottom
+    ChildSizing.ControlsPerLine = 1
+    ClientHeight = 52
+    ClientWidth = 241
+    ItemIndex = 1
+    Items.Strings = (
+      'Sysytem Default ( Shift-JIS etc.)'
+      'UTF-8'
+    )
+    OnClick = programCharset1Click
+    TabOrder = 4
+  end
+  object ColorBox1: TColorBox
+    Left = 239
+    Height = 24
+    Top = 87
+    Width = 100
+    DefaultColorColor = clBlue
+    NoneColorColor = clBlue
+    Selected = clBlue
+    Style = [cbStandardColors, cbExtendedColors]
+    ItemHeight = 18
+    TabOrder = 5
+  end
+  object Label1: TLabel
+    Left = 40
+    Height = 15
+    Top = 87
+    Width = 80
+    Caption = 'Structure Block'
+    ParentColor = False
+  end
+  object Label2: TLabel
+    Left = 40
+    Height = 15
+    Top = 121
+    Width = 109
+    Caption = 'Declative Statements'
+    ParentColor = False
+  end
+  object Label3: TLabel
+    Left = 40
+    Height = 15
+    Top = 152
+    Width = 116
+    Caption = 'Imperative Statements'
+    ParentColor = False
+  end
+  object Label4: TLabel
+    Left = 40
+    Height = 15
+    Top = 186
+    Width = 171
+    Caption = 'Parameters of innner procedures'
+    ParentColor = False
+  end
+  object Label5: TLabel
+    Left = 40
+    Height = 15
+    Top = 223
+    Width = 36
+    Caption = 'Strings'
+    ParentColor = False
+  end
+  object ColorBox2: TColorBox
+    Left = 239
+    Height = 24
+    Top = 121
+    Width = 100
+    DefaultColorColor = clGray
+    NoneColorColor = clGray
+    Selected = clGray
+    Style = [cbStandardColors, cbExtendedColors]
+    ItemHeight = 18
+    TabOrder = 6
+  end
+  object ColorBox3: TColorBox
+    Left = 239
+    Height = 24
+    Top = 155
+    Width = 100
+    DefaultColorColor = clPurple
+    NoneColorColor = clPurple
+    Selected = clPurple
+    Style = [cbStandardColors, cbExtendedColors]
+    ItemHeight = 18
+    TabOrder = 7
+  end
+  object ColorBox4: TColorBox
+    Left = 239
+    Height = 24
+    Top = 189
+    Width = 100
+    DefaultColorColor = clGreen
+    NoneColorColor = clGreen
+    Selected = clGreen
+    Style = [cbStandardColors, cbExtendedColors]
+    ItemHeight = 18
+    TabOrder = 8
+  end
+  object ColorBox5: TColorBox
+    Left = 239
+    Height = 24
+    Top = 223
+    Width = 100
+    DefaultColorColor = clNavy
+    NoneColorColor = clNavy
+    Selected = clNavy
+    Style = [cbStandardColors, cbExtendedColors]
+    ItemHeight = 18
+    TabOrder = 9
+  end
+  object ColorBox6: TColorBox
+    Left = 239
+    Height = 24
+    Top = 257
+    Width = 100
+    DefaultColorColor = clOlive
+    NoneColorColor = clOlive
+    Selected = clOlive
+    Style = [cbStandardColors, cbExtendedColors]
+    ItemHeight = 18
+    TabOrder = 10
+  end
+  object Label6: TLabel
+    Left = 40
+    Height = 15
+    Top = 257
+    Width = 56
+    Caption = 'Comments'
+    ParentColor = False
+  end
+  object Label7: TLabel
+    Left = 40
+    Height = 15
+    Top = 291
+    Width = 98
+    Caption = 'Branch Statements'
+    ParentColor = False
+  end
+  object ColorBox7: TColorBox
+    Left = 239
+    Height = 24
+    Top = 291
+    Width = 100
+    DefaultColorColor = clRed
+    NoneColorColor = clRed
+    Selected = clRed
+    Style = [cbStandardColors, cbExtendedColors]
+    ItemHeight = 18
+    TabOrder = 11
+  end
+end

@@ -12,6 +12,11 @@ A Raku implementation of a True BASIC interpreter using Raku grammars, supportin
 - Input/Output operations
 - Graphics and plotting
 
+Created by Jovan Trujillo
+Arizona State University
+Advanced Electronics and Photonics Center
+1/23/2025
+
 =end pod
 
 use v6.d;
@@ -20,15 +25,15 @@ use v6.d;
 grammar TrueBASICGrammar {
     token TOP { <program> }
     
-    rule program { <line>* }
+    rule program { <line>+ %% \n }
     
     rule line {
-        [ <line-number>? <statement> | <comment> | <blank-line> ]
+        <line-number>? <statement> | <comment> | <blank-line>
     }
     
     token line-number { \d+ }
-    token blank-line { \s* }
-    token comment { [ '!' | 'REM' ] .* }
+    token blank-line { ^^ \s* $$ }
+    token comment { [ '!' | 'REM' ] \N* }
     
     proto rule statement {*}
     rule statement:sym<let>      { 'LET'? <assignment> }
@@ -41,7 +46,7 @@ grammar TrueBASICGrammar {
     rule statement:sym<for>      { 'FOR' <identifier> '=' <expression> 'TO' <expression> [ 'STEP' <expression> ]? }
     rule statement:sym<next>     { 'NEXT' <identifier>? }
     rule statement:sym<do>       { 'DO' }
-    rule statement:sym<loop>     { 'LOOP' [ 'UNTIL' | 'WHILE' ]? <condition>? }
+    rule statement:sym<loop>     { 'LOOP' [ $<condition-type>=[ 'UNTIL' | 'WHILE' ] <condition> ]? }
     rule statement:sym<while>    { 'WHILE' <condition> }
     rule statement:sym<wend>     { 'WEND' }
     rule statement:sym<dim>      { 'DIM' <identifier> '(' <expression-list> ')' }
@@ -54,10 +59,11 @@ grammar TrueBASICGrammar {
     rule statement:sym<show>     { 'SHOW' 'PLOT' }
     rule statement:sym<save>     { 'SAVE' <expression>? }
     rule statement:sym<graphics> { 'GRAPHICS' <identifier> }
-    rule statement:sym<rem>      { 'REM' .* }
+    rule statement:sym<rem>      { 'REM' \N* }
     rule statement:sym<assign>   { <assignment> }
     
-    rule assignment { <identifier> '=' <expression> }
+    rule assignment { [ <identifier> | <array-access> ] '=' <expression> }
+    rule array-access { <identifier> '(' <expression-list> ')' }
     
     rule print-list { <print-item> [ <separator> <print-item> ]* <separator>? }
     rule print-item { <expression> }
@@ -73,27 +79,29 @@ grammar TrueBASICGrammar {
     token comparison-op { '=' | '<>' | '!=' | '<' | '>' | '<=' | '>=' }
     
     rule expression { <term> [ <additive-op> <term> ]* }
-    rule term { <factor> [ <multiplicative-op> <factor> ]* }
-    rule factor {
-        | <number>
-        | <string-literal>
-        | <identifier>
-        | <function-call>
-        | <unary-minus>
-        | '(' <expression> ')'
-    }
+    rule term { <power> [ <multiplicative-op> <power> ]* }
+    rule power { <factor> [ <exponentiation-op> <power> ]? }
+    proto rule factor { * }
+    rule factor:sym<number> { <number> }
+    rule factor:sym<string> { <string-literal> }
+    rule factor:sym<function> { <function-call> }
+    rule factor:sym<array> { <array-access> }
+    rule factor:sym<identifier> { <identifier> }
+    rule factor:sym<unary> { <unary-minus> }
+    rule factor:sym<paren> { '(' <expression> ')' }
     
     rule unary-minus { '-' <factor> }
     rule function-call { <identifier> '(' <expression-list>? ')' }
     
     token additive-op { '+' | '-' }
     token multiplicative-op { '*' | '/' }
+    token exponentiation-op { '^' }
     
     rule string-expr { <string-literal> | <identifier> }
     
-    token number { '-'? \d+ [ '.' \d+ ]? [ 'e' '-'? \d+ ]? }
+    token number { '-'? \d+ [ '.' \d+ ]? [ <[eE]> '-'? \d+ ]? }
     token string-literal { '"' <-["]>* '"' }
-    token identifier { <[A..Za..z]> <[A..Za..z0..9_]>* '\\$'? }
+    token identifier { <[A..Za..z]> <[A..Za..z0..9_]>* '$'? }
 }
 
 # Actions class for building AST
@@ -164,12 +172,19 @@ class TrueBASICActions {
     method statement:sym<loop>($/) {
         make {
             type => 'loop',
-            condition-type => $0 ?? ~$0 !! Nil,
+            condition-type => $<condition-type> ?? ~$<condition-type> !! Nil,
             condition => $<condition> ?? $<condition>.made !! Nil
         }
     }
     method statement:sym<end>($/) { make { type => 'end' } }
     method statement:sym<cls>($/) { make { type => 'cls' } }
+    method statement:sym<dim>($/) {
+        make {
+            type => 'dim',
+            array => ~$<identifier>,
+            dimensions => $<expression-list>.made
+        }
+    }
     method statement:sym<plot>($/) {
         make {
             type => 'plot',
@@ -198,8 +213,8 @@ class TrueBASICActions {
         make {
             type => 'window',
             x1 => $<expression>[0].made,
-            y1 => $<expression>[1].made,
-            x2 => $<expression>[2].made,
+            x2 => $<expression>[1].made,
+            y1 => $<expression>[2].made,
             y2 => $<expression>[3].made
         }
     }
@@ -219,9 +234,17 @@ class TrueBASICActions {
     method statement:sym<rem>($/) { make { type => 'rem', comment => ~$/ } }
     
     method assignment($/) {
-        make {
-            variable => ~$<identifier>,
-            expression => $<expression>.made
+        if $<array-access> {
+            make {
+                type => 'array-assignment',
+                array => $<array-access>.made,
+                expression => $<expression>.made
+            }
+        } else {
+            make {
+                variable => ~$<identifier>,
+                expression => $<expression>.made
+            }
         }
     }
     
@@ -272,36 +295,45 @@ class TrueBASICActions {
     }
     
     method term($/) {
-        my $result = $<factor>[0].made;
+        my $result = $<power>[0].made;
         
         for $<multiplicative-op>.kv -> $i, $op {
             $result = {
                 type => 'binary',
                 operator => ~$op,
                 left => $result,
-                right => $<factor>[$i + 1].made
+                right => $<power>[$i + 1].made
             }
         }
         
         make $result;
     }
     
-    method factor($/) {
-        if $<number> {
-            make { type => 'number', value => +$<number> }
-        } elsif $<string-literal> {
-            my $str = ~$<string-literal>;
-            make { type => 'string', value => $str.substr(1, *-1) }
-        } elsif $<identifier> {
-            make { type => 'variable', name => ~$<identifier> }
-        } elsif $<function-call> {
-            make $<function-call>.made
-        } elsif $<unary-minus> {
-            make $<unary-minus>.made
-        } elsif $<expression> {
-            make $<expression>.made
+    method power($/) {
+        my $result = $<factor>.made;
+        
+        if $<exponentiation-op> {
+            $result = {
+                type => 'binary',
+                operator => '^',
+                left => $result,
+                right => $<power>.made
+            }
         }
+        
+        make $result;
     }
+    
+    method factor:sym<number>($/) { make { type => 'number', value => +$<number> } }
+    method factor:sym<string>($/) { 
+        my $str = ~$<string-literal>;
+        make { type => 'string', value => $str.substr(1, *-1) }
+    }
+    method factor:sym<identifier>($/) { make { type => 'variable', name => ~$<identifier> } }
+    method factor:sym<array>($/) { make $<array-access>.made }
+    method factor:sym<function>($/) { make $<function-call>.made }
+    method factor:sym<unary>($/) { make $<unary-minus>.made }
+    method factor:sym<paren>($/) { make $<expression>.made }
     
     method unary-minus($/) {
         make {
@@ -321,6 +353,14 @@ class TrueBASICActions {
     
     method expression-list($/) {
         make $<expression>>>.made
+    }
+    
+    method array-access($/) {
+        make {
+            type => 'array-access',
+            name => ~$<identifier>,
+            indices => $<expression-list>.made
+        }
     }
     
     method string-expr($/) {
@@ -380,6 +420,7 @@ class TrueBASICInterpreter2 {
     method load-program(Str $filename) {
         try {
             my $source = $filename.IO.slurp;
+            say "Source code:\n$source" if $!debug;
             my $grammar = TrueBASICGrammar;
             my $actions = TrueBASICActions.new;
             
@@ -388,8 +429,20 @@ class TrueBASICInterpreter2 {
             if $match {
                 @!program = $match.made;
                 say "Program parsed successfully with {+@!program} statements." if $!debug;
+                say "Parsed program: {@!program.raku}" if $!debug;
             } else {
-                die "Failed to parse program";
+                say "Falling back to line-by-line parsing..." if $!debug;
+                @!program = [];
+                for $source.lines -> $line {
+                    say "Parsing line: '$line'" if $!debug;
+                    my $line-match = $grammar.parse($line, :$actions, rule => 'line');
+                    if $line-match {
+                        say "Line parsed: {$line-match.made.raku}" if $!debug;
+                        @!program.push($line-match.made) if $line-match.made;
+                    } else {
+                        say "Failed to parse line: '$line'" if $!debug;
+                    }
+                }
             }
         }
         CATCH {
@@ -409,12 +462,17 @@ class TrueBASICInterpreter2 {
             say "Executing line $!current-line: {$stmt.raku}" if $!debug;
             
             try {
+                say "DEBUG: About to execute statement" if $!debug;
                 self.execute-statement($stmt);
+                say "DEBUG: Statement executed successfully, incrementing line" if $!debug;
                 $!current-line++;
+                say "DEBUG: Line incremented to $!current-line" if $!debug;
             }
             CATCH {
                 default {
                     say "Runtime error at line $!current-line: {.message}";
+                    say "Exception type: {.^name}";
+                    say "Exception backtrace: {.backtrace}";
                     $!running = False;
                 }
             }
@@ -428,6 +486,7 @@ class TrueBASICInterpreter2 {
         
         given %s<type> {
             when 'let' { self.execute-let(%s<assignment>) }
+            when 'dim' { self.execute-dim(%s<array>, %s<dimensions>) }
             when 'print' { self.execute-print(%s<items>) }
             when 'input' { self.execute-input(%s<prompt>, %s<variable>) }
             when 'if' { self.execute-if(%s<condition>, %s<then-stmt>) }
@@ -457,6 +516,10 @@ class TrueBASICInterpreter2 {
             when 'number' { return %expr<value> }
             when 'string' { return %expr<value> }
             when 'variable' { return %!variables{%expr<name>} // 0 }
+            when 'array-access' {
+                my @indices = %expr<indices>.map({ self.evaluate-expression($_) });
+                return self.get-array-element(%expr<name>, @indices);
+            }
             when 'binary' {
                 my $left = self.evaluate-expression(%expr<left>);
                 my $right = self.evaluate-expression(%expr<right>);
@@ -465,6 +528,7 @@ class TrueBASICInterpreter2 {
                     when '-' { return $left - $right }
                     when '*' { return $left * $right }
                     when '/' { return $left / $right }
+                    when '^' { return $left ** $right }
                 }
             }
             when 'unary' {
@@ -502,7 +566,12 @@ class TrueBASICInterpreter2 {
 
     method execute-let(%assignment) {
         my $value = self.evaluate-expression(%assignment<expression>);
-        %!variables{%assignment<variable>} = $value;
+        if %assignment<type> && %assignment<type> eq 'array-assignment' {
+            my @indices = %assignment<array><indices>.map({ self.evaluate-expression($_) });
+            self.set-array-element(%assignment<array><name>, @indices, $value);
+        } else {
+            %!variables{%assignment<variable>} = $value;
+        }
     }
 
     method execute-print(@items) {
@@ -610,8 +679,8 @@ class TrueBASICInterpreter2 {
         
         if $condition-type && %condition {
             my $result = self.evaluate-expression(%condition);
-            if ($condition-type eq 'UNTIL' && !$result) || 
-               ($condition-type eq 'WHILE' && $result) {
+            if ($condition-type.trim eq 'UNTIL' && !$result) || 
+               ($condition-type.trim eq 'WHILE' && $result) {
                 $!current-line = $do-line;
             } else {
                 @!do-stack.pop;
@@ -626,6 +695,54 @@ class TrueBASICInterpreter2 {
         if @!plot-points || @!plot-lines || @!plot-circles {
             self.clear-graphics();
             say "Graphics cleared." if $!debug;
+        }
+    }
+
+    # Array management methods
+    method execute-dim($array-name, @dimensions) {
+        my @dims = @dimensions.map({ self.evaluate-expression($_) });
+        %!arrays{$array-name} = self.create-array(@dims);
+        say "Created array $array-name with dimensions: {@dims.join('x')}" if $!debug;
+    }
+    
+    method create-array(@dimensions) {
+        if @dimensions.elems == 1 {
+            return [0 xx (@dimensions[0] + 1)];  # 1-based indexing
+        } else {
+            my @array;
+            for 0..@dimensions[0] -> $i {
+                @array[$i] = self.create-array(@dimensions[1..*]);
+            }
+            return @array;
+        }
+    }
+    
+    method get-array-element($name, @indices) {
+        return 0 unless %!arrays{$name}:exists;
+        my $array = %!arrays{$name};
+        for @indices -> $index {
+            my $i = $index.Int;
+            return 0 unless $array && $array.isa(Array) && $i < $array.elems;
+            $array = $array[$i];
+        }
+        return $array // 0;
+    }
+    
+    method set-array-element($name, @indices, $value) {
+        return unless %!arrays{$name}:exists;
+        my $array = %!arrays{$name};
+        my $last-index = @indices.pop;
+        
+        # Navigate to the correct sub-array
+        for @indices -> $index {
+            my $i = $index.Int;
+            return unless $array && $array.isa(Array) && $i < $array.elems;
+            $array = $array[$i];
+        }
+        
+        # Set the value
+        if $array && $array.isa(Array) && $last-index < $array.elems {
+            $array[$last-index.Int] = $value;
         }
     }
 
@@ -671,6 +788,9 @@ class TrueBASICInterpreter2 {
         if @!plot-points || @!plot-lines || @!plot-circles {
             if $!graphics-mode eq 'ascii' {
                 self.show-ascii-plot();
+            } elsif $!graphics-mode eq 'popup' {
+                self.generate-svg();
+                self.show-popup();
             } else {
                 self.generate-svg();
                 say "Plot saved to $!plot-file";
@@ -689,11 +809,11 @@ class TrueBASICInterpreter2 {
 
     method execute-graphics($mode) {
         my $graphics-mode = $mode.lc;
-        if $graphics-mode eq 'svg' || $graphics-mode eq 'ascii' {
+        if $graphics-mode eq 'svg' || $graphics-mode eq 'ascii' || $graphics-mode eq 'popup' {
             $!graphics-mode = $graphics-mode;
             say "Graphics mode set to $graphics-mode";
         } else {
-            say "Invalid graphics mode. Use 'svg' or 'ascii'";
+            say "Invalid graphics mode. Use 'svg', 'ascii', or 'popup'";
         }
     }
 
@@ -704,12 +824,21 @@ class TrueBASICInterpreter2 {
     }
 
     method generate-svg() {
+        say "DEBUG: Starting generate-svg" if $!debug;
+        say "DEBUG: Window settings: {%!window.raku}" if $!debug;
+        
         my $width = 400;
         my $height = 300;
         my $margin = 20;
         
+        say "DEBUG: Calculating scales..." if $!debug;
+        say "DEBUG: x-range = {%!window<x-max> - %!window<x-min>}" if $!debug;
+        say "DEBUG: y-range = {%!window<y-max> - %!window<y-min>}" if $!debug;
+        
         my $x-scale = ($width - 2 * $margin) / (%!window<x-max> - %!window<x-min>);
         my $y-scale = ($height - 2 * $margin) / (%!window<y-max> - %!window<y-min>);
+        
+        say "DEBUG: x-scale = $x-scale, y-scale = $y-scale" if $!debug;
         
         sub transform-x($x) {
             return $margin + ($x - %!window<x-min>) * $x-scale;
@@ -719,6 +848,7 @@ class TrueBASICInterpreter2 {
             return $height - $margin - ($y - %!window<y-min>) * $y-scale;
         }
         
+        say "DEBUG: Building SVG content" if $!debug;
         my @svg-content = [
             qq[<?xml version="1.0" encoding="UTF-8"?>],
             qq[<svg width="$width" height="$height" xmlns="http://www.w3.org/2000/svg">],
@@ -743,6 +873,7 @@ class TrueBASICInterpreter2 {
             @svg-content.push(qq[<circle cx="$x" cy="$y" r="2" fill="blue"/>]);
         }
         
+        say "DEBUG: Drawing {+@!plot-lines} lines" if $!debug;
         # Draw lines
         for @!plot-lines -> $line {
             my $x1 = transform-x($line<x1>);
@@ -762,7 +893,9 @@ class TrueBASICInterpreter2 {
         
         @svg-content.push("</svg>");
         
+        say "DEBUG: Writing to file: $!plot-file" if $!debug;
         $!plot-file.IO.spurt(@svg-content.join("\n"));
+        say "DEBUG: File written successfully" if $!debug;
     }
 
     method show-ascii-plot() {
@@ -825,6 +958,56 @@ class TrueBASICInterpreter2 {
         }
     }
 
+    method show-popup() {
+        say "Opening plot in browser window...";
+        
+        # Try to open in browser - check for common browsers
+        my $svg-path = $!plot-file.IO.absolute;
+        my $opened = False;
+        
+        say "Debug: SVG path is $svg-path" if $!debug;
+        
+        # Try different browsers in order of preference
+        for <firefox chromium-browser google-chrome chrome> -> $browser {
+            say "Debug: Trying browser $browser" if $!debug;
+            try {
+                # Use Proc::Async for non-blocking process execution
+                my $proc = Proc::Async.new($browser, $svg-path);
+                $proc.start;
+                $opened = True;
+                say "Plot opened in $browser";
+                last;
+            }
+            CATCH { 
+                default { 
+                    say "Debug: Browser $browser failed: {.message}" if $!debug;
+                } 
+            }
+        }
+        
+        if !$opened {
+            # Fallback: try generic xdg-open (Linux) or open (macOS)
+            try {
+                if $*KERNEL.name eq 'linux' {
+                    my $proc = Proc::Async.new('xdg-open', $svg-path);
+                    $proc.start;
+                    say "Plot opened with default application";
+                } elsif $*KERNEL.name eq 'darwin' {
+                    my $proc = Proc::Async.new('open', $svg-path);
+                    $proc.start;
+                    say "Plot opened with default application"; 
+                } else {
+                    say "Could not automatically open plot. View manually: $svg-path";
+                }
+                CATCH { 
+                    default { 
+                        say "Could not automatically open plot. View manually: $svg-path";
+                    }
+                }
+            }
+        }
+    }
+
     method debug-mode(Bool $enable = True) {
         $!debug = $enable;
     }
@@ -838,7 +1021,7 @@ class TrueBASICInterpreter2 {
 }
 
 # Main program
-sub MAIN(Str $program-file?, Bool :$debug = False) {
+sub MAIN($program-file?, :$debug = False) {
     my $interpreter = TrueBASICInterpreter2.new();
     $interpreter.debug-mode($debug);
     

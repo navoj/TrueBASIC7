@@ -1,0 +1,629 @@
+object LocateForm: TLocateForm
+  Left = 490
+  Height = 50
+  Top = 125
+  Width = 627
+  AutoSize = True
+  BorderIcons = [biSystemMenu, biMinimize]
+  BorderStyle = bsDialog
+  Caption = 'Locate Value'
+  ClientHeight = 50
+  ClientWidth = 627
+  Color = clBtnFace
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Times New Roman'
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
+  LCLVersion = '1.8.4.0'
+  object Label1: TLabel
+    Left = 99
+    Height = 15
+    Top = 32
+    Width = 32
+    Caption = 'Label1'
+    ParentColor = False
+    Visible = False
+  end
+  object Name1: TLabel
+    Left = 3
+    Height = 15
+    Top = 7
+    Width = 34
+    Caption = 'Name1'
+    ParentColor = False
+  end
+  object Name2: TLabel
+    Left = 3
+    Height = 15
+    Top = 57
+    Width = 34
+    Caption = 'Name2'
+    ParentColor = False
+  end
+  object Label2: TLabel
+    Left = 99
+    Height = 15
+    Top = 82
+    Width = 32
+    Caption = 'Label2'
+    ParentColor = False
+    Visible = False
+  end
+  object Name3: TLabel
+    Left = 3
+    Height = 15
+    Top = 107
+    Width = 34
+    Caption = 'Name3'
+    ParentColor = False
+  end
+  object Label3: TLabel
+    Left = 99
+    Height = 15
+    Top = 132
+    Width = 32
+    Caption = 'Label3'
+    ParentColor = False
+    Visible = False
+  end
+  object name4: TLabel
+    Left = 3
+    Height = 15
+    Top = 157
+    Width = 34
+    Caption = 'Name4'
+    ParentColor = False
+  end
+  object Label4: TLabel
+    Left = 99
+    Height = 15
+    Top = 182
+    Width = 32
+    Caption = 'Label4'
+    ParentColor = False
+    Visible = False
+  end
+  object name5: TLabel
+    Left = 3
+    Height = 15
+    Top = 207
+    Width = 34
+    Caption = 'Name5'
+    ParentColor = False
+  end
+  object Label5: TLabel
+    Left = 99
+    Height = 15
+    Top = 232
+    Width = 32
+    Caption = 'Label5'
+    ParentColor = False
+    Visible = False
+  end
+  object TrackBar1: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 2
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar1Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 0
+  end
+  object OkButton: TButton
+    Left = 566
+    Height = 25
+    Top = 2
+    Width = 57
+    Caption = 'Ok'
+    Default = True
+    ModalResult = 1
+    TabOrder = 1
+  end
+  object TrackBar2: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 52
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar2Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 2
+  end
+  object TrackBar3: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 102
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar3Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 3
+  end
+  object TrackBar4: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 152
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar4Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 4
+  end
+  object TrackBar5: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 202
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar5Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 5
+  end
+  object Name6: TLabel
+    Left = 3
+    Height = 15
+    Top = 257
+    Width = 34
+    Caption = 'Name6'
+    ParentColor = False
+  end
+  object Name7: TLabel
+    Left = 3
+    Height = 15
+    Top = 307
+    Width = 34
+    Caption = 'Name7'
+    ParentColor = False
+  end
+  object Name8: TLabel
+    Left = 3
+    Height = 15
+    Top = 357
+    Width = 34
+    Caption = 'Name8'
+    ParentColor = False
+  end
+  object name9: TLabel
+    Left = 4
+    Height = 15
+    Top = 407
+    Width = 31
+    Caption = 'name9'
+    ParentColor = False
+  end
+  object name10: TLabel
+    Left = 1
+    Height = 15
+    Top = 457
+    Width = 37
+    Caption = 'name10'
+    ParentColor = False
+  end
+  object Label6: TLabel
+    Left = 99
+    Height = 15
+    Top = 282
+    Width = 32
+    Caption = 'Label6'
+    ParentColor = False
+    Visible = False
+  end
+  object Label7: TLabel
+    Left = 99
+    Height = 15
+    Top = 332
+    Width = 32
+    Caption = 'Label7'
+    ParentColor = False
+    Visible = False
+  end
+  object Label8: TLabel
+    Left = 99
+    Height = 15
+    Top = 382
+    Width = 32
+    Caption = 'Label8'
+    ParentColor = False
+    Visible = False
+  end
+  object Label9: TLabel
+    Left = 99
+    Height = 15
+    Top = 432
+    Width = 32
+    Caption = 'Label9'
+    ParentColor = False
+    Visible = False
+  end
+  object TrackBar6: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 252
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar6Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 6
+  end
+  object TrackBar7: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 302
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar7Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 7
+  end
+  object TrackBar8: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 352
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar8Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 8
+  end
+  object TrackBar9: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 402
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar9Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 9
+  end
+  object TrackBar10: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 452
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar10Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 10
+  end
+  object Name11: TLabel
+    Left = 0
+    Height = 15
+    Top = 507
+    Width = 40
+    Caption = 'Name11'
+    ParentColor = False
+  end
+  object Name12: TLabel
+    Left = 0
+    Height = 15
+    Top = 557
+    Width = 40
+    Caption = 'Name12'
+    ParentColor = False
+  end
+  object Name13: TLabel
+    Left = 0
+    Height = 15
+    Top = 607
+    Width = 40
+    Caption = 'Name13'
+    ParentColor = False
+  end
+  object name14: TLabel
+    Left = 1
+    Height = 15
+    Top = 657
+    Width = 37
+    Caption = 'name14'
+    ParentColor = False
+  end
+  object name15: TLabel
+    Left = 1
+    Height = 15
+    Top = 707
+    Width = 37
+    Caption = 'name15'
+    ParentColor = False
+  end
+  object Label10: TLabel
+    Left = 96
+    Height = 15
+    Top = 482
+    Width = 38
+    Caption = 'Label10'
+    ParentColor = False
+    Visible = False
+  end
+  object Label11: TLabel
+    Left = 96
+    Height = 15
+    Top = 532
+    Width = 38
+    Caption = 'Label11'
+    ParentColor = False
+    Visible = False
+  end
+  object Label12: TLabel
+    Left = 96
+    Height = 15
+    Top = 582
+    Width = 38
+    Caption = 'Label12'
+    ParentColor = False
+    Visible = False
+  end
+  object Label13: TLabel
+    Left = 96
+    Height = 15
+    Top = 632
+    Width = 38
+    Caption = 'Label13'
+    ParentColor = False
+    Visible = False
+  end
+  object TrackBar11: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 502
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar11Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 11
+  end
+  object TrackBar12: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 552
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar12Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 12
+  end
+  object TrackBar13: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 602
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar13Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 13
+  end
+  object TrackBar14: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 652
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar14Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 14
+  end
+  object TrackBar15: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 702
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar15Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 15
+  end
+  object Name16: TLabel
+    Left = 0
+    Height = 15
+    Top = 757
+    Width = 40
+    Caption = 'Name16'
+    ParentColor = False
+  end
+  object Name17: TLabel
+    Left = 0
+    Height = 15
+    Top = 807
+    Width = 40
+    Caption = 'Name17'
+    ParentColor = False
+  end
+  object Name18: TLabel
+    Left = 0
+    Height = 15
+    Top = 857
+    Width = 40
+    Caption = 'Name18'
+    ParentColor = False
+  end
+  object name19: TLabel
+    Left = 1
+    Height = 15
+    Top = 907
+    Width = 37
+    Caption = 'name19'
+    ParentColor = False
+  end
+  object name20: TLabel
+    Left = 1
+    Height = 15
+    Top = 957
+    Width = 37
+    Caption = 'name20'
+    ParentColor = False
+  end
+  object Label14: TLabel
+    Left = 96
+    Height = 15
+    Top = 682
+    Width = 38
+    Caption = 'Label14'
+    ParentColor = False
+    Visible = False
+  end
+  object Label15: TLabel
+    Left = 96
+    Height = 15
+    Top = 732
+    Width = 38
+    Caption = 'Label15'
+    ParentColor = False
+    Visible = False
+  end
+  object Label16: TLabel
+    Left = 96
+    Height = 15
+    Top = 782
+    Width = 38
+    Caption = 'Label16'
+    ParentColor = False
+    Visible = False
+  end
+  object Label17: TLabel
+    Left = 96
+    Height = 15
+    Top = 832
+    Width = 38
+    Caption = 'Label17'
+    ParentColor = False
+    Visible = False
+  end
+  object TrackBar16: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 752
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar16Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 16
+  end
+  object TrackBar17: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 802
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar17Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 17
+  end
+  object TrackBar18: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 852
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar18Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 18
+  end
+  object TrackBar19: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 902
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar19Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 19
+  end
+  object TrackBar20: TTrackBar
+    Left = 40
+    Height = 25
+    Top = 952
+    Width = 521
+    Frequency = 100
+    Max = 1000
+    OnChange = TrackBar20Change
+    Position = 0
+    ScalePos = trBottom
+    TickStyle = tsNone
+    TabOrder = 20
+  end
+  object Label18: TLabel
+    Left = 96
+    Height = 15
+    Top = 882
+    Width = 38
+    Caption = 'Label18'
+    ParentColor = False
+    Visible = False
+  end
+  object Label19: TLabel
+    Left = 96
+    Height = 15
+    Top = 932
+    Width = 38
+    Caption = 'Label19'
+    ParentColor = False
+    Visible = False
+  end
+  object Label20: TLabel
+    Left = 96
+    Height = 15
+    Top = 982
+    Width = 38
+    Caption = 'Label20'
+    ParentColor = False
+    Visible = False
+  end
+end

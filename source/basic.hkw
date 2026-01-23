@@ -1,0 +1,807 @@
+!="Line","html/basi8kaa.htm","Microsoft BASIC","html/basi77lc.htm"
+
+#="PRINT USING","html/basi1z6v.htm","OPEN","html/basi9vla.htm","Microsoft BASIC","html/basi77lc.htm"
+
+$=html/basi5jon.htm
+
+%="PRINT USING","html/basi1z6v.htm","Microsoft BASIC","html/basi77lc.htm"
+
+&=html/basi5jon.htm
+
+&H=html/basi3vqr.htm
+
+?=html/basi7bg4.htm
+
+^=html/basi1z6v.htm
+
+ABS="Numeiric functions","html/basi9lo3.htm","Complex functions","html/basi2u43.htm"
+
+ACCESS=html/basi9vla.htm
+
+ACCESS INPUT=html/basi9vla.htm
+
+ACCESS OUTIN=html/basi9vla.htm
+
+ACCESS OUTPUT=html/basi9vla.htm
+
+ACOS=html/basi6qar.htm
+
+AND=html/basi09ws.htm
+
+ANGLE="OPTION ANGLE","html/basi5of9.htm","Trigonometric functions","html/basi6qar.htm"
+
+AREA=html/basi1e3l.htm
+
+ARG=html/basi2u43.htm
+
+ARITHEMTIC DECIMAL=html/basi4y77.htm
+
+ARITHMETIC=html/basi4y77.htm
+
+ASC=html/basi3vqr.htm
+
+ASIN=html/basi6qar.htm
+
+ASK="ASK CHARACTER PENDING","html/basi5c8k.htm","Coordinate system","html/basi35mf.htm","COLOR","html/basi2182.htm","POINT","html/basi6ho4.htm","LINE","html/basi2f39.htm","AREA","html/basi1e3l.htm","TEXT","html/basi714k.htm#idh_set_text_justify","PIXEL","html/basi42zw.htm"
+
+ASK AREA COLOR=html/basi1e3l.htm
+
+ASK AXIS COLOR=html/basi6qzy.htm#idh_ext_ask_pixel_size
+
+ASK BITMAP SIZE=html/basi6qzy.htm#idh_ext_ask_pixel_size
+
+ASK CHARACTER PENDING=html/basi5c8k.htm
+
+ASK COLOR MIX=html/basi2182.htm
+
+ASK DIRECTORY=html/basi7cit.htm
+
+ASK LINE COLOR=html/basi2f39.htm
+
+ASK LINE STYLE=html/basi2f39.htm
+
+ASK MAX COLOR=html/basi2182.htm
+
+ASK MAX LINE STYLE=html/basi2f39.htm
+
+ASK MAX POINT STYLE=html/basi6ho4.htm
+
+ASK PIXEL ARRAY=html/basi42zw.htm#idh_ask_pixel_array
+
+ASK PIXEL SIZE=html/basi42zw.htm
+
+ASK PIXEL VALUE=html/basi42zw.htm
+
+ASK POINT COLOR=html/basi6ho4.htm
+
+ASK POINT STYLE=html/basi6ho4.htm
+
+ASK TEXT COLOR=html/basi714k.htm
+
+ASK TEXT JUSTIFY=html/basi714k.htm#idh_set_text_justify
+
+ASK WINDOWSET=html/basi35mf.htm
+
+ASSOC PRINT=html/basi6yjp.htm
+
+ATN=html/basi6qar.htm
+
+AXES=html/basi0do3.htm
+
+AXES0=html/basi0do3.htm
+
+BACKGROUND=html/basi7ofn.htm
+
+BASE=html/basi07jt.htm
+
+BASIC.BAK=
+
+BEEP=html/basi5gab.htm
+
+BITMAP=html/basi4x9h.htm
+
+BLEN=html/basi2pkk.htm
+
+BOX=html/basi7ofn.htm
+
+BREAK="Non-fatal exception","html/basi6pwu.htm","Debug","html/basi4kkn.htm"
+
+BSTR$=html/basi2kfi.htm
+
+BVAL=html/basi2kfi.htm
+
+BYTE="Characters","html/basi0ajt.htm","CHARACTER INPUT #","html/basi1yd0.htm"
+
+CALL="Internal sub","html/basi5cte.htm","External sub","html/basi8ejm.htm"
+
+CASE=html/basi7k50.htm
+
+CASE ELSE=html/basi7k50.htm
+
+CAUSE=html/basi461x.htm
+
+CAUSE EXCEPTION=html/basi461x.htm
+CEIL=html/basi9lo3.htm
+
+CELLS=html/basi8tmb.htm
+
+CHAIN=html/basi1q9a.htm
+
+CHARACTER INPUT=html/basi5c8k.htm
+
+CHARACTER INPUT #=html/basi1yd0.htm
+
+CHARACTER PENDING="character input","html/basi5c8k.htm","CHARACTER INPUT #","html/basi1yd0.htm"
+
+CHR$=html/basi09rn.htm
+
+CINT=html/basi3vqr.htm
+
+CIRCLE="Microsoft BASIC","html/basi2oxk.htm#idh_syntax_microsoft","DRAW CIRCLE","html/basi14rp.htm"
+
+CLEAR="character input","html/basi5c8k.htm","CLEAR","html/basi4jle.htm","CHARACTER INPUT #","html/basi1yd0.htm","N88-BASIC","html/basi48tf.htm"
+
+CLOSE=html/basi5g2t.htm
+
+CLS="Microsoft BASIC","html/basi2oxk.htm#idh_syntax_microsoft","N88-BASIC","html/basi48tf.htm"
+
+COLOR=html/basi2oxk.htm#idh_syntax_microsoft
+
+COLOR MIX=html/basi2182.htm
+
+COLOR MODE=html/basi7i05.htm
+
+COLORINDEX=html/basi7i05.htm
+
+COM1=html/basi8d4k.htm
+
+COM2=html/basi8d4k.htm
+
+COMB=html/basi43uc.htm
+
+COMPLEX="Complex Numbers","html/basi62bc.htm","Complex Functions","html/basi2u43.htm"
+
+CON=html/basi4svo.htm
+
+CONJ=html/basi2u43.htm
+
+CONSOLE=html/basi48tf.htm
+
+CONTINUE=html/basi50vi.htm#idh_when_body
+
+COS=html/basi6qar.htm
+
+COSH=html/basi9b8j.htm
+
+COT=html/basi6qar.htm
+
+CSC=html/basi6qar.htm
+
+CSV=html/basi6pgl.htm#idh_write
+
+DATA=html/basi3pep.htm
+
+DATE=html/basi7d7p.htm
+
+DATE$="Time","html/basi7d7p.htm","String functions","html/basi09rn.htm"
+DEBUG=html/basi4kkn.htm
+
+DECIMAL=html/basi4y77.htm
+
+DECLARE=html/basi792m.htm
+
+DECLARE EXTERNAL=html/basi8ejm.htm
+
+DECLARE EXTERNAL FUNCTION=html/basi792m.htm
+
+DECLARE NUMERIC=html/basi3fxh.htm
+
+DECLARE STRING=html/basi18tj.htm
+
+DEF=html/basi40me.htm
+
+DEFDBL=html/basi77lc.htm
+
+DEFINT=html/basi77lc.htm
+
+DEG=html/basi3r5e.htm
+
+DEGREES=html/basi5of9.htm
+
+DELETE=html/basi7cit.htm
+
+DENOM=html/basi4bub.htm
+
+DET=html/basi3d6b.htm
+
+DEVICE=html/basi68xe.htm
+
+DIM="Arrays","html/basi07jt.htm","Imperative DIM","html/basi3xv1.htm"
+
+DIRECTORY=html/basi7cit.htm
+
+DISK=html/basi14rp.htm
+
+DO=html/basi6fg0.htm
+
+DOT=html/basi3d6b.htm
+
+DRAW=html/basi8qjp.htm
+
+DRAW AXES=html/basi0do3.htm
+
+DRAW GRID=html/basi0do3.htm
+
+DRAW MODE=html/basi7p9o.htm
+
+ECHO=html/basi7skv.htm
+
+ELAPSED=html/basi8mck.htm
+
+ELSE=html/basi3nvq.htm
+
+ELSEIF=html/basi7v3a.htm
+
+END="END IF","html/basi3nvq.htm","END SELECT","html/basi7k50.htm","END WHEN","html/basi44ha.htm","END FUNCTION","html/basi4iwe.htm","END FUNCTION (external)","html/basi792m.htm","end","html/basi4484.htm"
+
+END FUNCTION="Function definitions","html/basi4iwe.htm","External function","html/basi792m.htm"
+
+END IF=html/basi3nvq.htm
+
+END SELECT=html/basi7k50.htm
+
+END WHEN=html/basi44ha.htm
+
+ENDOFLINE=html/basi7cit.htm
+
+EOF=html/basi4u3p.htm
+
+EPS=html/basi43g3.htm
+
+EPSÉtÉ@ÉCÉã=html/basi68xe.htm
+
+ERASE=html/basi7485.htm
+
+EXCEPTION="Exception handling","html/basi44ha.htm","cause-exception","html/basi461x.htm"
+
+EXECUTE=html/basi6yjp.htm
+
+EXIT="EXIT DO","html/basi6fg0.htm","EXIT FOR","html/basi6vw4.htm","exit sub (function, picture)","html/basi4ed0.htm"
+
+EXIT DO=html/basi6fg0.htm
+
+EXIT FOR=html/basi6vw4.htm
+
+EXIT FUNCTION=html/basi4ed0.htm
+
+EXIT HANDLER=html/basi3tma.htm
+
+EXIT PICTURE=html/basi4ed0.htm
+
+EXIT SUB=html/basi4ed0.htm
+
+EXP="Exponential","html/basi992k.htm","Complex functions","html/basi2u43.htm"
+
+EXTERNAL FUNCTION=html/basi792m.htm
+
+EXTYPE=html/basi0did.htm
+
+FACT=html/basi43uc.htm
+
+FILE=html/basi7cit.htm
+
+FILE DELETE=html/basi7cit.htm
+
+FILE GETNAME=html/basi7cit.htm
+
+FILE RENAME=html/basi7cit.htm
+
+FILE SPLITNAME=html/basi7cit.htm
+
+FIX=html/basi3vqr.htm
+
+FLOOD=html/basi4810.htm
+
+FONT=html/basi1khg.htm
+
+FOR=html/basi6vw4.htm
+
+FOR APPEND=html/basi4u3p.htm
+
+FOR INPUT=html/basi4u3p.htm
+
+FOR OUTPUT=html/basi4u3p.htm
+
+FP=html/basi9lo3.htm
+
+FUNCTION="Function definition","html/basi4iwe.htm","External function","html/basi792m.htm"
+
+GET=html/basi4a44.htm
+
+GET POINT=html/basi4a44.htm
+
+GETKEYSTATE=html/basic16ck.htm
+
+GLOAD=html/basi3spw.htm
+
+GOSUB=html/basi4484.htm
+
+GOSUBÅ`RETURN=html/basi4484.htm
+
+GOTO=html/basi8o8c.htm
+
+GRAPH=html/basi6aug.htm
+
+GRID=html/basi0do3.htm
+
+GRID0=html/basi0do3.htm
+
+GSAVE=html/basi3spw.htm
+
+HANDLER=html/basi6fjm.htm
+
+HEX$=html/basi3vqr.htm
+
+HIDDEN=html/basi7p9o.htm
+
+IDN=html/basi4svo.htm
+
+IF="IF .. END IF","html/basi3nvq.htm","IF THEN","html/basi8o8c.htm"
+
+IM=html/basi2u43.htm
+
+IMAGE=html/basi1z6v.htm
+
+INKEY$=html/basi3vqr.htm
+
+INPUT="INPUT","html/basi4c6s.htm","Non-fatal exception","html/basi6pwu.htm","files","html/basi9vla.htm"
+
+INPUT #=html/basi4wj8.htm
+
+INPUT ELAPSED=html/basi8mck.htm
+
+INPUT PROMPT=html/basi2wdw.htm
+
+INPUT TIMEOUT=html/basi2qpg.htm
+
+INSTR=html/basi3vqr.htm
+
+INT=html/basi9lo3.htm
+
+INTERNAL=html/basi6pgl.htm
+
+INTSQR=html/basi4bub.htm
+
+INV=html/basi4svo.htm
+
+IP=html/basi9lo3.htm
+
+KANJI=html/basi0ajt.htm
+
+KEY=html/basi7ofn.htm
+
+KILL=html/basi7cit.htm
+
+LBOUND=html/basi3d6b.htm
+
+LCASE$=html/basi09rn.htm
+
+LEFT$=html/basi2pkk.htm
+
+LET=html/basi4px0.htm
+
+LIBRARY=html/basi7ofn.htm
+
+LIMIT=html/basi1rn8.htm
+
+LINE="Microsoft BASIC","html/basi2oxk.htm#idh_syntax_microsoft","Microsoft BASIC","html/basi0hwz.htm"
+
+LINE COLOR=html/basi2f39.htm
+
+LINE INPUT=html/basi03lg.htm
+
+LINE INPUT #=html/basi4wj8.htm
+
+LINE STYLE=html/basi2f39.htm
+
+LINES=html/basi2f39.htm
+
+LOCATE="locate","html/basi6aug.htm","N88-BASIC","html/basi48tf.htm"
+
+LOG="Logarithmic","html/basi992k.htm","Complex functions","html/basi2u43.htm"
+
+LOG10=html/basi992k.htm
+
+LOG2=html/basi992k.htm
+
+LOOP=html/basi6fg0.htm
+
+LPRINT=html/basi77lc.htm
+
+LTRIM$=html/basi09rn.htm
+
+MARGIN="set margin","html/basi29f2.htm","SET statementes (file)","html/basi6o17.htm"
+
+MAT="MAT","html/basi4svo.htm","string operations","html/basi53n8.htm","MAT READ","html/basi2dd0.htm","MAT INPUT","html/basi7bg4.htm","MAT PRINT","html/basi6bqs.htm","MAT REDIM","html/basi20x9.htm#idh_ext_syntax","MAT PLOT","html/basi1rn8.htm","MAT PLOT CELLS","html/basi8tmb.htm","Transform MAT","html/basi2a99.htm"
+
+MAT GRAPH CELLS=html/basi8tmb.htm
+
+MAT INPUT=html/basi7bg4.htm
+
+MAT PLOT=html/basi1rn8.htm
+
+MAT PLOT AREA=html/basi1rn8.htm
+
+MAT PLOT CELLS=html/basi8tmb.htm
+
+MAT PLOT LINES=html/basi1rn8.htm
+
+MAT PLOT POINTS=html/basi1rn8.htm
+
+MAT PRINT=html/basi6bqs.htm
+
+MAT PRINT USING=html/basi76g7.htm
+
+MAT READ=html/basi2dd0.htm
+
+MAT REDIM=html/basi20x9.htm#idh_ext_syntax
+
+mat-cells=html/basi8tmb.htm
+
+MAX=html/basi3r5e.htm
+
+MAXNUM=html/basi43g3.htm
+
+MAXSIZE=html/basi3d6b.htm
+
+MID$=html/basi2pkk.htm
+
+MIN=html/basi3r5e.htm
+
+MIX=html/basi2182.htm
+
+MOD="Numeric functions","html/basi9lo3.htm","Microsoft BASIC","html/basi4tk4.htm"
+
+MODULE=html/basi5vtx.htm
+
+MORE=html/basi7ofn.htm
+
+MOUSE POLL=html/basi1khg.htm
+
+NAME=html/basi9vla.htm
+
+NATIVE=html/basi4y77.htm
+
+NEXT=html/basi6vw4.htm
+
+NOBEAMOFF=html/basi1khg.htm
+
+NOT=html/basi09ws.htm
+
+NOTXOR=html/basi7p9o.htm
+
+NOWAIT="character input","html/basi5c8k.htm","EXECUTE NOWAIT","html/basi6yjp.htm","CHARACTER INPUT #","html/basi1yd0.htm"
+
+NUL$=html/basi53n8.htm
+
+NUMER=html/basi4bub.htm
+
+NUMERIC=html/basi3fxh.htm
+
+ON ERROR GOTO=html/basi7ws2.htm
+
+OPEN="open","html/basi9vla.htm","Microsoft BASIC","html/basi4u3p.htm"
+
+OPTION="option angle","html/basi5of9.htm","option arithmetic","html/basi4y77.htm","OPTION BASE","html/basi07jt.htm"
+
+OPTION ANGLE DEGREES=html/basi5of9.htm
+
+OPTION ANGLE RADIANS=html/basi5of9.htm
+
+OPTION ARITHMETIC COMPLEX=html/basi62bc.htm
+
+OPTION ARITHMETIC DECIMAL=html/basi4y77.htm
+
+OPTION ARITHMETIC NATIVE=html/basi4y77.htm
+
+OPTION ARITHMETIC RATIONAL=html/basi36ek.htm
+
+OPTION BASE=html/basi07jt.htm
+
+OPTION CHARACTER=html/basi0ajt.htm
+
+OR=html/basi09ws.htm
+
+ORD=html/basi09rn.htm
+
+ORG=html/basi7ofm.htm
+
+ORGANIZATION=html/basi56el.htm
+
+OUTIN=html/basi9vla.htm
+
+OUTPUT=html/basi9vla.htm
+
+OVERWRITE=html/basi7p9o.htm
+
+PAINT="Microsoft BASIC","html/basi2oxk.htm#idh_syntax_microsoft","Original Enhancement","html/basi4810.htm"
+
+PAUSE=html/basi5m3y.htm
+
+PDF=html/basi68xe.htm
+
+PENDING="character input","html/basi5c8k.htm","CHARACTER INPUT #","html/basi1yd0.htm"
+
+PERM=html/basi43uc.htm
+
+PI=html/basi3r5e.htm
+
+PICTURE=html/basi8qjp.htm
+
+PIXEL=html/basi42zw.htm
+
+PIXEL ARRAY=html/basi42zw.htm#idh_ask_pixel_array
+
+PIXEL SIZE=html/basi42zw.htm#idh_pixel_size
+
+PIXEL VALUE=html/basi42zw.htm
+
+PIXELX=html/basi710l.htm
+
+PIXELY=html/basi710l.htm
+
+PLAY=html/basi6yjp.htm
+
+PLOT="PLOT AREA","html/basi1e3l.htm","PLOT LINES","html/basi2f39.htm","PLOT POINTS","html/basi6ho4.htm","PLOT TEXT","html/basi714k.htm","True BASIC","html/basi2083.htm","PLOT x, y","html/basi6qzy.htm"
+
+PLOT AREA=html/basi1e3l.htm
+
+PLOT LINES=html/basi2f39.htm
+
+PLOT POINTS=html/basi6ho4.htm
+
+PLOT TEXT=html/basi714k.htm
+
+POINT=html/basi4a44.htm
+
+POINT COLOR=html/basi6ho4.htm
+
+POINT STYLE=html/basi6ho4.htm
+
+POINTER BEGIN=html/basi5icy.htm
+
+POINTER END=html/basi5icy.htm
+
+POINTS=html/basi6ho4.htm
+
+POLL=html/basi1khg.htm
+
+POS=html/basi09rn.htm
+
+PostScript=html/basi68xe.htm
+
+PRINT=html/basi3chg.htm
+
+PRINT #=html/basi3wtw.htm
+
+PRINT USING=html/basi1z6v.htm
+
+PRINTER="Graphics device","html/basi68xe.htm","PRINTER","html/basi8lv6.htm"
+
+PRIVATE=html/basi7ofn.htm
+
+PROBLEMX=html/basi710l.htm
+
+PROBLEMY=html/basi710l.htm
+
+PROGRAM=html/basi1q9a.htm
+
+PROMPT=html/basi2wdw.htm
+
+PSET="Microsoft BASIC","html/basi2oxk.htm#idh_syntax_microsoft","Microsoft BASIC","html/basi0hwz.htm"
+
+PUBLIC=html/basi5vtx.htm
+
+RAD=html/basi3r5e.htm
+
+RADIANS=html/basi5of9.htm
+
+RANDOMIZE=html/basi6c31.htm
+
+RATIONAL=html/basi36ek.htm
+
+RE=html/basi2u43.htm
+
+READ=html/basi3pep.htm
+
+READ IF MISSING=html/basi04iv.htm
+
+RECTYPE=html/basi6pgl.htm
+
+REDIM=html/basi20x9.htm#idh_ext_syntax
+
+REMAINDER=html/basi9lo3.htm
+
+RENAME=html/basi7cit.htm
+
+REPEAT$=html/basi09rn.htm
+
+RESTORE=html/basi3pep.htm
+
+RESUME=html/basi7ws2.htm
+
+RETRY=html/basi50vi.htm#idh_when_body
+
+RETURN=html/basi4484.htm
+
+RIGHT$=html/basi2pkk.htm
+
+RND=html/basi6c31.htm
+
+ROTATE=html/basi8qjp.htm
+
+ROUND=html/basi9lo3.htm
+RTRIM$=html/basi09rn.htm
+
+SCALE=html/basi8qjp.htm
+
+SCREEN=html/basi2oxk.htm#idh_syntax_microsoft
+
+SEC=html/basi6qar.htm
+
+SELECT CASE=html/basi7k50.htm
+
+SET="COLOR","html/basi2182.htm","POINT","html/basi6ho4.htm","LINE","html/basi2f39.htm","PLOT AREA","html/basi1e3l.htm","PLOT TEXT","html/basi714k.htm#idh_set_text_justify","Bitmap","html/basi1khg.htm"
+
+SET AREA COLOR=html/basi1e3l.htm
+
+SET BITMAP SIZE=html/basi4x9h.htm
+
+SET COLOR MIX=html/basi2182.htm
+
+SET COLOR MODE=html/basi7i05.htm
+
+SET DIRECTORY=html/basi7cit.htm
+
+SET ECHO=html/basi7skv.htm
+
+SET LINE COLOR=html/basi2f39.htm
+
+SET LINE STYLE=html/basi2f39.htm
+
+SET MARGIN=html/basi29f2.htm
+
+SET POINT COLOR=html/basi6ho4.htm
+
+SET POINT STYLE=html/basi6ho4.htm
+
+SET TEXT COLOR=html/basi714k.htm
+
+SET TEXT FONT=html/basi1khg.htm
+
+SET TEXT HEIGHT=html/basi714k.htm#idh_set_text_justify
+
+SET TEXT JUSTIFY=html/basi714k.htm#idh_set_text_justify
+
+SET WINDOW=html/basi35mf.htm
+
+SET ZONEWIDTH=html/basi29f2.htm
+
+SETUP.BAT=html/basi14xc.htm
+
+SGN=html/basi9lo3.htm
+
+SHARE=html/basi5vtx.htm
+
+SHEAR=html/basi8qjp.htm
+
+SHIFT=html/basi8qjp.htm
+
+SIN=html/basi6qar.htm
+
+SINH=html/basi9b8j.htm
+
+SIZE="SIZE function","html/basi3d6b.htm","PIXEL SIZE","html/basi42zw.htm#idh_pixel_size"
+
+SPACE$=html/basi3vqr.htm
+
+SPC=html/basi3vqr.htm
+
+SPLITNAME=html/basi7cit.htm
+
+SQR="Numeric functions","html/basi9lo3.htm","Complex functions","html/basi2u43.htm"
+
+STEP=html/basi6vw4.htm
+
+STOP=html/basi8o8c.htm
+
+STR$=html/basi09rn.htm
+
+STREAM=html/basi56el.htm
+
+STRING=html/basi18tj.htm
+
+STRING$=html/basi3vqr.htm
+
+SUB="Internal subprogram","html/basi5cte.htm","EXTERNAL SUB","html/basi8ejm.htm"
+
+SUBSTR$=html/basi2pkk.htm
+
+SWAP=html/basi5gab.htm
+
+TAB=html/basi3chg.htm
+
+TAN=html/basi6qar.htm
+
+TANH=html/basi9b8j.htm
+
+TEXT=html/basi714k.htm
+
+TEXT FONT=html/basi1khg.htm
+
+TEXT JUSTIFY=html/basi714k.htm#idh_set_text_justify
+
+THEN=html/basi3nvq.htm
+
+TIME=html/basi7d7p.htm
+
+TIME$="Time","html/basi7d7p.htm","String functions","html/basi09rn.htm"
+
+TIMEOUT=html/basi2qpg.htm
+
+TO="DIM","html/basi07jt.htm","CASE","html/basi7k50.htm","FOR","html/basi6vw4.htm"
+
+TRACE=html/basi4kkn.htm
+
+TRANSFORM=html/basi2a99.htm
+
+TRN=html/basi4svo.htm
+
+True BASIC=html/basi2083.htm
+
+TRUNCATE=html/basi9lo3.htm
+
+TYPO=html/basi7ofn.htm
+
+UBOUND=html/basi3d6b.htm
+
+UCASE$=html/basi09rn.htm
+
+UNSAVE=html/basi7cit.htm
+
+UNTIL=html/basi6fg0.htm
+
+USE=html/basi44ha.htm
+
+USING="PRINT USING","html/basi1z6v.htm","MAT PRINT USING","html/basi76g7.htm"
+
+USING$=html/basi09rn.htm
+
+VAL=html/basi09rn.htm
+
+WAIT DELAY=html/basi5m3y.htm
+
+WEND=html/basi3oz0.htm
+
+WHEN="WHEN EXCEPTION IN","html/basi44ha.htm","WHEN EXCEPTION USE","html/basi6fjm.htm"
+
+WHEN EXCEPTION IN=html/basi44ha.htm
+
+WHEN EXCEPTION USE=html/basi6fjm.htm
+
+WHILE="DO WHILE, LOOP WHILE',"html/basi6fg0.htm",'WHILE .. WEND","html/basi3oz0.htm"
+
+WINDOW="Microsoft BASIC","html/basi2oxk.htm#idh_syntax_microsoft","SET WINDOW","html/basi35mf.htm","Microsoft BASIC","html/basi0hwz.htm"
+
+WITH=html/basi8qjp.htm
+
+WORLDX=html/basi710l.htm
+
+WORLDY=html/basi710l.htm
+
+WRITE=html/basi6pgl.htm
+
+ZER=html/basi4svo.htm
+
+ZONEWIDTH=html/basi29f2.htm
+
