@@ -14,6 +14,7 @@ A Raku implementation of a True BASIC interpreter supporting:
 =end pod
 
 use v6.d;
+use Graphics;
 
 class TrueBASICInterpreter {
     has %.variables;
@@ -680,6 +681,11 @@ class TrueBASICInterpreter {
         die "Missing comma in PLOT statement" unless @tokens[1] eq ',';
         my $y = self.evaluate-expression([@tokens[2]]);
         
+        # Use web graphics if in web mode
+        if $!graphics-mode eq 'web' {
+            plot($x, $y);
+        }
+        
         @!plot-points.push({ x => $x, y => $y });
         say "Plotted point at ($x, $y)" if $!debug;
     }
@@ -694,6 +700,11 @@ class TrueBASICInterpreter {
         my $x2 = self.evaluate-expression([@tokens[4]]);
         die "Missing comma in LINE statement" unless @tokens[5] eq ',';
         my $y2 = self.evaluate-expression([@tokens[6]]);
+        
+        # Use web graphics if in web mode
+        if $!graphics-mode eq 'web' {
+            draw-line($x1, $y1, $x2, $y2);
+        }
         
         @!plot-lines.push({ x1 => $x1, y1 => $y1, x2 => $x2, y2 => $y2 });
         say "Drew line from ($x1, $y1) to ($x2, $y2)" if $!debug;
@@ -737,6 +748,12 @@ class TrueBASICInterpreter {
         }
         
         %!window = x-min => $x1, y-min => $y1, x-max => $x2, y-max => $y2;
+        
+        # Update web graphics window if in web mode
+        if $!graphics-mode eq 'web' {
+            set-window($x1, $x2, $y1, $y2);
+        }
+        
         say "Set window to ($x1, $y1) - ($x2, $y2)" if $!debug;
     }
     
@@ -745,6 +762,9 @@ class TrueBASICInterpreter {
             if @!plot-points || @!plot-lines || @!plot-circles {
                 if $!graphics-mode eq 'ascii' {
                     self.show-ascii-plot();
+                } elsif $!graphics-mode eq 'web' {
+                    save-graphics("web_plot.html");
+                    say "Web plot saved to web_plot.html";
                 } else {
                     self.generate-svg();
                     say "Plot saved to $!plot-file";
@@ -767,11 +787,17 @@ class TrueBASICInterpreter {
     method execute-graphics(@tokens) {
         if @tokens {
             my $mode = @tokens[0].lc;
-            if $mode eq 'svg' || $mode eq 'ascii' {
+            if $mode eq 'svg' || $mode eq 'ascii' || $mode eq 'web' {
                 $!graphics-mode = $mode;
                 say "Graphics mode set to $mode";
+                
+                # Initialize web graphics if needed
+                if $mode eq 'web' {
+                    init-graphics(800, 600);
+                    set-window(0, 10, 0, 10); # Default window
+                }
             } else {
-                say "Invalid graphics mode. Use 'svg' or 'ascii'";
+                say "Invalid graphics mode. Use 'svg', 'ascii', or 'web'";
             }
         } else {
             say "Current graphics mode: $!graphics-mode";

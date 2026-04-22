@@ -31,6 +31,9 @@ enum RecordType is export <rcDISPLAY rcINTERNAL rcCSV>;
 # Organization types for file operations
 enum OrganizationType is export <orgSEQ orgSTREAM>;
 
+# Option appearance levels for OPTION statements
+enum OptionAppearance is export <ApNone ApUnit ApModule>;
+
 # Break directives corresponding to Pascal constants
 constant $bkCancel = 0;
 constant $bkStep = 1;

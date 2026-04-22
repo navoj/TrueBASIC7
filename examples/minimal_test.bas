@@ -1,0 +1,6 @@
+! Very simple test
+GRAPHICS WEB
+WINDOW 0, 0, 10, 10
+PLOT 5, 5
+SHOW PLOT
+END

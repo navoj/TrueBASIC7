@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
-<rect width="400" height="300" fill="white" stroke="black" stroke-width="1"/>
-<line x1="20" y1="20" x2="20" y2="280" stroke="gray" stroke-width="1"/>
-<line x1="20" y1="280" x2="380" y2="280" stroke="gray" stroke-width="1"/>
-<line x1="74" y1="241" x2="74" y2="189" stroke="blue" stroke-width="2"/>
-<line x1="74" y1="189" x2="146" y2="189" stroke="blue" stroke-width="2"/>
-<line x1="146" y1="189" x2="146" y2="241" stroke="blue" stroke-width="2"/>
-</svg>

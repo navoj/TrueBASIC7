@@ -15,146 +15,13 @@ use Base;
 use Variable;
 use Expression;
 use Statement;
+use Routine;
+use ProgramUnit;
+use Module;
 
 # Program unit types
-enum ProgramKind is export <MainProgram Module DefFunction SubProgram PictureProgram Handler>;
+enum ProgramKind is export <MainProgram ModuleProgram DefFunction SubProgram PictureProgram Handler>;
 
-# Routine class (corresponding to TRoutine)
-class Routine is export {
-    has IdRec $.result-var;
-    has Str $.name;
-    has IdTable $.var-table .= new;
-    has Int $.param-count = 0;
-    has Statement $.block;
-    has $.run-procedure;
-    has $.do-before;
-    has @.goto-list;
-    has Str $.kind = ''; # #0:MainProgram, M:module, D:def, F:function, S:sub, P:picture, H:Handler
-    has Bool $.by-val = False;
-    has Bool $.no-beam-off = False;
-    
-    method new(Str $name, Str $kind, Int $maxlen = 0) {
-        self.bless: :$name, :$kind;
-    }
-    
-    method set-result-var(Precision $arith) {
-        # Implementation depends on arithmetic precision mode
-        given $arith {
-            when PrecisionNormal { # Create appropriate variable }
-            when PrecisionComplex { # Create complex variable }
-            # etc.
-        }
-    }
-    
-    method make-parameter() {
-        # Set up parameters for routine
-    }
-    
-    method routine-body() {
-        # Execute the routine body
-        $!block.exec() if $!block.defined;
-    }
-    
-    method delete-statements() {
-        # Clean up statements
-    }
-    
-    method var-tables-rebuild() { ... } # Abstract method
-    
-    method label-complete() {
-        # Complete label processing
-    }
-    
-    method is-function() returns Bool {
-        return $!kind eq 'F' || $!kind eq 'D';
-    }
-    
-    method set-breakpoint(Int $line, Bool $enable) returns Bool {
-        return $!block.set-breakpoint($line, $enable) if $!block.defined;
-        return False;
-    }
-}
-
-# Program unit class (corresponding to TProgramUnit)
-class ProgramUnit is Routine is export {
-    has Int $.line-number = 0;
-    has Module $.parent;
-    has IdTable $.external-var-table .= new;
-    has IdTable $.external-sub-table .= new;
-    has @.data-sequence;
-    has @.image-list;
-    has @.trace-list;
-    has Precision $.arithmetic = PrecisionNormal;
-    has Int $.array-base = 1;
-    has Bool $.angle-degrees = False;
-    has Bool $.character-byte = False;
-    has Bool $.debug = False;
-    has OptionAppearance $.option-arithmetic = ApNone;
-    has OptionAppearance $.option-angle = ApNone;
-    has OptionAppearance $.option-base = ApNone;
-    has OptionAppearance $.option-collate = ApNone;
-    has Bool $.dim-appeared = False;
-    
-    method new(Str $name, Str $kind, Int $maxlen = 0, Module $parent?) {
-        self.bless: :$name, :$kind, :$parent;
-    }
-    
-    method channel-sub(Int $ch, Bool $can-insert) {
-        # Return text device for channel
-    }
-    
-    method channel(Int $ch) {
-        # Return text device for channel
-    }
-    
-    method open-printer(Int $ch) {
-        # Open printer on channel
-    }
-    
-    method open(Int $ch, Str $filename, AccessMode $am, RecordType $rc, OrganizationType $og, Int $len) {
-        # Open file
-    }
-    
-    method close(Int $ch) {
-        # Close channel
-    }
-    
-    method routine-body() {
-        # Execute program unit body
-        $!block.exec() if $!block.defined;
-    }
-    
-    method var-tables-rebuild() {
-        # Rebuild variable tables
-        $!var-table = IdTable.new;
-        $!external-var-table = IdTable.new;
-        $!external-sub-table = IdTable.new;
-    }
-}
-
-# Module class (corresponding to TModule)
-class Module is ProgramUnit is export {
-    has IdTable $.share-var-table .= new;
-    has IdTable $.share-sub-table .= new;
-    
-    method new(Str $name, Str $kind = 'M') {
-        self.bless: :$name, :$kind;
-    }
-    
-    method run-module() {
-        self.routine-body();
-    }
-    
-    method run-main() {
-        self.routine-body();
-    }
-    
-    method var-tables-rebuild() {
-        callsame();
-        $!share-var-table = IdTable.new;
-        $!share-sub-table = IdTable.new;
-    }
-}
 
 # Procedure table for managing routines
 class ProcedureTable is export {
@@ -202,9 +69,9 @@ class ProcedureTable is export {
 # Main compiler class
 class BasicCompiler is export {
     has ProcedureTable $.current-program .= new;
-    has Module $.main-program;
-    has ProgramUnit $.program-unit;
-    has Module $.current-module;
+    has Module $.main-program is required;
+    has ProgramUnit $.program-unit is required;
+    has Module $.current-module is required;
     has @.source-lines;
     has Int $.current-line = 0;
     has Bool $.recompile = False;

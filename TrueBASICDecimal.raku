@@ -29,6 +29,7 @@ use Variable;
 use Expression;
 use Compiler;
 use Statement;
+use Graphics;
 
 # Main TrueBASIC interpreter class
 class TrueBASICDecimalInterpreter is export {
@@ -56,9 +57,16 @@ class TrueBASICDecimalInterpreter is export {
         $initialOptionBase = %!options<array-base>;
         $initialCharacterByte = %!options<character-byte>;
         
-        say "TrueBASIC Decimal Interpreter v1.0" if $!debug;
+        say "TrueBASIC/Decimal BASIC Interpreter v1.0" if $!debug;
         say "Translated from Decimal BASIC Pascal source" if $!debug;
         say "Precision Mode: {%PrecisionText{%!options<precision>}}" if $!debug;
+        
+        # Initialize graphics system
+        if init-graphics() {
+            say "Graphics system initialized successfully." if $!debug;
+        } else {
+            say "Graphics system initialization failed - running in text mode." if $!debug;
+        }
     }
     
     # Main entry point for file execution
@@ -81,6 +89,13 @@ class TrueBASICDecimalInterpreter is export {
                 
                 # Execute the program
                 $!compiler.run();
+                
+                # Keep graphics window open if graphics were used
+                if Graphics::$graphics-context.graphics-active && !$!interactive {
+                    say "Graphics window active. Press Enter to continue..." if $!debug;
+                    get();
+                }
+                
                 return True;
             } else {
                 say "Compilation failed.";
@@ -448,6 +463,18 @@ This is a comprehensive True BASIC interpreter translated from the Decimal BASIC
 =item --degrees        Use degrees for angle functions (default: radians)
 =item --base=N         Set array base to 0 or 1 (default: 1)
 
+=head1 GRAPHICS
+
+The graphics system uses GTK::Simple for rendering. Graphics commands include:
+
+=item SET WINDOW - Define coordinate system
+=item SET VIEWPORT - Define display area  
+=item PLOT - Draw points and lines
+=item PLOT LINES - Draw connected segments
+=item PLOT AREA - Draw filled polygons
+
+Graphics can be exported to SVG or PNG format (requires Cairo module).
+
 =head1 AUTHOR
 
 Translated from Pascal to Raku by AI Assistant
@@ -455,3 +482,8 @@ Based on Decimal BASIC by SHIRAISHI Kazuo
 For Jovan Trujillo, Arizona State University
 
 =end pod
+
+# Cleanup on exit
+END {
+    cleanup-graphics();
+}

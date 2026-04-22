@@ -16,12 +16,14 @@ use Base;
 use Variable;
 use Expression;
 
-# Forward declarations
+# Forward declarations for local classes only
 class Statement { ... }
-class Routine { ... }
-class ProgramUnit { ... }
-class Module { ... }
 class WhenException { ... }
+
+# Statement execution role for graphics commands and other executable statements
+role TBStatement is export {
+    method exec() { ... } # Must be implemented by classes that do this role
+}
 
 # Control exception classes
 class ControlException is Exception is export {
@@ -121,8 +123,8 @@ class Statement is export {
     has Statement $.previous;
     has Statement $.eldest;
     has WhenException $.when-block;
-    has Routine $.proc;
-    has ProgramUnit $.punit;
+    has $.proc; # Untyped to avoid circular dependency
+    has $.punit; # Untyped to avoid circular dependency
     has $.stop-key-sense;
     
     method new(Statement $prev?, Statement $eld?) {

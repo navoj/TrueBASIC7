@@ -1,0 +1,3 @@
+! Debug test
+GRAPHICS WEB
+END

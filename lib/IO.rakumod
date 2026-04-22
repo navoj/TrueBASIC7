@@ -132,12 +132,12 @@ class Input is export {
     has Int $.count = 0;
     has Int $.line-number = 0;
     has Str $.prompt = '';
-    has Num $.time-limit = 0.0;
+    has Num $.time-limit = 0e0;
     has IOOptions $.options = ioNONE;
     has TextDevice $.device;
     
     method new(@variables, Int :$count, Int :$line-number = 0,
-               Str :$prompt = '', Num :$time-limit = 0.0,
+               Str :$prompt = '', Num :$time-limit = 0e0,
                IOOptions :$options = ioNONE, 
                TextDevice :$device = $console) {
         self.bless(
@@ -224,12 +224,12 @@ class LineInput is export {
     has Int $.count = 0;
     has Int $.line-number = 0;
     has Str $.prompt = '';
-    has Num $.time-limit = 0.0;
+    has Num $.time-limit = 0e0;
     has IOOptions $.options = ioNONE;
     has TextDevice $.device;
     
     method new(@variables, Int :$count, Int :$line-number = 0,
-               Str :$prompt = '', Num :$time-limit = 0.0,
+               Str :$prompt = '', Num :$time-limit = 0e0,
                IOOptions :$options = ioNONE,
                TextDevice :$device = $console) {
         self.bless(
@@ -266,12 +266,12 @@ class CharacterInput is export {
     has Variable $.variable;
     has Int $.line-number = 0;
     has Str $.prompt = '';
-    has Num $.time-limit = 0.0;
+    has Num $.time-limit = 0e0;
     has IOOptions $.options = ioNONE;
     has TextDevice $.device;
     
     method new(Variable $variable, Int :$line-number = 0,
-               Str :$prompt = '', Num :$time-limit = 0.0,
+               Str :$prompt = '', Num :$time-limit = 0e0,
                IOOptions :$options = ioNONE,
                TextDevice :$device = $console) {
         self.bless(
@@ -363,7 +363,7 @@ sub string-to-number(Str $s, Variable $var) returns Any is export {
             }
             when CVari {
                 # Parse complex number "a+bi" or "a+b*i"
-                my $complex-match = $s ~~ /^(<[-+]>?\d+(?:\.\d+)?)\s*<[+\-]>\s*(\d+(?:\.\d+)?)\s*\*?\s*i$/;
+                my $complex-match = $s ~~ /^ (<[-+]>? \d+ ['.' \d+]?) \s* <[+\-]> \s* (\d+ ['.' \d+]?) \s* '*'? \s* i $/;
                 if $complex-match {
                     return Complex.new($complex-match[0].Num, $complex-match[1].Num);
                 } else {
