@@ -63,7 +63,9 @@ grammar TrueBASICGrammar {
         | 'IDN' [ '(' <expression-list> ')' ]?
         | 'TRN' '(' <identifier> ')'
         | 'INV' '(' <identifier> ')'
-        | <identifier> [ '*' <identifier> ]?
+        | '(' <expression> ')' '*' <identifier>
+        | <identifier> <[*+\-]> <identifier>
+        | <identifier>
         | <expression>
     }
 
@@ -834,6 +836,23 @@ class TrueBASICInterpreter {
         return $line;
     }
 
+    method split-on-colon(Str $line --> List) {
+        # Don't split lines containing special colon syntax
+        my $trimmed = $line.trim;
+        return ($line,) if $trimmed ~~ /:i ^ \d* \s* [ 'OPEN' | 'PRINT' \s* '#' | 'INPUT' \s* '#' | 'PLOT' \s+ 'TEXT'
+                                           | 'INPUT' \s+ 'PROMPT' | 'LINE' \s+ 'INPUT' ] /;
+        my @parts;
+        my $current = '';
+        my $in-string = False;
+        for $line.comb -> $ch {
+            if $ch eq '"' { $in-string = !$in-string; $current ~= $ch }
+            elsif $ch eq ':' && !$in-string { @parts.push($current); $current = '' }
+            else { $current ~= $ch }
+        }
+        @parts.push($current) if $current.trim ne '';
+        return @parts.elems > 0 ?? @parts.List !! ($line,);
+    }
+
     method load-source(Str $source) {
         my $grammar = TrueBASICGrammar;
         my $actions = TrueBASICActions.new;
@@ -858,11 +877,16 @@ class TrueBASICInterpreter {
                 # Strip inline ! comments (not inside strings)
                 my $line = self.strip-inline-comment($raw-line);
                 next if $line.trim eq '';
-                my $m = $grammar.parse($line, :$actions, rule => 'line');
-                if $m && $m.made {
-                    @!program.push($m.made);
-                } else {
-                    say "⚠ Skipped: $line" if $!debug;
+                # Split on colon multi-statement separator (but not inside strings or special syntax)
+                my @stmts = self.split-on-colon($line);
+                for @stmts -> $stmt {
+                    next if $stmt.trim eq '';
+                    my $m = $grammar.parse($stmt, :$actions, rule => 'line');
+                    if $m && $m.made {
+                        @!program.push($m.made);
+                    } else {
+                        say "⚠ Skipped: $stmt" if $!debug;
+                    }
                 }
             }
         }
@@ -1721,6 +1745,27 @@ class TrueBASICInterpreter {
             return;
         }
 
+        # MAT C = A + B or MAT C = A - B (element-wise add/subtract)
+        if $rhs ~~ /:i ^ (\w+) \s* (<[+\-]>) \s* (\w+) $ / {
+            my $an = (~$0).uc;
+            my $op = ~$1;
+            my $bn = (~$2).uc;
+            return unless (%!arrays{$an}:exists) && (%!arrays{$bn}:exists);
+            my $A = %!arrays{$an};
+            my $B = %!arrays{$bn};
+            my $rows = $A.elems - 1;
+            my $cols = ($A[1] ~~ Array ?? $A[1].elems - 1 !! 1);
+            %!arrays{$n} = self.make-array([$rows, $cols]);
+            for 1..$rows -> $i {
+                for 1..$cols -> $j {
+                    my $av = self.to-num($A[$i] ~~ Array ?? $A[$i][$j] !! $A[$i]);
+                    my $bv = self.to-num($B[$i] ~~ Array ?? $B[$i][$j] !! $B[$i]);
+                    %!arrays{$n}[$i][$j] = $op eq '+' ?? $av + $bv !! $av - $bv;
+                }
+            }
+            return;
+        }
+
         # MAT A = TRN(B)  (transpose)
         if $rhs ~~ /:i ^ 'TRN' \s* '(' \s* (\w+) \s* ')' $ / {
             my $sn = (~$0).uc;
@@ -2129,7 +2174,9 @@ class TrueBASICInterpreter {
         # Boxes
         for @!plot-boxes -> %b {
             my ($bx, $by, $bw, $bh) = tx(%b<x1>), ty(%b<y2>), tx(%b<x2>) - tx(%b<x1>), ty(%b<y1>) - ty(%b<y2>);
-            @svg.push: qq[<rect x="$bx" y="$by" width="$bw" height="$bh" fill="none" stroke="{rgb(%b<color>)}" stroke-width="1.5"/>];
+            my $fill = %b<fill> ?? rgb(%b<color>) !! 'none';
+            my $opacity = %b<fill> ?? ' fill-opacity="0.5"' !! '';
+            @svg.push: qq[<rect x="$bx" y="$by" width="$bw" height="$bh" fill="$fill"$opacity stroke="{rgb(%b<color>)}" stroke-width="1.5"/>];
         }
 
         # Lines
@@ -2285,6 +2332,15 @@ class TrueBASICInterpreter {
                 $first = False;
             }
             @js.push: "ctx.closePath(); ctx.fill(); ctx.globalAlpha=1.0;";
+        }
+
+        # Boxes
+        for @!plot-boxes -> %b {
+            my $bx1 = %b<x1>; my $by1 = %b<y1>; my $bx2 = %b<x2>; my $by2 = %b<y2>;
+            my $fill = %b<fill> ?? 'true' !! 'false';
+            @js.push: "setColor(ctx,{%b<color>}); ctx.lineWidth=1.5;";
+            @js.push: "ctx.beginPath(); ctx.rect(tx({$bx1}),ty({$by2}),tx({$bx2})-tx({$bx1}),ty({$by1})-ty({$by2}));";
+            @js.push: ($fill eq 'true' ?? "ctx.globalAlpha=0.5; ctx.fill(); ctx.globalAlpha=1.0; ctx.stroke();" !! "ctx.stroke();");
         }
 
         # Lines
@@ -2487,6 +2543,7 @@ class PlotRenderer {
             set-cr-color($cr, %b<color>);
             $cr.rectangle(tx(%b<x1>).Num, ty(%b<y2>).Num,
                           (tx(%b<x2>) - tx(%b<x1>)).Num, (ty(%b<y1>) - ty(%b<y2>)).Num);
+            if %b<fill> { $cr.fill-preserve; }
             $cr.stroke;
         }
 
