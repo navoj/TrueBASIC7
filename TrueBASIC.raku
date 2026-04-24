@@ -837,9 +837,13 @@ class TrueBASICInterpreter {
     }
 
     method split-on-colon(Str $line --> List) {
-        # Don't split lines containing special colon syntax
+        # Don't split lines containing special colon syntax (True BASIC uses : in many places)
         my $trimmed = $line.trim;
-        return ($line,) if $trimmed ~~ /:i ^ \d* \s* [ 'OPEN' | 'PRINT' \s* '#' | 'INPUT' \s* '#' | 'PLOT' \s+ 'TEXT'
+        # Strip leading line number
+        my $check = $trimmed;
+        $check = $check.subst(/^ \d+ \s+/, '');
+        return ($line,) if $check ~~ /:i ^ [ 'OPEN' \s | 'PRINT' \s* '#' | 'INPUT' \s* '#'
+                                           | 'PLOT' \s+ [ 'TEXT' | 'LINES' | 'AREA' | 'POINTS' ]
                                            | 'INPUT' \s+ 'PROMPT' | 'LINE' \s+ 'INPUT' ] /;
         my @parts;
         my $current = '';
@@ -2084,7 +2088,8 @@ class TrueBASICInterpreter {
     method exec-pause($dur-expr) {
         my $secs = $dur-expr ?? self.eval($dur-expr) !! 0;
         if $secs > 0 { sleep $secs }
-        else { print "Press Enter to continue..."; $*IN.get }
+        elsif $*IN.t { print "Press Enter to continue..."; $*IN.get }
+        # Skip pause when stdin is not a TTY (non-interactive)
     }
 
     method exec-open-screen(%s) {
