@@ -38,87 +38,114 @@ grammar TrueBASICGrammar {
 
     token line-number { \d+ }
     token blank-line  { ^^ \s* $$ }
-    token comment     { [ '!' | 'REM' ] \N* }
+    token comment     { [ '!' | :i 'REM' ] \N* }
 
     proto rule statement {*}
 
     # Variable assignment
-    rule statement:sym<let>       { 'LET' <assignment> }
+    rule statement:sym<let>       { :i 'LET' <assignment> }
     rule statement:sym<assign>    { <assignment> }
 
     # I/O
-    rule statement:sym<print>     { 'PRINT' <print-list>? }
-    rule statement:sym<input>     { 'INPUT' [ <string-expr> ';' ]? <identifier> }
+    rule statement:sym<print>     { :i 'PRINT' <print-list>? }
+    rule statement:sym<input-prompt> { :i 'INPUT' 'PROMPT' <expression> ':' <identifier>+ % ',' }
+    rule statement:sym<input>     { :i 'INPUT' [ <string-expr> ';' ]? <identifier>+ % ',' }
+    rule statement:sym<mat-print> { :i 'MAT' 'PRINT' <identifier> [ ';' | ',' ]? }
+    rule statement:sym<mat-read>  { :i 'MAT' 'READ' <identifier> }
+    rule statement:sym<mat-redim> { :i 'MAT' 'REDIM' <identifier> '(' <expression-list> ')' }
+    rule statement:sym<mat-input> { :i 'MAT' 'INPUT' <identifier> }
 
     # Control flow
-    rule statement:sym<if>        { 'IF' <condition> 'THEN' <statement> [ 'ELSE' <else=statement> ]? }
-    rule statement:sym<goto>      { 'GOTO' <line-number> }
-    rule statement:sym<gosub>     { 'GOSUB' <line-number> }
-    rule statement:sym<return>    { 'RETURN' }
-    rule statement:sym<for>       { 'FOR' <identifier> '=' <expression> 'TO' <expression> [ 'STEP' <expression> ]? }
-    rule statement:sym<next>      { 'NEXT' <identifier>? }
-    rule statement:sym<do>        { 'DO' [ $<condition-type>=[ 'WHILE' | 'UNTIL' ] <condition> ]? }
-    rule statement:sym<loop>      { 'LOOP' [ $<condition-type>=[ 'UNTIL' | 'WHILE' ] <condition> ]? }
-    rule statement:sym<while>     { 'WHILE' <condition> }
-    rule statement:sym<wend>      { 'WEND' }
-    rule statement:sym<exit>      { 'EXIT' [ 'DO' | 'FOR' | 'SUB' | 'FUNCTION' ]? }
+    rule statement:sym<if-block>  { :i 'IF' <condition> 'THEN' $$ }
+    rule statement:sym<if>        { :i 'IF' <condition> 'THEN' <statement> [ 'ELSE' <else=statement> ]? }
+    rule statement:sym<else>      { :i 'ELSE' }
+    rule statement:sym<elseif>    { :i 'ELSEIF' <condition> 'THEN' }
+    rule statement:sym<end-if>    { :i 'END' 'IF' }
+    rule statement:sym<goto>      { :i 'GOTO' <line-number> }
+    rule statement:sym<gosub>     { :i 'GOSUB' <line-number> }
+    rule statement:sym<return>    { :i 'RETURN' }
+    rule statement:sym<for>       { :i 'FOR' <identifier> '=' <expression> 'TO' <expression> [ 'STEP' <expression> ]? }
+    rule statement:sym<next>      { :i 'NEXT' <identifier>? }
+    rule statement:sym<do>        { :i 'DO' [ $<condition-type>=[ 'WHILE' | 'UNTIL' ] <condition> ]? }
+    rule statement:sym<loop>      { :i 'LOOP' [ $<condition-type>=[ 'UNTIL' | 'WHILE' ] <condition> ]? }
+    rule statement:sym<while>     { :i 'WHILE' <condition> }
+    rule statement:sym<wend>      { :i 'WEND' }
+    rule statement:sym<exit>      { :i 'EXIT' [ 'DO' | 'FOR' | 'SUB' | 'FUNCTION' ]? }
 
     # Data
-    rule statement:sym<dim>       { 'DIM' <dim-item>+ % ',' }
-    rule statement:sym<read>      { 'READ' <identifier>+ % ',' }
-    rule statement:sym<data>      { 'DATA' <data-item>+ % ',' }
-    rule statement:sym<restore>   { 'RESTORE' }
+    rule statement:sym<dim>       { :i 'DIM' <dim-item>+ % ',' }
+    rule statement:sym<read>      { :i 'READ' <read-target>+ % ',' }
+    rule statement:sym<data>      { :i 'DATA' <data-item>+ % ',' }
+    rule statement:sym<restore>   { :i 'RESTORE' }
+
+    # Options
+    rule statement:sym<option>    { :i 'OPTION' [ 'NOLET' | 'BASE' <expression> | 'ANGLE' [ 'DEGREES' | 'RADIANS' ] ] }
 
     # Subroutines and functions
-    rule statement:sym<sub>       { 'SUB' <identifier> [ '(' <param-list> ')' ]? }
-    rule statement:sym<end-sub>   { 'END' 'SUB' }
-    rule statement:sym<call>      { 'CALL' <identifier> [ '(' <expression-list> ')' ]? }
-    rule statement:sym<def>       { 'DEF' <identifier> [ '(' <param-list> ')' ]? '=' <expression> }
-    rule statement:sym<declare>   { 'DECLARE' [ 'DEF' | 'SUB' ] <identifier> }
-    rule statement:sym<local>     { 'LOCAL' <identifier>+ % ',' }
+    rule statement:sym<sub>       { :i 'SUB' <identifier> [ '(' <sub-param-list> ')' ]? }
+    rule statement:sym<end-sub>   { :i 'END' 'SUB' }
+    rule statement:sym<call>      { :i 'CALL' <identifier> [ '(' <call-arg-list> ')' ]? }
+    rule statement:sym<def>       { :i 'DEF' <identifier> [ '(' <param-list> ')' ]? '=' <expression> }
+    rule statement:sym<declare>   { :i 'DECLARE' [ 'DEF' | 'SUB' ] <identifier> }
+    rule statement:sym<local>     { :i 'LOCAL' <identifier>+ % ',' }
+    rule statement:sym<end-function> { :i 'END' 'FUNCTION' }
+    rule statement:sym<function>  { :i 'FUNCTION' <identifier> [ '(' <sub-param-list> ')' ]? }
 
     # SELECT CASE
-    rule statement:sym<select>    { 'SELECT' 'CASE' <expression> }
-    rule statement:sym<case>      { 'CASE' [ 'ELSE' | <case-test>+ % ',' ] }
-    rule statement:sym<end-select> { 'END' 'SELECT' }
+    rule statement:sym<select>    { :i 'SELECT' 'CASE' <expression> }
+    rule statement:sym<case>      { :i 'CASE' [ 'ELSE' | <case-test>+ % ',' ] }
+    rule statement:sym<end-select> { :i 'END' 'SELECT' }
 
     # Graphics — True BASIC syntax
-    rule statement:sym<set-window>   { 'SET' 'WINDOW' <expression> ',' <expression> ',' <expression> ',' <expression> }
-    rule statement:sym<set-color>    { 'SET' 'COLOR' <color-spec> }
-    rule statement:sym<set-cursor>   { 'SET' 'CURSOR' <expression> ',' <expression> }
-    rule statement:sym<set-text>     { 'SET' 'TEXT' 'JUSTIFY' <identifier> ',' <identifier> }
-    rule statement:sym<plot-lines>   { 'PLOT' 'LINES' ':' <coord-pair>+ % ';' }
-    rule statement:sym<plot-area>    { 'PLOT' 'AREA' ':' <coord-pair>+ % ';' }
-    rule statement:sym<plot-text>    { 'PLOT' 'TEXT' ',' 'AT' <expression> ',' <expression> ':' <expression> }
-    rule statement:sym<plot>         { 'PLOT' [ <expression> ',' <expression> $<continuation>=';'? ]? }
+    rule statement:sym<set-window>   { :i 'SET' 'WINDOW' <expression> ',' <expression> ',' <expression> ',' <expression> }
+    rule statement:sym<set-color>    { :i 'SET' 'COLOR' <color-spec> }
+    rule statement:sym<set-back>     { :i 'SET' 'BACKGROUND' 'COLOR' <color-spec> }
+    rule statement:sym<set-cursor>   { :i 'SET' 'CURSOR' <expression> ',' <expression> }
+    rule statement:sym<set-text>     { :i 'SET' 'TEXT' 'JUSTIFY' <identifier> ',' <identifier> }
+    rule statement:sym<plot-lines>   { :i 'PLOT' 'LINES' ':' <coord-pair>+ % ';' }
+    rule statement:sym<plot-area>    { :i 'PLOT' 'AREA' ':' <coord-pair>+ % ';' }
+    rule statement:sym<plot-text>    { :i 'PLOT' 'TEXT' ',' 'AT' <expression> ',' <expression> ':' <expression> }
+    rule statement:sym<plot>         { :i 'PLOT' [ <expression> ',' <expression> $<continuation>=';'? ]? }
 
     # Simplified graphics keywords
-    rule statement:sym<window>    { 'WINDOW' <expression> ',' <expression> ',' <expression> ',' <expression> }
-    rule statement:sym<line>      { 'LINE' <expression> ',' <expression> ',' <expression> ',' <expression> }
-    rule statement:sym<circle>    { 'CIRCLE' <expression> ',' <expression> ',' <expression> }
-    rule statement:sym<box>       { 'BOX' [ 'LINES' | 'AREA' | 'CLEAR' ] <expression> ',' <expression> ',' <expression> ',' <expression> }
+    rule statement:sym<window>    { :i 'WINDOW' <expression> ',' <expression> ',' <expression> ',' <expression> }
+    rule statement:sym<line>      { :i 'LINE' <expression> ',' <expression> ',' <expression> ',' <expression> }
+    rule statement:sym<circle>    { :i 'CIRCLE' <expression> ',' <expression> ',' <expression> }
+    rule statement:sym<box>       { :i 'BOX' [ 'LINES' | 'AREA' | 'CLEAR' ] <expression> ',' <expression> ',' <expression> ',' <expression> }
+    rule statement:sym<flood>     { :i 'FLOOD' <expression> ',' <expression> }
+    rule statement:sym<ask>       { :i 'ASK' <identifier> <identifier> }
 
     # Display/output
-    rule statement:sym<show>      { 'SHOW' 'PLOT' }
-    rule statement:sym<save>      { 'SAVE' <expression>? }
-    rule statement:sym<graphics>  { 'GRAPHICS' <identifier> }
-    rule statement:sym<clear>     { 'CLEAR' }
-    rule statement:sym<cls>       { 'CLS' }
-    rule statement:sym<pause>     { 'PAUSE' <expression>? }
-    rule statement:sym<get-key>   { 'GET' 'KEY' <identifier> }
+    rule statement:sym<show>      { :i 'SHOW' 'PLOT' }
+    rule statement:sym<save>      { :i 'SAVE' <expression>? }
+    rule statement:sym<graphics>  { :i 'GRAPHICS' <identifier> }
+    rule statement:sym<clear>     { :i 'CLEAR' }
+    rule statement:sym<cls>       { :i 'CLS' }
+    rule statement:sym<pause>     { :i 'PAUSE' <expression>? }
+    rule statement:sym<get-key>   { :i 'GET' 'KEY' <identifier> }
+    rule statement:sym<open>      { :i 'OPEN' <expression> ':' <identifier> ',' <identifier> [ ',' <identifier> ]* }
+    rule statement:sym<close>     { :i 'CLOSE' '#' <expression> }
+    rule statement:sym<print-file> { :i 'PRINT' '#' <expression> ':' <print-list>? }
+    rule statement:sym<input-file> { :i 'INPUT' '#' <expression> ':' <identifier>+ % ',' }
+    rule statement:sym<library>   { :i 'LIBRARY' <expression> }
 
     # Program structure
-    rule statement:sym<program>   { 'PROGRAM' <identifier> }
-    rule statement:sym<end>       { 'END' | 'STOP' }
-    rule statement:sym<rem>       { 'REM' \N* }
+    rule statement:sym<program>   { :i 'PROGRAM' <identifier> }
+    rule statement:sym<end>       { :i [ 'END' | 'STOP' ] }
+    rule statement:sym<rem>       { :i 'REM' \N* }
 
     # Sub-rules
     rule dim-item                 { <identifier> '(' <expression-list> ')' }
-    rule case-test                { <expression> [ 'TO' <expression> ]? }
+    rule case-test                { <expression> [ :i 'TO' <expression> ]? }
     rule coord-pair               { <expression> ',' <expression> }
     rule param-list               { <identifier>+ % ',' }
+    rule sub-param               { <identifier> [ '(' ')' ]? }
+    rule sub-param-list          { <sub-param>+ % ',' }
+    rule call-arg                { <expression> | <identifier> '(' ')' }
+    rule call-arg-list           { <call-arg>+ % ',' }
+    rule read-target             { <array-access> | <identifier> }
 
-    rule assignment { [ <identifier> | <array-access> ] '=' <expression> }
+    rule assignment { [ <array-access> | <identifier> ] '=' <expression> }
     rule array-access { <identifier> '(' <expression-list> ')' }
 
     rule print-list { <print-item> [ <separator> <print-item> ]* <separator>? }
@@ -128,11 +155,13 @@ grammar TrueBASICGrammar {
     rule expression-list { <expression> [ ',' <expression> ]* }
 
     rule condition {
-        <expression> <comparison-op> <expression>
+        '(' <expression> <comparison-op> <expression> [ :i <logical-op> <expression> <comparison-op> <expression> ]* ')'
+        | <expression> <comparison-op> <expression> [ :i <logical-op> <expression> <comparison-op> <expression> ]*
         | <expression>
     }
 
     token comparison-op { '<=' | '>=' | '<>' | '!=' | '<' | '>' | '=' }
+    token logical-op    { :i 'AND' | 'OR' }
 
     rule expression  { <term> [ <additive-op> <term> ]* }
     rule term        { <power> [ <multiplicative-op> <power> ]* }
@@ -141,6 +170,7 @@ grammar TrueBASICGrammar {
     proto rule unary-factor { * }
     rule unary-factor:sym<neg>   { '-' <factor> }
     rule unary-factor:sym<pos>   { '+'? <factor> }
+    rule unary-factor:sym<not>   { :i 'NOT' <factor> }
 
     proto rule factor { * }
     rule factor:sym<number>      { <number> }
@@ -152,8 +182,8 @@ grammar TrueBASICGrammar {
 
     rule function-call { <func-name> '(' <expression-list>? ')' }
 
-    token additive-op        { '+' | '-' }
-    token multiplicative-op  { '*' | '/' | 'MOD' }
+    token additive-op        { '+' | '-' | '&' }
+    token multiplicative-op  { '*' | '/' | :i 'MOD' }
     token exponentiation-op  { '^' }
 
     rule string-expr { <string-literal> | <identifier> }
@@ -166,7 +196,10 @@ grammar TrueBASICGrammar {
     }
     token string-literal { '"' <-["]>* '"' }
     token func-name      { <[A..Za..z]> <[A..Za..z0..9_]>* '$'? }
-    token identifier     { <[A..Za..z]> <[A..Za..z0..9_]>* '$'? }
+    token identifier     { <[A..Za..z]> <[A..Za..z0..9_]>* [ '$' | '%' ]? }
+
+    # Data items can be numbers or strings
+    token data-item      { <string-literal> | <[+\-]>? <number> | <-[,\n]>+ }
 }
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -256,30 +289,13 @@ class TrueBASICActions {
         }
         make { type => 'dim', items => @dims }
     }
-    method statement:sym<read>($/) {
-        make { type => 'read', variables => $<identifier>>>.Str }
-    }
+    method statement:sym<restore>($/) { make { type => 'restore' } }
     method statement:sym<data>($/) {
         make { type => 'data', values => $<data-item>>>.made }
     }
-    method statement:sym<restore>($/) { make { type => 'restore' } }
 
     # Subroutines
-    method statement:sym<sub>($/) {
-        make {
-            type   => 'sub',
-            name   => ~$<identifier>,
-            params => $<param-list> ?? $<param-list>.made !! [],
-        }
-    }
     method statement:sym<end-sub>($/) { make { type => 'end-sub' } }
-    method statement:sym<call>($/) {
-        make {
-            type => 'call',
-            name => ~$<identifier>,
-            args => $<expression-list> ?? $<expression-list>.made !! [],
-        }
-    }
     method statement:sym<def>($/) {
         make {
             type       => 'def',
@@ -432,33 +448,12 @@ class TrueBASICActions {
     }
     method print-item($/) { make $<expression>.made }
 
-    method condition($/) {
-        if $<comparison-op> {
-            make {
-                type     => 'comparison',
-                left     => $<expression>[0].made,
-                operator => ~$<comparison-op>,
-                right    => $<expression>[1].made,
-            }
-        } else {
-            make $<expression>[0].made;
-        }
-    }
-
     # ── Expression actions ───────────────────────────────────────────────
 
     method expression($/) {
         my $result = $<term>[0].made;
         for $<additive-op>.kv -> $i, $op {
             $result = { type => 'binary', operator => ~$op, left => $result, right => $<term>[$i + 1].made }
-        }
-        make $result;
-    }
-    method term($/) {
-        my $result = $<power>[0].made;
-        for $<multiplicative-op>.kv -> $i, $op {
-            my $oper = ~$op eq 'MOD' ?? 'MOD' !! ~$op;
-            $result = { type => 'binary', operator => $oper, left => $result, right => $<power>[$i + 1].made }
         }
         make $result;
     }
@@ -500,8 +495,134 @@ class TrueBASICActions {
         }
     }
     method data-item($/) { make ~$/ }
-}
 
+    # New actions for extended grammar
+    method statement:sym<input-prompt>($/) {
+        make {
+            type => 'input-prompt',
+            prompt => $<expression>.made,
+            variables => $<identifier>>>.Str,
+        }
+    }
+    method statement:sym<if-block>($/) {
+        make { type => 'if-block', condition => $<condition>.made }
+    }
+    method statement:sym<else>($/)     { make { type => 'else' } }
+    method statement:sym<elseif>($/)   { make { type => 'elseif', condition => $<condition>.made } }
+    method statement:sym<end-if>($/)   { make { type => 'end-if' } }
+    method statement:sym<option>($/)   { make { type => 'option', text => ~$/ } }
+    method statement:sym<mat-print>($/) {
+        make { type => 'mat-print', name => ~$<identifier> }
+    }
+    method statement:sym<mat-read>($/) {
+        make { type => 'mat-read', name => ~$<identifier> }
+    }
+    method statement:sym<mat-redim>($/) {
+        make { type => 'mat-redim', name => ~$<identifier>, dimensions => $<expression-list>.made }
+    }
+    method statement:sym<mat-input>($/) {
+        make { type => 'mat-input', name => ~$<identifier> }
+    }
+    method statement:sym<set-back>($/) {
+        make { type => 'set-back-color', color => ~$<color-spec> }
+    }
+    method statement:sym<flood>($/)     { make { type => 'flood' } }
+    method statement:sym<ask>($/)       { make { type => 'ask' } }
+    method statement:sym<open>($/)      { make { type => 'open' } }
+    method statement:sym<close>($/)     { make { type => 'close' } }
+    method statement:sym<print-file>($/) { make { type => 'print-file' } }
+    method statement:sym<input-file>($/) { make { type => 'input-file' } }
+    method statement:sym<library>($/)   { make { type => 'library' } }
+    method statement:sym<function>($/) {
+        make { type => 'function-def', name => ~$<identifier>,
+               params => $<sub-param-list> ?? $<sub-param-list>.made !! [] }
+    }
+    method statement:sym<end-function>($/) { make { type => 'end-function' } }
+
+    method statement:sym<sub>($/) {
+        make {
+            type   => 'sub',
+            name   => ~$<identifier>,
+            params => $<sub-param-list> ?? $<sub-param-list>.made !! [],
+        }
+    }
+    method statement:sym<call>($/) {
+        make {
+            type => 'call',
+            name => ~$<identifier>,
+            args => $<call-arg-list> ?? $<call-arg-list>.made !! [],
+        }
+    }
+
+    method sub-param($/) {
+        my $name = ~$<identifier>;
+        make $name ~ ($/.Str ~~ /\(\)/ ?? '()' !! '');
+    }
+    method sub-param-list($/) { make $<sub-param>>>.made }
+
+    method call-arg($/) {
+        if $<expression> {
+            make $<expression>.made;
+        } else {
+            make { type => 'array-ref', name => ~$<identifier> };
+        }
+    }
+    method call-arg-list($/) { make $<call-arg>>>.made }
+
+    method read-target($/) {
+        if $<array-access> {
+            make $<array-access>.made;
+        } else {
+            make { type => 'variable', name => ~$<identifier> };
+        }
+    }
+    method statement:sym<read>($/) {
+        make { type => 'read', targets => $<read-target>>>.made }
+    }
+
+    method condition($/) {
+        if $<comparison-op> {
+            my $result = {
+                type     => 'comparison',
+                left     => $<expression>[0].made,
+                operator => ~$<comparison-op>[0],
+                right    => $<expression>[1].made,
+            };
+            # Handle chained conditions: a < b AND c > d
+            if $<logical-op> {
+                for $<logical-op>.kv -> $i, $lop {
+                    $result = {
+                        type     => 'logical',
+                        operator => (~$lop).uc,
+                        left     => $result,
+                        right    => {
+                            type     => 'comparison',
+                            left     => $<expression>[$i * 2 + 2].made,
+                            operator => ~$<comparison-op>[$i + 1],
+                            right    => $<expression>[$i * 2 + 3].made,
+                        },
+                    };
+                }
+            }
+            make $result;
+        } else {
+            make $<expression>[0].made;
+        }
+    }
+
+    method unary-factor:sym<not>($/) {
+        make { type => 'unary', operator => 'NOT', operand => $<factor>.made }
+    }
+
+    method term($/) {
+        my $result = $<power>[0].made;
+        for $<multiplicative-op>.kv -> $i, $op {
+            my $oper = (~$op).uc eq 'MOD' ?? 'MOD' !! ~$op;
+            $result = { type => 'binary', operator => $oper, left => $result, right => $<power>[$i + 1].made }
+        }
+        make $result;
+    }
+}
 # ══════════════════════════════════════════════════════════════════════════════
 # Color palette — True BASIC standard colors
 # ══════════════════════════════════════════════════════════════════════════════
@@ -571,8 +692,11 @@ class TrueBASICInterpreter {
     has Str $.graphics-mode is rw = 'gtk';  # gtk, web, svg, ascii
     has Str $.plot-file = 'plot.svg';
     has Int $.current-color = 4;      # default blue
+    has Int $.bg-color = 0;           # background color
     has Bool $.graphics-used = False;
     has Bool $.graphics-shown = False;
+    has Bool $.option-nolet = False;
+    has Int $.option-base = 0;        # OPTION BASE 0 or 1
 
     method new(Bool :$debug = False) {
         my $obj = self.bless(:$debug);
@@ -616,6 +740,16 @@ class TrueBASICInterpreter {
         %!functions<MID$>   = -> $s, $p, $n? { $n ?? $s.substr($p.Int - 1, $n.Int) !! $s.substr($p.Int - 1) };
         %!functions<TAB>    = -> $n { ' ' x $n.Int };
         %!functions<USING$> = -> $fmt, $n { sprintf($fmt, $n) };
+        %!functions<POS>    = -> $s, $t, $p? { my $idx = $s.index($t, ($p // 1).Int - 1); $idx.defined ?? $idx + 1 !! 0 };
+        %!functions<ORD>    = -> $s { $s.ord };
+        %!functions<REPEAT$> = -> $s, $n { $s x $n.Int };
+        %!functions<TRIM$>  = -> $s { $s.trim };
+        %!functions<LTRIM$> = -> $s { $s.trim-leading };
+        %!functions<RTRIM$> = -> $s { $s.trim-trailing };
+        %!functions<CPOS>   = -> $x, $y? { 0 };  # stub
+        %!functions<CEIL>   = -> $x { $x.ceiling };
+        %!functions<REMAINDER> = -> $x, $y { $x mod $y };
+        %!functions<TRUNCATE> = -> $x, $d? { $d ?? ($x * 10 ** $d).truncate / (10 ** $d) !! $x.truncate };
     }
 
     # ── Program loading ──────────────────────────────────────────────────
@@ -623,6 +757,17 @@ class TrueBASICInterpreter {
     method load-program(Str $filename) {
         my $source = $filename.IO.slurp;
         self.load-source($source);
+    }
+
+    method strip-inline-comment(Str $line --> Str) {
+        my $in-string = False;
+        for $line.comb.kv -> $i, $ch {
+            if $ch eq '"' { $in-string = !$in-string }
+            elsif $ch eq '!' && !$in-string {
+                return $line.substr(0, $i).trim-trailing;
+            }
+        }
+        return $line;
     }
 
     method load-source(Str $source) {
@@ -638,8 +783,11 @@ class TrueBASICInterpreter {
             # Fallback: line-by-line parsing
             say "Full parse failed, trying line-by-line..." if $!debug;
             @!program = [];
-            for $source.lines -> $line {
-                next if $line.trim eq '' || $line.trim.starts-with('!');
+            for $source.lines -> $raw-line {
+                next if $raw-line.trim eq '' || $raw-line.trim.starts-with('!');
+                # Strip inline ! comments (not inside strings)
+                my $line = self.strip-inline-comment($raw-line);
+                next if $line.trim eq '';
                 my $m = $grammar.parse($line, :$actions, rule => 'line');
                 if $m && $m.made {
                     @!program.push($m.made);
@@ -667,6 +815,9 @@ class TrueBASICInterpreter {
                 when 'sub' {
                     %!subroutines{%stmt<statement><name>.uc} = $idx;
                 }
+                when 'function-def' {
+                    %!subroutines{%stmt<statement><name>.uc} = $idx;
+                }
             }
         }
     }
@@ -681,30 +832,34 @@ class TrueBASICInterpreter {
             my %stmt = @!program[$!current-line];
             say "[$!current-line] {%stmt.raku}" if $!debug;
 
+            my $ctrl = '';
+            my $err = '';
             try {
+                CATCH {
+                    when X::AdHoc {
+                        given .message {
+                            when '__EXIT_DO__'  { $ctrl = 'exit-do' }
+                            when '__EXIT_FOR__' { $ctrl = 'exit-for' }
+                            when '__EXIT_SUB__' { $ctrl = 'exit-sub' }
+                            default { $err = .message }
+                        }
+                    }
+                    default { $err = $_ ~~ Exception ?? .message !! ~$_ }
+                }
                 self.execute-statement(%stmt);
                 $!current-line++;
             }
-            CATCH {
-                when X::AdHoc {
-                    if .message eq '__EXIT_DO__' {
-                        self.skip-to-after-loop();
-                        next;
-                    } elsif .message eq '__EXIT_FOR__' {
-                        self.skip-to-after-next();
-                        next;
-                    } elsif .message eq '__EXIT_SUB__' {
-                        self.return-from-sub();
-                        next;
-                    }
-                    say "Runtime error at line $!current-line: {.message}";
-                    $!running = False;
-                }
-                default {
-                    say "Runtime error at line $!current-line: {.message}";
-                    say .backtrace if $!debug;
-                    $!running = False;
-                }
+
+            given $ctrl {
+                when 'exit-do'  { self.skip-to-after-loop() }
+                when 'exit-for' { self.skip-to-after-next() }
+                when 'exit-sub' { self.return-from-sub() }
+            }
+
+            if $err {
+                say "Runtime error at line $!current-line: $err";
+                say "Statement: {%stmt.raku}" if $!debug;
+                $!running = False;
             }
         }
 
@@ -737,15 +892,27 @@ class TrueBASICInterpreter {
             when 'wend'          { self.exec-wend() }
             when 'exit'          { die X::AdHoc.new(message => '__EXIT_DO__') }
             when 'dim'           { self.exec-dim(%s<items>) }
-            when 'read'          { self.exec-read(%s<variables>) }
+            when 'read'          { self.exec-read(%s<targets>) }
             when 'data'          { }  # handled in prescan
             when 'restore'       { $!data-pointer = 0 }
+            when 'option'        { self.exec-option(%s<text>) }
             when 'sub'           { self.skip-to-end-sub() }
             when 'end-sub'       { self.exec-return() }
+            when 'function-def'  { self.skip-to-end-function() }
+            when 'end-function'  { self.exec-return() }
             when 'call'          { self.exec-call(%s<name>, %s<args>) }
             when 'def'           { self.exec-def(%s<name>, %s<params>, %s<expression>) }
             when 'declare'       { }  # no-op at runtime
             when 'local'         { }  # handled by sub frame
+            when 'input-prompt'  { self.exec-input-prompt(%s<prompt>, %s<variables>) }
+            when 'if-block'      { self.exec-if-block(%s<condition>) }
+            when 'else'          { self.skip-to-end-if() }
+            when 'elseif'        { self.skip-to-end-if() }
+            when 'end-if'        { }  # no-op, just marks end
+            when 'mat-print'     { self.exec-mat-print(%s<name>) }
+            when 'mat-read'      { self.exec-mat-read(%s<name>) }
+            when 'mat-redim'     { self.exec-mat-redim(%s<name>, %s<dimensions>) }
+            when 'mat-input'     { self.exec-mat-input(%s<name>) }
             when 'select'        { self.exec-select(%s<expression>) }
             when 'case'          { self.exec-case(%s<tests>) }
             when 'case-else'     { self.exec-case-else() }
@@ -755,6 +922,9 @@ class TrueBASICInterpreter {
             when 'set-color'     { $!current-color = resolve-color(%s<color>) }
             when 'set-cursor'    { }  # TODO
             when 'set-text-justify' { }  # TODO
+            when 'set-back-color' { $!bg-color = resolve-color(%s<color>) }
+            when 'flood'         { }  # TODO
+            when 'ask'           { }  # TODO
             when 'plot'          { self.exec-plot(%s<x>, %s<y>, %s<continuation>) }
             when 'plot-end'      { self.exec-plot-end() }
             when 'plot-lines'    { self.exec-plot-lines(%s<coords>) }
@@ -770,6 +940,11 @@ class TrueBASICInterpreter {
             when 'pause'         { self.exec-pause(%s<duration>) }
             when 'get-key'       { }  # TODO
             when 'program'       { }  # no-op, just a label
+            when 'open'          { }  # TODO: file I/O
+            when 'close'         { }  # TODO: file I/O
+            when 'print-file'    { }  # TODO: file I/O
+            when 'input-file'    { }  # TODO: file I/O
+            when 'library'       { }  # no-op
             when 'end'           { $!running = False }
             when 'rem'           { }
             default              { say "⚠ Unknown statement: {%s<type>}" if $!debug }
@@ -796,17 +971,22 @@ class TrueBASICInterpreter {
                 my $l = self.eval(%expr<left>);
                 my $r = self.eval(%expr<right>);
                 given %expr<operator> {
-                    when '+'   { return $l + $r }
+                    when '+'   {
+                        return ($l ~~ Str || $r ~~ Str) && !($l ~~ Numeric && $r ~~ Numeric)
+                            ?? $l ~ $r !! $l + $r
+                    }
                     when '-'   { return $l - $r }
                     when '*'   { return $l * $r }
                     when '/'   { return $r == 0 ?? die("Division by zero") !! $l / $r }
                     when '^'   { return $l ** $r }
                     when 'MOD' { return $l % $r }
+                    when '&'   { return $l ~ $r }
                 }
             }
             when 'unary' {
                 my $val = self.eval(%expr<operand>);
                 if %expr<operator> eq '-' { return -$val }
+                if %expr<operator> eq 'NOT' { return ($val ?? 0 !! 1) }
                 return $val;
             }
             when 'comparison' {
@@ -821,9 +1001,22 @@ class TrueBASICInterpreter {
                     when '>=' { return ($l >= $r ?? 1 !! 0) }
                 }
             }
+            when 'logical' {
+                my $l = self.eval(%expr<left>);
+                my $r = self.eval(%expr<right>);
+                given %expr<operator> {
+                    when 'AND' { return ($l && $r ?? 1 !! 0) }
+                    when 'OR'  { return ($l || $r ?? 1 !! 0) }
+                }
+            }
             when 'function' {
                 my $name = %expr<name>.uc;
                 my @args = %expr<args>.map({ self.eval($_) });
+                # Resolve ambiguity: array access or function call?
+                if %!arrays{$name}:exists {
+                    my @idx = @args.map(*.Int);
+                    return self.get-array($name, @idx);
+                }
                 # Check user-defined functions first
                 if %!user-functions{$name}:exists {
                     my %func = %!user-functions{$name};
@@ -839,13 +1032,37 @@ class TrueBASICInterpreter {
                     }
                     return $result;
                 }
+                # Multi-line FUNCTION...END FUNCTION
+                if %!subroutines{$name}:exists {
+                    my $func-line = %!subroutines{$name};
+                    my %func-stmt = @!program[$func-line]<statement>;
+                    if (%func-stmt<type> // '') eq 'function-def' {
+                        return self.exec-function-call($name, %func-stmt<params> // [], @args);
+                    }
+                }
+                # Special functions that need interpreter state
+                if $name eq 'SIZE' {
+                    # SIZE(array-name, dim) — returns dimension size
+                    # First arg should be a variable that is an array name
+                    my $arr-name = %expr<args>[0]<name>.uc // '';
+                    my $dim = @args.elems > 1 ?? @args[1].Int !! 1;
+                    if %!arrays{$arr-name}:exists {
+                        my $a = %!arrays{$arr-name};
+                        return $a.elems - 1;  # True BASIC arrays are 0-based internally
+                    }
+                    return 0;
+                }
                 # Built-in
                 if %!functions{$name}:exists {
                     return %!functions{$name}.(|@args);
                 }
-                die "Unknown function: {%expr<name>}";
+                die X::AdHoc.new(message => "Unknown function: {%expr<name>}");
             }
-            default { die "Unknown expression: {%expr<type>}" }
+            when 'array-ref' {
+                # Array reference — used in CALL args, just return the name
+                return %expr<name>;
+            }
+            default { die X::AdHoc.new(message => "Unknown expression: {%expr<type>}") }
         }
     }
 
@@ -857,7 +1074,7 @@ class TrueBASICInterpreter {
             my @idx = %asgn<array><indices>.map({ self.eval($_).Int });
             self.set-array(%asgn<array><name>, @idx, $val);
         } else {
-            %!variables{%asgn<variable>} = $val;
+            %!variables{%asgn<variable>.uc} = $val;
         }
     }
 
@@ -878,7 +1095,7 @@ class TrueBASICInterpreter {
         if $prompt { print self.eval($prompt) }
         else       { print "? " }
         my $in = $*IN.get.trim;
-        %!variables{$var} = $in ~~ /^ <[0..9+\-.eE]>+ $/ ?? +$in !! $in;
+        %!variables{$var.uc} = $in ~~ /^ <[0..9+\-.eE]>+ $/ ?? +$in !! $in;
     }
 
     method exec-if(%s) {
@@ -902,13 +1119,13 @@ class TrueBASICInterpreter {
     }
 
     method exec-return() {
-        die "RETURN without GOSUB/CALL" unless @!call-stack;
-        $!current-line = @!call-stack.pop;
+        self.return-from-sub();
     }
 
     method exec-for($var, %start, %end, %step) {
-        %!variables{$var} = self.eval(%start);
-        @!for-stack.push({ var => $var, end => self.eval(%end), step => self.eval(%step), line => $!current-line });
+        my $v = $var.uc;
+        %!variables{$v} = self.eval(%start);
+        @!for-stack.push({ var => $v, end => self.eval(%end), step => self.eval(%step), line => $!current-line });
     }
 
     method exec-next($var) {
@@ -926,14 +1143,21 @@ class TrueBASICInterpreter {
     method exec-do($cond-type, $cond) {
         if $cond-type && $cond {
             my $val = self.eval($cond);
-            my $enter = ($cond-type.trim eq 'WHILE') ?? $val !! !$val;
+            my $enter = ($cond-type.trim.uc eq 'WHILE') ?? $val !! !$val;
             if $enter {
-                @!do-stack.push($!current-line);
+                # Only push if not re-entering from LOOP
+                unless @!do-stack && @!do-stack[*-1] == $!current-line {
+                    @!do-stack.push($!current-line);
+                }
             } else {
+                @!do-stack.pop if @!do-stack && @!do-stack[*-1] == $!current-line;
                 self.skip-to-after-loop();
             }
         } else {
-            @!do-stack.push($!current-line);
+            # Plain DO — only push if not already on top
+            unless @!do-stack && @!do-stack[*-1] == $!current-line {
+                @!do-stack.push($!current-line);
+            }
         }
     }
 
@@ -942,11 +1166,12 @@ class TrueBASICInterpreter {
         my $do-line = @!do-stack[*-1];
         if $cond-type && $cond {
             my $val = self.eval($cond);
-            my $repeat = ($cond-type.trim eq 'UNTIL') ?? !$val !! $val;
-            if $repeat { $!current-line = $do-line }
+            my $repeat = ($cond-type.trim.uc eq 'UNTIL') ?? !$val !! $val;
+            if $repeat { $!current-line = $do-line - 1 }  # -1 because main loop will ++
             else       { @!do-stack.pop }
         } else {
-            $!current-line = $do-line;
+            # Plain LOOP — jump back to DO line for re-evaluation
+            $!current-line = $do-line - 1;  # -1 because main loop will ++
         }
     }
 
@@ -968,14 +1193,23 @@ class TrueBASICInterpreter {
     method exec-dim(@items) {
         for @items -> %item {
             my @dims = %item<dimensions>.map({ self.eval($_).Int });
-            %!arrays{%item<name>} = self.make-array(@dims);
+            %!arrays{%item<name>.uc} = self.make-array(@dims);
         }
     }
 
-    method exec-read(@vars) {
-        for @vars -> $var {
+    method exec-read(@targets) {
+        for @targets -> $target {
             die "Out of DATA" if $!data-pointer >= @!data-values.elems;
-            %!variables{$var} = @!data-values[$!data-pointer++];
+            my $val = @!data-values[$!data-pointer++];
+            if $target ~~ Hash && $target<type> eq 'array-access' {
+                my @indices = $target<indices>.map: { self.eval($_).Int };
+                self.set-array($target<name>, @indices, $val);
+            } elsif $target ~~ Hash && $target<type> eq 'variable' {
+                %!variables{$target<name>.uc} = $val;
+            } else {
+                # Legacy format: plain string
+                %!variables{$target.uc} = $val;
+            }
         }
     }
 
@@ -986,35 +1220,110 @@ class TrueBASICInterpreter {
     method exec-call($name, @arg-exprs) {
         my $sub-name = $name.uc;
         die "SUB $sub-name not found" unless %!subroutines{$sub-name}:exists;
-        my @args = @arg-exprs.map({ self.eval($_) });
         # Get SUB definition line to read params
         my $sub-line = %!subroutines{$sub-name};
         my %sub-stmt = @!program[$sub-line]<statement>;
-        my @params = %sub-stmt<params> // [];
-        # Save variables, bind params
-        my %saved;
-        for @params.kv -> $i, $p {
-            %saved{$p} = %!variables{$p} if %!variables{$p}:exists;
-            %!variables{$p} = @args[$i] if $i < @args.elems;
+        my @params = (%sub-stmt<params> // []).flat.grep(*.defined);
+        # Evaluate arguments and bind params
+        my %saved-vars;
+        my %saved-arrays;
+        for @params.kv -> $i, $raw-p {
+            last if $i >= @arg-exprs.elems;
+            my $p = ~$raw-p;
+            my $is-array = $p.ends-with('()');
+            $p = $p.subst('()', '') if $is-array;
+            $p = $p.uc;
+            my $arg = @arg-exprs[$i];
+            if $is-array || ($arg ~~ Hash && ($arg<type> // '') eq 'array-ref') {
+                # Array parameter — alias the array
+                my $arr-name = ($arg ~~ Hash && $arg<name>) ?? $arg<name>.uc !! $p;
+                %saved-arrays{$p} = %!arrays{$p} if %!arrays{$p}:exists;
+                %!arrays{$p} = %!arrays{$arr-name} if %!arrays{$arr-name}:exists;
+            } else {
+                # Value parameter
+                %saved-vars{$p} = %!variables{$p} if %!variables{$p}:exists;
+                %!variables{$p} = self.eval($arg);
+            }
         }
-        @!call-stack.push({ line => $!current-line, saved => %saved, params => @params });
-        $!current-line = $sub-line;  # will be incremented, so first stmt after SUB runs
+        @!call-stack.push({
+            line          => $!current-line,
+            saved-vars    => %saved-vars,
+            saved-arrays  => %saved-arrays,
+            params        => @params.map({ .subst('()', '').uc }).Array,
+            array-params  => @params.grep(*.ends-with('()')).map({ .subst('()', '').uc }).Array,
+        });
+        $!current-line = $sub-line;
     }
 
     method return-from-sub() {
         die "RETURN without CALL" unless @!call-stack;
         my $frame = @!call-stack.pop;
         if $frame ~~ Hash && ($frame<line>:exists) {
-            # Restore variables
-            for $frame<params> -> $p {
-                if $frame<saved>{$p}:exists { %!variables{$p} = $frame<saved>{$p} }
-                else { %!variables{$p}:delete }
+            # Restore value variables
+            if $frame<saved-vars> {
+                for $frame<params>.flat -> $p {
+                    next if $frame<array-params> && $p ∈ $frame<array-params>.flat;
+                    if $frame<saved-vars>{$p}:exists { %!variables{$p} = $frame<saved-vars>{$p} }
+                    else { %!variables{$p}:delete }
+                }
+            } elsif $frame<saved> {
+                # Legacy format
+                for ($frame<params> // []).flat -> $p {
+                    if $frame<saved>{$p}:exists { %!variables{$p} = $frame<saved>{$p} }
+                    else { %!variables{$p}:delete }
+                }
+            }
+            # Restore arrays
+            if $frame<saved-arrays> {
+                for $frame<saved-arrays>.kv -> $k, $v {
+                    %!arrays{$k} = $v;
+                }
             }
             $!current-line = $frame<line>;
-            $!current-line++;
+            # Main loop will increment $!current-line
         } else {
             $!current-line = $frame;  # GOSUB style
         }
+    }
+
+    # Multi-line FUNCTION call (synchronous execution within eval)
+    method exec-function-call($name, @param-defs, @args) {
+        my @params = @param-defs.grep(*.defined).map(*.Str.uc);
+        # Save caller state
+        my $saved-line = $!current-line;
+        my %saved-vars;
+        for @params -> $p {
+            %saved-vars{$p} = %!variables{$p} if %!variables{$p}:exists;
+        }
+        # Also save the function-name variable (return value holder)
+        %saved-vars{$name} = %!variables{$name} if %!variables{$name}:exists;
+        # Bind parameters
+        for @params.kv -> $i, $p {
+            %!variables{$p} = @args[$i] if $i < @args.elems;
+        }
+        # Initialize function return variable to 0
+        %!variables{$name} = 0;
+        # Execute function body starting after FUNCTION line
+        my $func-line = %!subroutines{$name};
+        $!current-line = $func-line + 1;
+        while $!current-line < @!program.elems {
+            my %stmt = @!program[$!current-line];
+            my $type = %stmt<statement><type> // '';
+            last if $type eq 'end-function';
+            self.execute-statement(%stmt);
+            $!current-line++;
+        }
+        # Get return value (the variable named after the function)
+        my $result = %!variables{$name} // 0;
+        # Restore caller state
+        for @params -> $p {
+            if %saved-vars{$p}:exists { %!variables{$p} = %saved-vars{$p} }
+            else { %!variables{$p}:delete }
+        }
+        if %saved-vars{$name}:exists { %!variables{$name} = %saved-vars{$name} }
+        else { %!variables{$name}:delete }
+        $!current-line = $saved-line;
+        return $result;
     }
 
     # SELECT CASE
@@ -1085,6 +1394,129 @@ class TrueBASICInterpreter {
         }
     }
 
+    method skip-to-end-function() {
+        while $!current-line < @!program.elems - 1 {
+            $!current-line++;
+            last if (@!program[$!current-line]<statement><type> // '') eq 'end-function';
+        }
+    }
+
+    method skip-to-end-if() {
+        my $depth = 1;
+        while $!current-line < @!program.elems - 1 {
+            $!current-line++;
+            my $t = @!program[$!current-line]<statement><type> // '';
+            $depth++ if $t eq 'if-block';
+            $depth-- if $t eq 'end-if';
+            last if $depth == 0;
+        }
+    }
+
+    method skip-to-else-or-end-if() {
+        my $depth = 1;
+        while $!current-line < @!program.elems - 1 {
+            $!current-line++;
+            my $t = @!program[$!current-line]<statement><type> // '';
+            $depth++ if $t eq 'if-block';
+            if $depth == 1 && ($t eq 'else' || $t eq 'elseif' || $t eq 'end-if') {
+                last;
+            }
+            $depth-- if $t eq 'end-if';
+        }
+    }
+
+    method exec-option($text) {
+        my $t = $text.uc;
+        if $t ~~ /:i nolet/ { $!option-nolet = True }
+        if $t ~~ /:i base \s+ 0/ { $!option-base = 0 }
+        if $t ~~ /:i base \s+ 1/ { $!option-base = 1 }
+        # OPTION ANGLE DEGREES / RADIANS handled later if needed
+    }
+
+    method exec-if-block(%cond) {
+        my $result = self.eval(%cond);
+        unless $result {
+            self.skip-to-else-or-end-if();
+        }
+    }
+
+    method exec-input-prompt($prompt-expr, @vars) {
+        my $prompt = self.eval($prompt-expr);
+        print $prompt;
+        my $line = $*IN.get // '';
+        my @vals = $line.split(',').map(*.trim);
+        for @vars.kv -> $i, $var {
+            %!variables{$var.uc} = $i < @vals.elems ?? @vals[$i] !! 0;
+        }
+    }
+
+    method exec-mat-print($name) {
+        my $n = $name.uc;
+        if %!arrays{$n}:exists {
+            my @a = %!arrays{$n};
+            if @a[0] ~~ Array {
+                # 2D array
+                for @a -> @row {
+                    say @row.map({ ~$_ }).join(' ');
+                }
+            } else {
+                say @a.map({ ~$_ }).join(' ');
+            }
+        } else {
+            say "⚠ Array $n not defined";
+        }
+    }
+
+    method exec-mat-read($name) {
+        my $n = $name.uc;
+        return unless %!arrays{$n}:exists;
+        my @a = %!arrays{$n};
+        self.mat-read-fill($n, @a);
+    }
+
+    method mat-read-fill($name, @arr) {
+        # Fill array from DATA
+        if @arr[0] ~~ Array {
+            for @arr.kv -> $i, @sub {
+                self.mat-read-fill($name, @sub);
+            }
+        } else {
+            for @arr.keys -> $i {
+                die "Out of DATA" if $!data-pointer >= @!data-values.elems;
+                @arr[$i] = @!data-values[$!data-pointer++];
+            }
+        }
+    }
+
+    method exec-mat-redim($name, @dim-exprs) {
+        my $n = $name.uc;
+        my @dims = @dim-exprs.map: { self.eval($_).Int };
+        if %!arrays{$n}:exists {
+            my @old = %!arrays{$n}.Array;
+            %!arrays{$n} = self.make-array(@dims);
+            # Copy old values for 1D arrays
+            if @dims.elems == 1 {
+                for ^min(@old.elems, @dims[0] + 1) -> $i {
+                    %!arrays{$n}[$i] = @old[$i];
+                }
+            }
+        } else {
+            %!arrays{$n} = self.make-array(@dims);
+        }
+    }
+
+    method exec-mat-input($name) {
+        my $n = $name.uc;
+        return unless %!arrays{$n}:exists;
+        say "? (enter values for $n)";
+        my $line = $*IN.get // '';
+        my @vals = $line.split(',').map(*.trim);
+        my @a = %!arrays{$n};
+        for @vals.kv -> $i, $v {
+            @a[$i] = +$v if $i < @a.elems;
+        }
+    }
+
     method skip-to-wend() {
         my $depth = 1;
         while $!current-line < @!program.elems - 1 {
@@ -1125,18 +1557,20 @@ class TrueBASICInterpreter {
     }
 
     method get-array($name, @idx) {
-        return 0 unless %!arrays{$name}:exists;
-        my $a = %!arrays{$name};
+        my $n = $name.uc;
+        return 0 unless %!arrays{$n}:exists;
+        my $a = %!arrays{$n};
         for @idx -> $i { $a = $a[$i] // return 0 }
         return $a;
     }
 
     method set-array($name, @idx, $val) {
-        unless %!arrays{$name}:exists {
+        my $n = $name.uc;
+        unless %!arrays{$n}:exists {
             # Auto-DIM with default size 10 per dimension
-            %!arrays{$name} = self.make-array(@idx.map({ max($_, 10) }));
+            %!arrays{$n} = self.make-array(@idx.map({ max($_, 10) }));
         }
-        my $a = %!arrays{$name};
+        my $a = %!arrays{$n};
         for @idx[0..*-2] -> $i { $a = $a[$i] }
         $a[@idx[*-1]] = $val;
     }

@@ -149,55 +149,135 @@ class BasicCompiler is export {
     }
     
     method parse-statement(Str $line) returns Statement {
-        # Basic statement parsing
-        given $line.uc {
-            when /^ 'LET' \s+ (.+)/ {
-                return self.parse-let-statement(~$0);
-            }
-            when /^ 'PRINT' \s* (.*)/ {
-                return self.parse-print-statement(~$0);
-            }
-            when /^ 'INPUT' \s+ (.+)/ {
-                return self.parse-input-statement(~$0);
-            }
-            when /^ 'IF' \s+ (.+) \s+ 'THEN' \s+ (.+)/ {
-                return self.parse-if-statement(~$0, ~$1);
-            }
-            when /^ 'FOR' \s+ (.+)/ {
-                return self.parse-for-statement(~$0);
-            }
-            when /^ 'WHILE' \s+ (.+)/ {
-                return self.parse-while-statement(~$0);
-            }
-            when /^ 'DO' \s* $/ {
-                return self.parse-do-statement();
-            }
-            when /^ 'LOOP' \s* (.*)/ {
-                return self.parse-loop-statement(~$0);
-            }
-            when /^ 'GOTO' \s+ (\d+)/ {
-                return GotoStatement.new(target-label => $0.Int);
-            }
-            when /^ 'DIM' \s+ (.+)/ {
-                return self.parse-dim-statement(~$0);
-            }
-            when /^ 'END' \s* $/ {
-                return self.parse-end-statement();
-            }
-            when /^ (\w+) \s* '=' \s* (.+)/ {
-                # Assignment without LET keyword
-                return self.parse-assignment(~$0, ~$1);
-            }
-            default {
-                say "Unknown statement: $line";
-                return Statement;
-            }
+        say "      [parse-statement called with: {$line.substr(0, 30)}]" if $!debug;
+        # Basic statement parsing - use string matching instead of complex regexes
+        my $line-uc = $line.uc;
+        
+        # Directives and keywords (non-executable, just skip/acknowledge)
+        if $line-uc ~~ /^ 'PROGRAM' \s+ (\w+)/ {
+            say "    [Program declaration: {$0}]" if $!debug;
+            return Statement;  # Valid but no-op
         }
+        if $line-uc ~~ /^ 'OPTION' \s+ (\w+)/ {
+            say "    [Option directive: {$0}]" if $!debug;
+            return Statement;
+        }
+        if $line-uc ~~ /^ 'LIBRARY' \s+ '"' ([^"]+) '"'/ {
+            say "    [Library import: {$0}]" if $!debug;
+            return Statement;
+        }
+        
+        # Subroutine definition
+        if $line-uc ~~ /^ 'SUB' \s+ (\w+)/ {
+            say "    [Subroutine definition: {$0}]" if $!debug;
+            return Statement;  # TODO: Implement proper sub parsing
+        }
+        if $line-uc ~~ /^ 'END' \s+ 'SUB'/ {
+            say "    [End subroutine]" if $!debug;
+            return Statement;
+        }
+        
+        # Function call
+        if $line-uc ~~ /^ 'CALL' \s+ (\w+) \s* \(/ {
+            say "    [Function call: {$0}]" if $!debug;
+            return self.parse-call-statement($line);
+        }
+        
+        # File I/O 
+        if $line-uc ~~ /^ 'OPEN' \s+ \#/ {
+            say "    [Open file]" if $!debug;
+            return self.parse-open-statement($line);
+        }
+        if $line-uc ~~ /^ 'CLOSE' \s+ \#/ {
+            say "    [Close file]" if $!debug;
+            return self.parse-close-statement($line);
+        }
+        if $line-uc ~~ /^ 'ERASE' \s+ \#/ {
+            say "    [Erase file]" if $!debug;
+            return self.parse-erase-statement($line);
+        }
+        
+        # Matrix operations
+        if $line-uc ~~ /^ 'MAT' \s+ 'REDIM'/ {
+            return self.parse-mat-redim-statement($line);
+        }
+        if $line-uc ~~ /^ 'MAT' \s+ 'INPUT'/ {
+            return self.parse-input-statement($line);
+        }
+        if $line-uc ~~ /^ 'MAT' \s+ 'PRINT'/ {
+            return self.parse-print-statement($line);
+        }
+        
+        # Graphics/terminal control
+        if $line-uc ~~ /^ 'SET' \s+ 'COLOR'/ {
+            return Statement;
+        }
+        if $line-uc ~~ /^ 'SET' \s+ 'CURSOR'/ {
+            return Statement;
+        }
+        if $line-uc ~~ /^ 'GET' \s+ 'KEY'/ {
+            return Statement;
+        }
+        
+        # Standard statements
+        if $line-uc ~~ /^ 'LET' \s+/ {
+            return self.parse-let-statement($line.substr(4).trim);
+        }
+        if $line-uc ~~ /^ 'PRINT'/ {
+            my $args = $line.substr(5).trim;
+            return self.parse-print-statement($args);
+        }
+        if $line-uc ~~ /^ 'INPUT' \s+/ {
+            return self.parse-input-statement($line.substr(5).trim);
+        }
+        if $line-uc ~~ /^ 'IF' / {
+            return self.parse-if-statement($line);
+        }
+        if $line-uc ~~ /^ 'FOR' \s+/ {
+            return self.parse-for-statement($line.substr(3).trim);
+        }
+        if $line-uc ~~ /^ 'WHILE' \s+/ {
+            return self.parse-while-statement($line.substr(5).trim);
+        }
+        if $line-uc ~~ /^ 'DO' \s*$/ {
+            return self.parse-do-statement();
+        }
+        if $line-uc ~~ /^ 'LOOP'/ {
+            return self.parse-loop-statement($line.substr(4).trim);
+        }
+        if $line-uc ~~ /^ 'GOTO' \s+ (\d+)/ {
+            return GotoStatement.new(target-label => $0.Int);
+        }
+        if $line-uc ~~ /^ 'DIM' \s+/ {
+            return self.parse-dim-statement($line.substr(3).trim);
+        }
+        if $line-uc ~~ /^ 'END' \s*$/ {
+            return self.parse-end-statement();
+        }
+        if $line-uc ~~ /^ 'NEXT'/ {
+            return Statement;
+        }
+        if $line-uc ~~ /^ 'WEND'/ {
+            return Statement;
+        }
+        
+        # Assignment (with or without LET)
+        if $line ~~ /(\w+)\s*=\s*(.+)/ {
+            return self.parse-assignment($0, $1);
+        }
+        
+        # Array assignment
+        if $line ~~ /(\w+)\s*\((.+)\)\s*=\s*(.+)/ {
+            return self.parse-array-assignment($0, $1, $2);
+        }
+        
+        say "    ⚠ Unknown statement: {$line.substr(0, 50)}" if $!debug;
+        return Statement;
     }
-    
+
     method parse-let-statement(Str $assignment) returns LetStatement {
         # Parse LET statement: variable = expression
-        if $assignment ~~ /^ (\w+) \s* '=' \s* (.+)/ {
+        if $assignment ~~ /^ (\w+) \s* [] \s* (.+)/ {
             return self.parse-assignment(~$0, ~$1);
         }
         die "Invalid LET statement: $assignment";
@@ -228,7 +308,7 @@ class BasicCompiler is export {
     
     method parse-input-statement(Str $input-args) returns InputStatement {
         # Parse INPUT statement
-        if $input-args ~~ /^ '"' (.*?) '"' \s* ';' \s* (\w+)/ {
+        if $input-args ~~ /^ '"' (.*?) '"' \s* [] \s* (\w+)/ {
             # INPUT "prompt"; variable
             return InputStatement.new(
                 prompt => ~$0,
@@ -256,7 +336,7 @@ class BasicCompiler is export {
     
     method parse-for-statement(Str $for-args) returns ForStatement {
         # Parse FOR variable = start TO end [STEP step]
-        if $for-args ~~ /^ (\w+) \s* '=' \s* (.+) \s+ 'TO' \s+ (.+) (\s+ 'STEP' \s+ (.+))?/ {
+        if $for-args ~~ /^ (\w+) \s* [] \s* (.+) \s+ 'TO' \s+ (.+) (\s+ 'STEP' \s+ (.+))?/ {
             my $var = self.get-or-create-variable(~$0);
             my $start = self.parse-expression(~$1);
             my $end = self.parse-expression(~$2);
