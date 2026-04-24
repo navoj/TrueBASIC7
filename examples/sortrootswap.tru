@@ -1,0 +1,37 @@
+option nolet
+! based crossing and uncrossing (algo)
+dim a(1)
+n=5
+for i=1 to n
+  mat redim a(i)
+  read a(i)
+next i
+!=>      ' data array '
+data 5,3,2,1,4
+print "before sorting =>"
+mat print a
+!****************************************
+flag=0
+do
+         flag=1 ! otherwise exit do
+  for i=1 to n-1
+      if a(i)> a(i+1) then  !
+         call swap(a(),i)
+         flag=0 ! no more swap
+      end if
+  next i
+loop while (flag=0)
+!****************************************
+print "after sorting =>"
+mat print a
+end
+
+sub swap(a(),i)
+!===swap======= 
+    temp  =a(i)
+    a(i)  =a(i+1)
+    a(i+1)=temp
+!==============
+end sub
+
+

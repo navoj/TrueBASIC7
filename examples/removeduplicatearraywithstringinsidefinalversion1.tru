@@ -1,0 +1,74 @@
+option nolet
+print "************************************************"
+print "* remove duplicates from a array$ 'version1'   *"
+print "* peter.vlasschaert@gmail.com,28/02/2017       *"
+print "************************************************"
+! filename:removeduplicatearraywithstringinsidefinalversion1
+!***********************************
+!*rem : without sorting,principles *
+!***********************************
+print
+dim el$(6),result$(1)
+!*******************************************************
+! use to find all elements in a chemical reaction system
+!*******************************************************
+el$(1)="Na"
+el$(2)="H"
+el$(3)="O"
+el$(4)="H"
+el$(5)="N"
+el$(6)="H"
+print "************************"
+print "*< input array = 'el$'>*"
+print "************************"
+print
+mat print el$
+print
+print  "-------------------------------------------------------------------------" 
+print  ""," i= "," j= ","value$";"    find duplicates"
+print  "-------------------------------------------------------------------------"
+print
+print  "***********************"
+print  "*find = 1 => duplicate*"
+print  "***********************"
+print
+target = 1
+for i=1 to size(el$)
+
+  value$ = el$(i)
+
+  find = 0   ! begin nothing to find
+
+  for j=1 to target-1  ! first value target = 1 (nothing to do)
+      if result$(j) = value$ then
+         find = 1 !  find duplicates
+         print " result_1_$ = ";i,j,value$,find
+         print
+      end if
+  next j
+
+  if find = 0 then
+     result$(target)= value$
+     print " result_2_$ = "; i,j,value$,find
+     print
+     target = target + 1
+     mat redim result$(target)
+  end if
+
+next i
+print
+ print "********************************************"
+ print " size string 'result$' = ";target-1
+ print "********************************************"
+ mat redim result$(target-1) ! last value is ""
+ print "********************************************"
+ print " removes duplicates from input array = 'el$'" 
+ print " put result in array = 'result$'            "
+ print "********************************************"
+ print
+ print "*******************************"
+ print "*< output array = ' result$ '>*"
+ print "*******************************"
+ print
+ mat print result$   
+end

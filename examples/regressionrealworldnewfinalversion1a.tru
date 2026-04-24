@@ -1,0 +1,293 @@
+option nolet
+open #1:screen 0,0.5,0,1
+open #2:screen .5,1,.5,1
+window #1
+! serie :analytical chemistry
+! filename :REGRESSIONREALWORLDNEWfinalversion1a.tru
+print
+print "*********************************************"
+print "* regressionline          'version 1.0a'    *"
+print "*  Why use :realworld example               *"
+print "*  (better understanding,relation between ) *"
+print "*  (weight and length ,to predict         ) *"
+print "*   Labo data: use the below principles     *"
+print "*********************************************"
+print "* peter.vlasschaert@gmail.com,20/10/2016    *"
+print "*********************************************"
+print
+print "************"
+print "* given =  *"
+print "************"
+!**********************************
+! info to display data on the graph
+!**********************************
+dim xp(2),yp(2)
+tb_x = 160 ! xmin
+te_x = 210 ! xmax
+nt_x = 10  ! tick marks x-axis
+tb_y = 50  ! ymin
+te_y = 100 ! ymax
+nt_y = 5   ! tick marks y-axis
+!*********************************************************
+! info : graph,title,numbering,label axes
+!*********************************************************
+title$ = "graph 'length versus weight'"
+x_txt$ = "length,cm"
+y_txt$ = "weight,kg"
+txt = 2  !  distance from right part of the window
+!read data statement, x data = length, y data = weight
+dim xy(2,1)
+!read x data
+n=10 !  number x data = number y data
+mat redim xy(2,n)
+! x  data
+for i=1 to n
+  read xy(1,i)
+next i
+! y  data
+for i=1 to n
+  read xy(2,i)
+next i
+print
+print " x-data = length 'cm' => "
+print
+for i=1 to n
+  print xy(1,i);
+next i
+print
+print
+print " y-data = weight 'kg' => "
+print
+for i=1 to n
+  print xy(2,i);
+next i
+print
+print
+print "*******************************"
+print " data range: x,y;tick x,y     *"
+print "*******************************"
+print
+print " xmin = ";tb_x
+print " xmax = ";te_x
+print " number of tick mark,x = ";nt_x
+print
+print " ymin = ";tb_y
+print " ymax = ";te_y
+print " number of tick mark,y = ";nt_y
+print
+print "************"
+print "* result = *"
+print "************"
+print
+!sum x,average x,ii=1;sum y,average y,ii=2
+call sum_val_average(1,n,xy(,),somvalx,avgx) 
+call sum_val_average(2,n,xy(,),somvaly,avgy) 
+print " sum  x_values,sum  y_values = ";somvalx;",";somvaly
+print " mean x_values,mean y_values = ";avgx;",";avgy
+print
+! sum prod of x_values*y_values
+call sum_prod_x_y(n,xy(,),somprodxy)
+print " sum(prod(x,y)) = ";somprodxy
+! sum prod of x_values*x_values
+call sum_prod_x_x(1,n,xy(,),somprodxx)
+print " sum(prod(x,x)) = ";somprodxx
+! sum prod of y_values*y_values
+call sum_prod_x_x(2,n,xy(,),somprodyy)
+print " sum(prod(y,y)) = ";somprodyy
+! calculation regression line ' y = aa*x+bb'
+spxx = somprodxx
+spyy = somprodyy
+spxy = somprodxy
+sx = somvalx
+sy = somvaly
+call regr_line_aa(n,spxy,spxx,spyy,sx,sy,aa)
+call regr_line_bb(n,avgx,avgy,aa,bb)
+print
+print "******************************"
+print "  regression line,blue => y = ";aa;" * x(+)";bb
+print "******************************"
+print
+print "********************************************"
+print " correlation coef. = spxy/sqr(spxx*spyy) => "
+print " -1 = <  correlation coef. = < 1            "
+print "********************************************"
+call correlation_coef(spxy,spxx,spyy,r_cor)
+print " correlation coef.  = ";r_cor
+print
+print "********************************************"
+print " solve ? What will be weight for person 2 m "
+print "********************************************"
+person = 200 ! conversion : 2 m = 200 cm
+tsolve = aa*person+bb
+print " weight for person of 2m = ";tsolve;" kg"
+!*******************************************
+window #2 ! draw graph right part of screen
+!*******************************************
+ntx = nt_x ! tick marks x-axis
+nty = nt_y ! tick marks y-axis
+xp(1)=tb_x   ! xmin,cm
+xp(2)=te_x   ! xmax,cm 
+yp(1)=tb_y   ! ymin,kg
+yp(2)=te_y   ! ymax,kg
+ask pixels px,py
+asp_r =1  ! px/py  !aspect ratio correction(rectangular window)
+set window xp(1)*asp_r,xp(2)*asp_r,yp(1),yp(2)
+call draw_axes(xp(1)*asp_r,xp(2)*asp_r,yp(1),yp(2),ntx,nty)
+set color "black"
+!**********************************************************
+call num_txt_axes(title$,x_txt$,y_txt$,xp(),yp(),txt,ntx,nty)
+!**********************************************************
+! draw graph in the window x-axes ,y-axes(right part)
+!**********************************************************
+set color "red" ! color of the graph
+!*************************************************
+! data x,y
+!*************************************************
+s1=0.4      ! radius
+z3$ = "red" ! color 'circle'
+asp = px/py ! to draw circle in the graph for data xy
+! draw n circles for data xy
+for i=1 to n
+call smallcir_dr(s1,xy(1,i),xy(2,i),scale,asp,z3$)
+flood xy(1,i),xy(2,i)   ! fill circle with color 'red'
+next i
+!*************************************************
+! axes ,transformation x=X-avgx,y=Y-avgy
+!*************************************************
+set color "green"
+plot lines :avgx,yp(1);avgx,yp(2)
+plot lines :xp(1),avgy;xp(2),avgy
+plot text,at avgx,avgy+1:"(mean(x),mean(y))"
+!*************************************************
+! draw regression line : y = aa*x+bb,2 points
+!*************************************************
+set color "blue"
+! first point   xx1,yy1
+xx1 = tb_x
+yy1 = aa*xx1+bb
+! second point  xx2,yy2 
+xx2 = te_x
+yy2 = aa*xx2+bb
+plot lines :xx1,yy1;xx2,yy2
+!*************************************************
+! draw : solve example ( person 2m,find weight)
+!*************************************************
+set color "magenta"
+plot lines :person,yp(1);person,tsolve
+plot lines :xp(1),tsolve;person,tsolve
+cord$ = "(" & str$(person) & "," & str$(tsolve)&")"
+plot text,at person,tsolve:cord$
+!*************************************************
+! data : x,y
+!*************************************************
+! data statement, x values
+data 170,179,185,171,188,175,190,166,186,192
+! data statement, y values
+data 73,74,81,74,82,70,82,60,90,85
+end
+
+!******************************************
+! y = aa*x+bb 'regression line
+!******************************************
+sub regr_line_aa(n,spxy,spxx,spyy,sx,sy,aa)
+tel1 = n*spxy-sx*sy
+noem1= n*spxx - (sx)^2
+aa = tel1/noem1
+end sub
+
+sub regr_line_bb(n,avgx,avgy,aa,bb)
+bb = avgy - aa*avgx
+end sub
+!*****************************************
+!*****************************************
+
+sub sum_val_average(ii,n,xy(,),somval,avg) 
+som1 = 0
+for i= 1 to n
+ som1 = som1 + xy(ii,i)
+next i
+somval=som1
+avg = (somval)/n
+end sub
+
+sub sum_prod_x_y(n,xy(,),somprodxy)
+som2 = 0
+for i=1 to n
+  som2=som2+xy(1,i)*xy(2,i)
+next i
+somprodxy = som2
+end sub
+
+sub sum_prod_x_x(ii,n,xy(,),somprodxx)
+som3 = 0
+for i=1 to n
+  som3=som3+xy(ii,i)*xy(ii,i)
+next i
+somprodxx = som3
+end sub
+
+sub correlation_coef(spxy,spxx,spyy,r_cor)
+tel2 = spxy
+noem2 = sqr(spxx*spyy)
+r_cor = tel2/noem2
+end sub
+
+sub smallcir_dr(s1,xf,yf,scale,asp,z3$)
+set color z3$
+for theta=0 to 2*3.14 step 0.0001    
+    plot points:s1*cos(theta)+xf,s1*sin(theta)*asp+yf   
+next theta
+end sub
+
+sub num_txt_axes(title$,x_txt$,y_txt$,xp(),yp(),txt,ntx,nty)
+ mx = xp(2)-xp(1)
+ my = yp(2)-yp(1)
+plot text,at xp(1)+mx/txt,yp(2)-my/(txt*txt):title$
+!*****************************************
+!**** range x axis  0 to xmax      *******
+!*****************************************
+for i=2 to ntx
+ m1 = xp(1)+mx/ntx*(i-1)
+ plot text,at m1,yp(1):str$(m1)
+next i
+plot text,at xp(2)-2*txt,yp(1)+txt:x_txt$
+!*****************************************
+!**** range y axis  0 to ymax ************
+!*****************************************
+for i=2 to nty
+ m2 = yp(1)+my/nty*(i-1)
+ plot text,at xp(1),m2:str$(m2)
+next i
+plot text,at xp(1)+txt,yp(2)-txt:y_txt$
+end sub
+
+SUB draw_axes(xmin,xmax,ymin,ymax,ntx,nty)
+! axis :for distribution function
+! see extra,website
+    ! distance between tick marks on x-axis
+    LET dx = (xmax - xmin)/ntx
+    ! distance between tick marks on y-axis
+    LET dy = (ymax - ymin)/nty
+    SET WINDOW xmin ,xmax ,ymin ,ymax
+    LET x0 = max(0,xmin)
+    LET y0 = max(0,ymin)
+    IF ymin*ymax < 0 then
+       LET y0 = 0
+    ELSE
+       LET y0 = ymin
+    END IF
+    PLOT LINES: xmin,y0;xmax,y0   ! horizontal axis
+    PLOT LINES: x0,ymin;x0,ymax   ! vertical axis
+    LET tx = 0.1*dy               ! size of tick mark
+    LET ty = 0.1*dx
+    FOR itick = 0 to ntx
+        LET x = xmin + itick*dx
+        PLOT LINES: x,y0 - tx; x,y0 + tx    ! draw ticks on x axis
+    next itick
+    FOR itick = 0 to nty
+        LET y = ymin + itick*dy
+        PLOT LINES: x0 - ty,y; x0 + ty,y    ! draw ticks on y axis
+    NEXT itick
+END SUB
+
+

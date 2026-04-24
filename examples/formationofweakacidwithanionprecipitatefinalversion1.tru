@@ -1,0 +1,147 @@
+option nolet
+! serie : analytical chemistry
+print "*************************************************"
+print " Solubility M(p)A(q) in solution of certain 'pH'*"
+print "*************************************************"
+print "*calculation : Formation of a weak acid with the*"
+print "*anion of the precipitate:M(p)A(q).(version 1.0)*"
+print "*weak acid : H(m)A(n),     'general n=1' ,5e)   *"
+print "*solid     : M(p)A(q)                           *"
+print "*************************************************"
+print " use     with : anion of weak acid  (+)          "
+print " not use with : complex formation                "
+print "-------------------------------------------------"
+print " peter.vlaschaert@gmail.com,        15/09/2016   "
+print "-------------------------------------------------"
+!file:formationofweakacidwithanionprecipitatefinalversion1
+!***************************
+!info: common ion effect (+)
+!***************************
+!*******************************************************
+! M(p)A(q)  =>   weak acid anion H(m)A(n) ,'general n=1'
+!*******************************************************
+! examples :    ' precipitate '
+!*******************************************************
+! 1e) Ca   [C(2)O(4)]   A = Oxalic     anion => alpha(2)
+!     p=1,q=1,m=2,n=1 => H(2)[C(2)O(4)]
+! 2e) Ag(2) S           A = Sulfide    anion => alpha(2)
+!     p=2,q=1,m=2,n=1 => H(2)S    
+! 3e) Ag(3) PO(4)       A = Phosphate  anion => alpha(3)
+!     p=3,q=1,m=3,n=1 => H(3)PO4
+! 4e) Sr(1)CO(3)        A = Carbonate  anion => alpha(2)
+!     p=1,q=1,m=2,n=1 => H(2)CO3
+! 5e) Sr(1) F(2)        A = Fluoride   anion => alpha(1)
+!     p=1,q=2,m=1,n=1 => HF
+!CF = [HF]+[F(-)] => alpha(0)->[HF] and alpha(1)->[F(-)]
+! 6e) Ca(3)[PO4](2)     A = Phosphate  anion => alpha(3)
+!     p=3,q=2,m=3,n=1 => H(3)PO4
+!M(p)A(q) 'solid' :  M = Ca(2+) => p , A = PO4(3-) => q
+! 7e) Bi(1)PO4          A = Phosphate  anion => alpha(3)
+!     p=1,q=1,m=3,n=1 => H(3)PO4
+! 8e) CdS               A = Sulfide    anion => alpha(2)
+!     p=1,q=1,m=2,n=1 => H(2)S
+!*******************************************************
+! conclusion : take n=1 :   'version 1.0' p,q,m only
+!!******************************************************
+!*******************************************************
+print "************************************************"
+print " polyprotic acid: H(2)A = H(+) + HA(-) => ka(1) "
+print "                  HA(-) = H(+) + A(2-) => ka(2) "
+print " M(p)A(q)'solid'  M(p)A(q) = p M(v+)+q A(w-) ksp"
+print "************************************************"
+print " general : polyprotic acid ,m=n-1 => H(m)A ,m=2 "
+print "************************************************"
+print " use : alph(0),alpha(2),..,alpha(m)             "
+print " use : ka(1),ka(2),..ka(j)...,ka(m)             "
+print " alpha(i) = f( ka(j),[H(+)]),      j=1..m       "
+print "************************************************"
+print " given : pH 'anion acid'                        "
+print "************************************************"
+print " Solubility 'S' M(p)A(q)'Ksp' in anion acid     "
+print " ksp =(p*S)^p*(q*S*alpha(m))^q                  "
+print " S = ( ksp/(p^p*q^q*(alpha(m))^q))^(1/(p+q))    "
+print "************************************************"
+!*******************************************************
+! p*v(+)+q*w(-) = 0  
+!*******************************************************
+!file:formationofweakacidwithanionprecipitatefinalversion1.tru
+n = 2 ! monoprotic weak acid (n=4 ,triprotic acid H(3)PO4)
+dim ka(1),alpha(0)
+dim pp(1)
+m=n-1
+mat redim ka(m) ! acid equilibruim constant (see above,5e)
+! pp(i) numerator
+mat redim pp(n),alpha( 0 to m)
+print
+print "*********"
+print " given = "
+print "*********"
+print
+! read ka(i) from data statement
+for i=1 to m
+    read ka(i)
+next i
+pH = 4 ! solution 'anion acid H(m)A'see examples above'
+!*********************************
+! Definition " pH = " -log10[H(+)]
+! pH = 3  => [H(+)] = x = 0.001
+!*********************************
+x = 10^(-pH) 
+!precipitate 'SrF(2)' in anion acid HF
+p=1
+q=2
+ksp = 2.8E-9   ! ksp 'solid' M(p)A(q) ,SrF(2)
+print " M(p)A(q)              p  = ";p;", q = ";q
+print " Solubility product (ksp) = ";ksp
+print " H(m)A                 m  = ";m   
+print " pH solution              = ";pH
+for i=1 to m 
+ print " ka(";i;")                  = ";ka(i) 
+next i
+! result => x,ka(i),(i=1..m), calculation 'alpha(m)'
+print
+print "***********"
+print "  result = "
+print "***********"
+print
+call frac_denominator(x,ka(),m,som,pp())
+call alpha_m(m,som,pp(),alpha())
+print " alpha(";m;")                  = ";alpha(m)
+call solubility_pH(ksp,p,q,m,alpha(),s)
+print "'S' Solubility(acid anion)   = ";S;" M"
+! data statement ka(i) i=1..m,m=1,HF
+data 6.7E-4
+end
+
+sub solubility_pH(ksp,p,q,m,alpha(),s)
+S = ( ksp/(p^p*q^q*(alpha(m))^q))^(1/(p+q))
+end sub
+
+sub alpha_m(m,som,pp(),alpha())
+for i=0 to m
+    alpha(i) = pp(i+1)/som
+next i
+end sub
+
+sub frac_denominator(x,ka(),m,som,pp())
+!***********************************************
+!--------------------------
+! see above : diprotic acid
+!--------------------------
+!print " (di)protic acid : n=3,m=2 (see code)           
+!print " sum = (H[+])^2+ka(1)*H[+] + Ka(1)*ka(2)        
+!***********************************************
+som = x^m
+pp(1) = som
+for i=1 to m
+    prod = 1
+    for j=1 to i
+        prod = prod * x^(m-i)*ka(j)
+    next j
+        pp(i+1) = prod
+  !*** denominator ***
+  som = som + pp(i+1)
+  !*******************
+next i
+end sub
+

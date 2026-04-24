@@ -1,0 +1,171 @@
+option nolet
+! serie :analytical chemistry
+declare function ph,pOH
+!***************************************************
+!filename:PHweakACIDWITHSTRONGBASEfinalversion1a.tru
+! more info then before (without graphics)
+!***************************************************
+print
+print "**********************************************"
+print " titration : weak acid with strong base       "
+print " peter.vlasschaert@gmail.com,24/08/2016       "
+print "**********************************************"
+print " CH(3)COOH + NaOH -> NaAc + aq   (version1.0a)"
+print "**********************************************"
+!***************************************************
+! titration of weak acid with strong base.
+!***************************************************
+! Three zones :
+! def : ph = - log [H+]
+!       ph+pOH = 14
+! First  zone: weak acid (HAc)
+!  "jump of ph just before EP ",buffer(HAc,NaAc)
+! Second zone:  salt     (NaAc)
+!  "jump of ph just after  EP "
+! Thrid  zone: strong base
+!****************************************************
+! pratical : 
+!****************************************************
+print " dutch : buret(ENG:burette) :x  ml Na0H 0.1N "
+print "         erlenmeyer(ENG:)   :10 ml HAc  0.1N "
+!----------------------------------------------------------------
+!****************************************************************
+!****************************************************************
+! mathematics : ' titration curve'=' weak acid with strong base
+!****************************************************************
+! charge balance : [H(+)] = [Ac(-)]+[OH(-)]       (1)
+!                  C_Acid = [HAc]+[Ac(-)]         (2)
+!                  k_a    = ([H(+)]*[Ac(-)])/[HAc](3)
+! (after first zone :'NaOH added' ) (1)->(1') 
+!   [H(+)]+[Na(+)] = [Ac(-)]+[OH(-)]     (1')
+!*****************************************************************
+! first zone :* C_Acid =[HAc] 'weak acid',[OH(-)] = 0
+!         (1) ->(*)  [H(+)] = [Ac(-)]
+!         (3) ->(*)  [H(+)] = sqr(k_a*C_Acid)
+!*****************************************************************
+! jump before 'EP' :buffer ( NaAc (salt),HAc(acid))
+!        NaAc  (aq)-> Na(+) + Ac(-) 'salt'
+!        HAc   (aq)<- H(+)  + Ac(-)
+!        => (3)  [H(+)] = k_a*[HAc,acid]/[Ac(-),salt]
+!*****************************************************************
+! K_w = K_a *K_b = 1e-14
+!-----------------------------------------------------------------
+!second zone: EP  :salt(NaAc)    [OH(-)] = sqr(k_b*C_base)
+! see: C_base 'sub EP(V0_HAc,C0_HAc,C_NaOH,x_NaOH,k_b,C_base,OH_c)'
+!-----------------------------------------------------------------
+! jump after  'EP':C_Base  'strong base NaOH'
+!*****************************************************************
+! Thrid  zone: C_Base      'strong base NaOH'
+!*****************************************************************
+!*****************************************************************
+!-----------------------------------------------------------------
+!*************************
+! info : acid acetic (HAc)
+!*************************
+k_a = 1.8e-5 !  acid equilibrium constant
+kw  = 1e-14  ! (kw = 1e-7*1e-7=[OH(-)]*[H(+)])
+k_b = kw/k_a
+!**************
+!* pratical   *
+!**************
+!  erlenmeyer :
+V0_HAc=10  ! ml
+C0_HAc=.1  ! N
+!  buret      :
+C_NaOH=.1  ! N
+! first zone :pH ' weak acid '
+print
+print " ml NaOH" ," ml HAc"," ml formed Ac" ,"[H(+)]"," pH"
+print
+print "**************"
+print " first zone : "
+print "**************"
+for i=0 to V0_HAc - 1
+call  before(V0_HAc,C0_HAc,i,k_a,H_c)
+print  i,V0_HAc-i,i,H_c,pH(H_c)
+next i
+! jump zone ( before EP)
+print " jump zone : before EP "
+for i=(V0_HAc - 1)+.1 to V0_HAc - 0.1 step .1
+call  before(V0_HAc,C0_HAc,i,k_a,H_c)
+print  i,V0_HAc-i,i,H_c,pH(H_c)
+next i
+! second zone:' NaAc formed '
+print
+print "***********************************"
+print " EP: second zone 'pure salt: NaAc' "
+print "***********************************"
+print " 'HAc (erlenmeyer) + NaOH (burette) -> NaAc+H(2)O' "
+print "  total(ml) =   V0_HAc + x_NaOH ml                 "
+call EP(V0_HAc,C0_HAc,C_NaOH,x_NaOH,k_b,C_base,OH_c,H_c)
+print " EP : ";x_NaOH;" ml base from the burette 'NaOH (conc :0.1 N)'"
+print " pH         =   ";pH(H_c)
+print
+! jump zone ( after EP )
+print " jump zone : after EP "
+print " ml Base NaOH","Conc Base NaOH"," pOH(base)"," pH(base)"
+print
+t_ml = x_NaOH + V0_HAc
+for i=.1 to .5 step .1
+call after(t_ml,i,C_NaOH,C_base)
+print x_NaOH+i,C_base , pOH(C_base),14-pOH(C_base)
+next i
+! thrid zone :pH ' C_base '
+print "**********************"
+print " third zone : after EP"
+print "**********************"
+for i=1 to 5 step 1
+call after(t_ml,i,C_NaOH,C_base)
+print x_NaOH+i,C_base , pOH(C_base),14-pOH(C_base)
+next i
+end
+
+sub  before(V0_HAc,C0_HAc,V_ml,k_a,H_c)
+!*************
+! H_c = [H(+)]
+!*************
+if V_ml = 0 then
+H_c = sqr(k_a*C0_HAc)       
+ else
+ ratio  =(V0_HAc-V_ml)/V_ml
+H_c = ratio*k_a
+end if
+end sub 
+
+function pH(C)
+! conversion from base (e) to base(10)
+pH = -1/log(10)*log(C)
+end function
+
+function pOH(C)
+! conversion from base (e) to base(10)
+pOH = -1/log(10)*log(C)
+end function
+
+sub EP(V0_HAc,C0_HAc,C_NaOH,x_NaOH,k_b,C_base,OH_c,H_c)
+!************
+!* OH_C     *
+!************
+!*******************************
+!1e) part
+!********************************
+x_NaOH = (V0_HAc*C0_HAc)/C_NaOH
+ratio  = x_NaOH/(x_NaOH+V0_HAc)
+C_base = ratio *C_NaOH
+!*******************************
+!2e) part
+!*******************************
+OH_c = sqr(k_b*C_base)
+!*******************************
+!3e) part
+!*******************************
+H_c = 1e-14/OH_c ! pH+pOH = 14
+!*******************************
+end sub
+
+sub  after(t_ml,x_ml,C_NaOH,C_base)
+q_ml = t_ml + x_ml
+ratio = ((q_ml)- t_ml)/(q_ml)
+C_base = ratio * C_NaOH
+end sub
+

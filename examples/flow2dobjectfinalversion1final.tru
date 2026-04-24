@@ -1,0 +1,691 @@
+! flow : circle 2D (finte element 2D)
+option nolet
+print "******************************************************"
+print " potential flow : flow over circular cylinder,between "
+print "                  two parallel plates ( version 1.0)  "
+print "******************************************************"
+print " finite element (2D),simplex = triangle (i,j,k)  :    "
+print " peter.vlasschaert@gmail.com        , 15/06/2016      "
+print "******************************************************"
+! file :      FLOW2DOBJECTFINALversion1final.tru
+!*****************************************************
+! ref : The finite element method in engineering (5ed)      
+!       author :Singiresu S.Rao
+!       publisher : Butterworth-Heinemann (Elsevier)
+!      info :book : pg 571-584
+!*****************************************************
+! to do computations (read data in matrix ,mat_ ***)
+!*****************************************************
+read nu   
+dim mat_xy(1,1)
+mat redim mat_xy(nu,2)
+for i = 1 to nu
+    read mat_xy(i,1)
+    read mat_xy(i,2)
+next i
+read nt
+dim mat_ijk(1,1)
+mat redim mat_ijk(nt,3)
+for i = 1 to nt
+    read mat_ijk(i,1)
+    read mat_ijk(i,2)
+    read mat_ijk(i,3)
+next i
+!***************************************************
+!*calculation : area (each triangle 1 to  nt  )    *
+!***************************************************
+dim mat_el(1,1)
+mat redim mat_el(nt,nu)
+for i=1 to nt
+mat_el(i,1) = mat_xy(mat_ijk(i,1),1)  !xi
+mat_el(i,2) = mat_xy(mat_ijk(i,1),2)  !yi
+mat_el(i,3) = mat_xy(mat_ijk(i,2),1)  !xj
+mat_el(i,4) = mat_xy(mat_ijk(i,2),2)  !yj
+mat_el(i,5) = mat_xy(mat_ijk(i,3),1)  !xk
+mat_el(i,6) = mat_xy(mat_ijk(i,3),2)  !yk
+mat_el(i,7) = mat_el(i,3)-mat_el(i,1) !ck = xj-xi
+mat_el(i,8) = mat_el(i,5)-mat_el(i,3) !ci = xk-xj
+mat_el(i,9) = mat_el(i,1)-mat_el(i,5) !cj = xi-xk
+mat_el(i,10) = mat_el(i,4)-mat_el(i,6) !bi = yj-yk
+mat_el(i,11) = mat_el(i,6)-mat_el(i,2) !bj = yk-yi
+mat_el(i,12) = mat_el(i,2)-mat_el(i,4) !bk = yi-yj
+! area_el 'last column 
+area_e1= mat_el(i,7)*(-mat_el(i,10))
+area_e2= mat_el(i,8)*(-mat_el(i,12))
+area_el = area_e1 - area_e2
+mat_el(i,13) = 1/2 * abs(area_el)
+next i
+print "----------------------------------------------------"
+print " property of the finite elements (i=1..'nu=13')     "
+print "----------------------------------------------------"
+print "xi","yi","xj","yj","xk","yk","ck","ci","cj","bi","bj","bk","area el(i)"
+print
+mat print mat_el
+!***************************
+! build the stifness matrix*
+!***************************
+!*** build  e_h      *******
+!***************************
+dim e_h(1,1)
+mat redim e_h(nt,9)
+for i=1 to nt
+! diagonal
+   e_h(i,1) = (mat_el(i,10))^2+(mat_el(i,8))^2 ! ci^2+bi^2 
+   e_h(i,1) = 1/4 * 1/mat_el(i,13)*e_h(i,1)
+   e_h(i,2) = (mat_el(i,9))^2+(mat_el(i,11))^2 ! cj^2+bj^2
+   e_h(i,2) = 1/4 * 1/mat_el(i,13)*e_h(i,2)
+   e_h(i,3) = (mat_el(i,7))^2+(mat_el(i,12))^2 ! ck^2+bk^2
+   e_h(i,3) = 1/4 * 1/mat_el(i,13)*e_h(i,3)
+! outside diagonal
+x12 = mat_el(i,10)*mat_el(i,11)+mat_el(i,8)*mat_el(i,9) !bibj+cicj
+  e_h(i,4)=x12*1/4 * 1/mat_el(i,13)
+x13 = mat_el(i,10)*mat_el(i,12)+mat_el(i,8)*mat_el(i,7) !bibk+cick
+ e_h(i,5)=x13*1/4 * 1/mat_el(i,13)
+x23 = mat_el(i,11)*mat_el(i,12)+mat_el(i,9)*mat_el(i,7) !bjbk+cjck
+  e_h(i,6)=x23*1/4 * 1/mat_el(i,13)
+! position i,j,k node number
+e_h(i,7) = mat_ijk(i,1)  ! pos1
+e_h(i,8) = mat_ijk(i,2)  ! pos2
+e_h(i,9) = mat_ijk(i,3)  ! pos3
+next i
+! print "ii","jj","kk","ij","ik","jk","pos(i)","pos(j)","pos(k)"
+! mat print e_h
+print
+dim kh(1,1)
+nn = 3*nt
+mat redim kh(nn,3)
+! build 13 small matricess for domain intrest
+for ii=0 to nt-1 
+!** diagonal **
+  kh(1+3*ii,1)=e_h(ii+1,1)
+  kh(2+3*ii,2)=e_h(ii+1,2)
+  kh(3+3*ii,3)=e_h(ii+1,3)
+!** uppertriangle **
+  kh(1+3*ii,2)=e_h(ii+1,4)
+  kh(1+3*ii,3)=e_h(ii+1,5)
+  kh(2+3*ii,3)=e_h(ii+1,6)
+next ii
+!** lowertriangle **
+for ii=0 to nt-1
+ kh(2+3*ii,1)=e_h(ii+1,4)
+ kh(3+3*ii,1)=e_h(ii+1,5)
+ kh(3+3*ii,2)=e_h(ii+1,6)
+next ii
+! mat print kh
+!**************************
+! build a table : matrix kh
+!**************************
+dim table(1,1)
+mm=nu*nu
+mat redim table(mm,17)
+for i=1 to mm
+ table(i,1) = i
+next i
+for i=0 to nu-1
+  for j=1 to nu
+table(j+i*nu,2)=i+1 ! i => table
+table(j+i*nu,3)=j   ! j => table
+ next j
+next i
+! small matrix (3,3) = simplex2d (each triangle)
+dim a(1,1)
+mat redim a(3,3)
+mat a = zero
+! build : stifness matrix
+dim k(1,1)
+mat redim  k(nt,nt)
+m  = 13             ! 13+3 = 16 columns with data
+k3 = mm             ! 13*13
+k1 = nu             ! number of elements = 13
+for kn=0 to nu-1
+for i=1 to 3
+  for j=1 to 3
+   a(i,j) = kh(3*kn+i,j)
+  next j
+next i
+ call simplex2dtri(kn,k3,k1,e_h(kn+1,7),e_h(kn+1,8),e_h(kn+1,9),a(,),table(,),k(,))
+next kn
+call sum_columns(16,mm,table(,))  !16=13+3
+call mat_k(mm,table(,),k(,))
+print "-----------------------------------------------"
+print " constraint (nodes,value),stifness matrix  'k' "
+print "-----------------------------------------------"
+! mat print k
+file3$ = "C:\Prog\k.dat"
+call write_matrix(file3$,k(,))
+! in flow  uo => Vo=-1
+vo=-1  ! see book
+! build part that give : input flow: fig AB ( modification)
+! element three local sides : 
+!   triangle : given points (i,j,k)
+!              side sji => from   i to j ( see book E.3)
+!              side skj => from   j to k ( see book E.4)
+!              side sik => from   k to i ( see book E.4)
+! detail : book : The finite element method (fifth edition)
+!                 author : singiresu s.rao
+!                 company (published):elsevier
+! "flow through => element 1 local 1,2,3 -> global 5,1,6 : (side sji = 5,1) "
+t1 = 1  ! element 1
+xi = mat_el(t1,1) !see above
+yi = mat_el(t1,2)
+xj = mat_el(t1,3) !see above
+yj = mat_el(t1,4)
+call dist_S(xi,yi,xj,yj,sji)
+! print " sji = ";sji;" in flow sij = ";-sji
+sij = -sji ! see book
+factor1 = (vo*sij)/2 ! global (5,1,6) =(i,j,k)
+! print " factor1 = "; factor1 !! p1=factor1*transpose(1,1,0)
+! "flow through => element 7 local 1,2,3 -> global 5,6,9 : (side sik = 5,9) "
+t1 = 7  ! element 1
+xi = mat_el(t1,1) !see above
+yi = mat_el(t1,2)
+xk = mat_el(t1,5) !see above
+yk = mat_el(t1,6)
+call dist_S(xi,yi,xk,yk,ski)
+! print " ski = ";ski;" in flow sik = ";-ski
+sik = -ski ! see book
+factor2 = (vo*sik)/2 ! global (5,6,9) =(i,j,k)
+! print " factor2 = "; factor2 ! p7=factor2*transpose(1,0,1)
+!***********************************************************************
+! second : part we call : load vector
+! equation : mat k * pontential=phi(vector) = load pp (vector) => get phi
+! output : flow =>  BC = Boundary Conditions :
+!                   ( element = 6 (4,8),element = 13 (8,13) )
+! see book : output CD :  phi(global = 4) =0,phi(global = 8) =0
+!                         phi(global = 13) =0
+!***********************************************************************
+dim pp(1)
+mat redim pp(nu) 
+! hulp matrix
+dim ph(1,1)
+mat redim ph(nu,nu+2)
+for i=1 to nu
+   ph(i,1)=i
+next i
+!***********************************************
+! non zero elements ph : column = 2 ,column = 8
+!***********************************************
+! first element (column = 2)
+for i=1 to nu
+   ph(e_h(1,7),2)=factor1*1 ! first element ,i '7',2
+   ph(e_h(1,8),2)=factor1*1 ! first element ,j '8',2
+   ph(e_h(1,9),2)=0
+next i   
+! seventh element (column = 8)
+for i=1 to nu
+   ph(e_h(7,7),8)=factor2*1 ! seventh element ,i '7',8
+   ph(e_h(7,8),8)=0
+   ph(e_h(7,9),8)=factor2*1 ! seventh element ,k '9',8
+next i   
+! values for pp vector sum columns 2 -> 14,sum (column=15)
+st = 2
+call sum_column_ph(nu,st,ph(,))
+! mat print ph
+!***********************
+! find load vector = pp
+!***********************
+for i = 1 to nu
+  pp(i) = ph(i,nu+2)
+next i
+!mat print pp
+!*****************************************
+! build : system ,k augmented matrix
+!*****************************************
+! k matrix and last column pp load vector
+!*****************************************
+dim k_augm(1,1)
+mat redim k_augm(nu,nu+1)
+for i=1 to nu
+ for j=1 to nu
+k_augm(i,j) = k(i,j)
+ next j
+next i
+for i=1 to nu
+  k_augm(i,nu+1)=pp(i)
+next i
+! mat print k_augm
+!****************************************
+! implement BC : with need eliminated(**)
+!****************************************
+! phi4   => row 4,column 4 eliminated
+! phi8   => row 8,column 8 eliminated
+! phi13  => row 13,column 13 eliminated
+!***************************************************
+! find : data file unther constrained (read - data )
+!***************************************************
+nc = 3  ! number constrained values (example 4,8,13)
+!***************************************************
+!*build (co)nstrained 'row' vector*
+! *********************************
+dim co_row(1),co_row_val(1)
+read nc
+mat redim co_row(nc),co_row_val(nc)
+for i=1 to nc
+  read co_row(i)
+next i
+! values : constrained
+for i=1 to nc
+  read co_row_val(i)
+next i
+n1 = size(k_augm,1)
+m1 = size(k_augm,2)
+dim v_v(1,1),w_w(1,1)
+!**************************************************
+! delete : columns and rows
+!**************************************************
+      mat redim v_v(n1,m1-1)
+call delete_column(n1,m1,co_row(1),k_augm(,),v_v(,))
+!print " delete column = ";co_row(1)
+      ! mat print v_v
+      mat redim w_w(n1-1,m1-1)
+call delete_row(n1,m1,co_row(1),v_v(,),w_w(,))
+!print " delete row    = ";co_row(1)
+      ! mat print w_w
+!***********************
+! second thridth combine
+!************************
+for ii = 2  to nc
+!print   ii;"(e the : run "
+     mat redim v_v(n1-(ii-1),m1-ii)
+call delete_column(n1-(ii-1),m1-(ii-1),co_row(ii)-1,w_w(,),v_v(,))
+!print " delete column = ";co_row(ii)
+     ! mat print v_v
+      mat redim w_w(n1-ii,m1-ii)
+call delete_row(n1-(ii-1),m1-(ii-1),co_row(ii)-1,v_v(,),w_w(,))
+!print " delete row    = ";co_row(ii)
+     ! mat print w_w
+next ii
+!mat print w_w
+mat print co_row,co_row_val
+
+!****************************************************
+! how to build row with zeros and ones
+! (put in (vec)tor 'zero' for 'constrained   values')
+! (                'one ' for 'unconstrained values')
+!****************************************************
+num_un = nu-nc
+dim vec(1)
+mat redim vec(13)
+    mat vec = 1
+for i=1 to nc
+    vec(co_row(i)) = 0
+next i
+dim vec_un(1)
+mat redim vec_un(nu)
+for i=1 to nu
+    vec_un(i)=vec(i)*i
+next i
+dim vec_un_reduce(1)
+    mat redim vec_un_reduce(nu)
+    ii = 0
+!*****************************
+! {1,2,3,0,5,6,7,0,9,10,11,12}
+!*****************************
+! remove zeros from vector
+!*****************************
+for i=1 to nu
+    if vec_un(i)<> 0 then
+       ii=ii+1
+       vec_un_reduce(ii)=vec_un(i)
+    end if
+next i
+!*******************************
+! {1,2,3,5,6,7,9,10,11,12,0,0,0}
+!*******************************
+!*******************************
+mat redim vec_un_reduce(num_un)
+!*******************************
+!*******************************
+! {1,2,3,5,6,7,9,10,11,12}
+!  mat print vec_un_reduce
+!*******************************
+!*******************************************
+! build :stifness with constrained dimension
+!*******************************************
+dim k_co(1,1)
+mat redim k_co(nu,num_un)
+for j=1 to nu
+    for i=1 to num_un
+!       constrained vector used
+        k_co(j,i)=k_augm(j,vec_un_reduce(i))
+    next i
+next j
+!*************************************************
+!*************************************************
+!form matrix is not square ( find invers A^(-1) ?)
+! mat print k_co
+!*************************************************
+! build:loadvector with constrained dimension
+!*************************************************
+dim f_co(1,1)
+mat redim f_co(nu,1)
+!*****************************************
+! form is a vector(nu,1)
+!*****************************************
+!*****************************************
+! build solution vector phi(1..nu)
+!*****************************************
+! see(**) : Boundary Condition
+!*****************************************
+! 1e) constrained solution vector
+!*****************************************
+!*****************************************
+dim phi(1,1)
+mat redim phi(nu,1)
+! constrained :
+for i=1 to nc
+  phi(co_row(i),1)= co_row_val(i)
+next i
+! mat print phi
+!*****************************************
+!2e) constrained load vector : build
+!*****************************************
+!*****************************************
+! a) build f_co
+!*****************************************
+for i=1 to nu
+   sd1 = k_augm(i,co_row(1))*phi(co_row(1),1)
+   sd2 = k_augm(i,co_row(2))*phi(co_row(2),1)
+   sd3 = k_augm(i,co_row(3))*phi(co_row(3),1) 
+   sdd = sd1+sd2+sd3
+   f_co(i,1)=k_augm(i,nu+1)-sdd
+next i
+!mat print f_co  
+!****************************************
+! b) constrained ,column vector = f_co 
+!    remove elements  : mat print co_row
+!****************************************
+dim f_co_r(1)
+mat redim f_co_r(nu)
+!************************
+! use below sub procedure
+!************************
+for i=1 to nu
+  f_co_r(i) = f_co(i,1)
+next i
+!***************************************
+! delete elements from vector because of
+!***************************************
+! the constraint
+for i=1 to nc
+call del_el_vec(i,co_row(),f_co_r())
+next i
+mat redim f_co_r(num_un)
+!mat print f_co_r
+!*********************************
+! back conversion for least square
+!*********************************
+dim f_co_rr(1,1),www(1,1)
+mat redim f_co_rr(num_un,1)
+mat redim www(num_un,num_un)
+for i=1 to num_un
+   f_co_rr(i,1)=f_co_r(i)
+next i
+! mat print w_w
+print
+for i=1 to num_un
+  for j=1 to num_un
+ www(i,j)=w_w(i,j)
+  next j
+next i
+mat print www
+!mat print f_co_rr
+!*****************************************
+!*****************************************
+!
+!********************
+!* ? solve : system *
+!********************
+!************************************************
+! to build system to solve(=least square method)
+!************************************************
+! y=A*x                    : system of equations
+! x=(trn(A)*A)^(-1)*trn(A)*y : 'algo'
+!************************************************
+! algo : first part ' mat A = mat www '
+!  mat z = trn(www)*www
+!************************************************
+dim z(1,1),z_inv(1,1)
+mat redim z(num_un,num_un)  ! (num_un*nu)*(nu,num_un)
+mat redim z_inv(num_un,num_un)
+dim z_h1(1,1)
+mat redim z_h1(num_un,num_un)
+mat z_h1 = TRN(www)
+mat z = z_h1*www
+mat z_inv = inv(z)   ! mat z_inv =(trn(A)*A)^(-1) 
+dim z_h2(1,1)
+mat redim z_h2(num_un,num_un)
+mat z_h2 = z_inv*z_h1
+! mat print z_h2
+dim solv(1,1)
+mat redim solv(num_un,1)
+mat solv =z_h2*f_co_rr
+! mat print solv
+!***************************
+! solve vector : phi(1..nu)
+!***************************
+for i=1 to num_un
+ phi(vec_un_reduce(i),1)=solv(i,1)
+next i
+print " solution = 'potential at the ";nu;" nodes' "
+print
+ mat print phi
+!*******************
+! *** data file ***
+!*******************
+! node number        => nu
+data 13
+! global coordinates => nu -> (x,y)
+data 0,8,5,8,9.17,8,12,8,0,4,5,4
+data 9.17,5.5,12,5.5,0,0,5,0,8,0
+data 9.17,2.83,12,4
+! element(triangle ,three points i,j,k)
+! number triangles   => nt
+data 13 ! nt
+! global node numbers => (i,j,k)
+! data i,j,k
+data 5,1,6  ! first element : in flow    (element = 1)
+data 6,1,2
+data 6,2,7
+data 7,2,3
+data 7,3,4
+data 7,4,8
+data 5,6,9  ! seventh element : in flow  (element = 1)
+data 9,6,10
+data 10,6,11
+data 11,6,12
+data 6,7,12
+data 7,12,13
+data 7,8,13
+!******************************************
+! system : equations
+! constrained data (potential),values known 
+!******************************************
+data 3       ! number constrained values of phi
+data 4,8,13  !        known phi
+data 0,0,0   ! values known phi
+data 1,2,3,5,6,7,9,10,11,12 ! unknown phi
+! *** end data file ***
+end
+
+sub sum_column_ph(nu,st,ph(,))
+for kv = 1 to nu
+  sv=0
+  for jj=st to nu+1
+         sv = sv + ph(kv,jj)
+  next jj
+     ! result sum : find in column 15
+     ph(kv,nu+2) = sv
+next kv
+end sub
+
+
+sub dist_S(xi,yi,xj,yj,ss)
+!Sij=sqr((xj-xi)^2+(yj-yi)^2)
+dx = (xj-xi)
+dy = (yj-yi)
+ss = sqr(dx^2+dy^2)
+end sub
+
+sub mat_k(k3,table(,),k(,))
+! k3 = k1*k2
+for ii = 1 to k3
+!*****************************
+! i = table(ii,3)
+! j = table(ii,4)
+!*****************************
+   k(table(ii,2),table(ii,3))=table(ii,17)
+next ii
+end sub
+
+
+sub sum_columns(nn,k3,table(,))
+for ks = 1  to k3
+     s=0 ! init sum
+ for jj=4 to nn
+         s = s + table(ks,jj)
+ next jj
+     ! result sum : find in column 17
+     table(ks,17) = s
+next ks
+end sub
+
+
+sub simplex2dtri(m,k3,k1,pos1,pos2,pos3,a(,),table(,),k(,))
+for i=1 to k3
+if i=pos1 or i=pos2 or i=pos3 then   !test: row    ( position mat :a)
+   for j=1 to k3
+       if j=pos1 or j=pos2 or j=pos3 then   !test: column ( position mat :a)
+!*******************************************************************************
+!use: example simplex 2d in a bigger matrix (finite element method:flow problem)
+!   : triangles ( simplex 2d),three points.
+!*******************************************************************************
+    s1=a(1,1)
+    !*(pos1,pos1)*
+    k(pos1,pos1)=s1
+    table(k1*(pos1-1)+pos1,4+m) = s1 !column 
+    s2=a(1,2)
+    !*(pos1,pos2)*
+    k(pos1,pos2)=s2
+    table(k1*(pos1-1)+pos2,4+m) = s2 !column 
+    s3=a(1,3)
+    !*(pos1,pos3)*
+    k(pos1,pos3)=s3
+    table(k1*(pos1-1)+pos3,4+m) = s3 !column 
+    s4=a(2,1)
+    !*(pos2,pos1)*
+    k(pos2,pos1)=s4
+    table(k1*(pos2-1)+pos1,4+m) = s4 !column 
+    s5=a(2,2)
+    !*(pos2,pos2)*
+    k(pos2,pos2)=s5
+    table(k1*(pos2-1)+pos2,4+m) = s5 !column 
+    s6=a(2,3)
+    !*(pos2,pos3)*
+    k(pos1,pos3)=s6
+    table(k1*(pos2-1)+pos3,4+m) = s6 !column 
+    s7=a(3,1)
+    !*(pos3,pos1)*
+    k(pos3,pos1)=s7
+    table(k1*(pos3-1)+pos1,4+m) = s7 !column
+    s8=a(3,2)
+    !*(pos3,pos2)*
+    k(pos3,pos2)=s8
+    table(k1*(pos3-1)+pos2,4+m) = s8 !column 
+    s9=a(3,3)
+    !*(pos3,pos3)*
+    k(pos3,pos3)=s9
+    table(k1*(pos3-1)+pos3,4+m) = s9 !column 
+       end if
+   next j
+end if
+next i
+end sub
+
+!1e) write ( matrix -vector)
+
+Sub write_vector(filename$,data())
+open #1: name filename$,create newold,org text,access outin
+erase #1
+set #1:Margin maxnum
+mat print #1:data
+close #1
+end sub
+
+Sub write_matrix(filename$,data(,))
+! write matrix to file
+open #1: name filename$,create newold,org text,access outin
+erase #1
+set #1:Margin maxnum
+Mat data = TRN(data)
+Mat print #1:data
+close #1
+end sub
+
+!2e) delete more columns and rows
+
+sub delete_row(n,m,row,v(,),w(,))
+!**********************************
+! second: operation  'v->w'
+!**********************************
+! n    = number rows     matrix 'v'
+! m-1  = number columns  matrix 'v'
+! result : operation (delete row)
+! n-1  = number rows     matrix 'w'
+! m-1  = number columns  matrix 'w'
+!**********************************
+del_r = row
+for j=1 to m-1
+  for i=1 to n-1
+     if i >= del_r  then
+        w(i,j) = v(i+1,j)
+     else
+        w(i,j) = v(i,j)
+     end if
+  next i
+next j
+end sub
+
+
+sub delete_column(n,m,col,a(,),v(,))
+!**********************************
+! first: operation ' a -> v '
+!**********************************
+! n= number rows     matrix 'a'
+! m= number columns  matrix 'a'
+! result : operation (delete column)
+! n    = number rows     matrix 'v'
+! m-1  = number columns  matrix 'v'
+!**********************************
+del_c = col  ! delete column = col
+for i=1 to n
+  for j=1 to m-1
+     if j >= del_c  then
+        v(i,j) = a(i,j+1)
+     else
+        v(i,j) = a(i,j)
+     end if
+  next j
+next i
+end sub
+
+!3e) delete elements from vector
+
+sub del_el_vec(kf,el(),a())
+   for i=1 to el(kf)-2
+      a(i) = a(i)
+   next i
+   for i=el(kf)-1 to size(a)-1
+       a(i) = a(i+1)
+   next i
+end sub
+
+
+
+
+
+
+
+
+
+

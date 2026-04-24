@@ -1,0 +1,111 @@
+option nolet
+print "--------------------------------------------------------"
+print " find:solution of two non-linear equations 'version 1.0'"
+print " f1(x,y) = x^2+y^2-50 = 0   find = x,y                  "
+print " f2(x,y) = x*y-25     = 0                               "
+print " no need : for symbolic calculation of derivatives of   "
+print "           the jacobian.(finite differences approx.)    "
+print " method : secant algorithm                              "
+print "--------------------------------------------------------"
+print " peter.vlasschaert@gmail.com , 16/08/2015               "
+print "--------------------------------------------------------"
+print
+declare function f1,f2
+!**************************
+! start value for iteration
+!**************************
+x0 = 2
+y0 = 3
+!**************************
+nu = 2     ! number of equations f1,f2
+x=x0
+y=y0
+dx=.1
+!****************************************
+input prompt " number of iterations = ":k
+!****************************************
+print
+dim xx(1)
+mat redim xx(nu) ! x,y
+dim ff(1)  ! 
+mat redim ff(nu) ! f1,f2
+dim JC(1,1)
+mat redim JC(nu,nu)
+!****************************************
+print " J = jacobian  = ' finite differences approximation ' = "
+print
+JC(1,1) = (f1(x+dx,y)-f1(x,y))/dx ! df1/dx
+JC(1,2) = (f1(x,y+dx)-f1(x,y))/dx ! df1/dy
+JC(2,1) = (f2(x+dx,y)-f2(x,y))/dx ! df2/dx
+JC(2,2) = (f2(x,y+dx)-f2(x,y))/dx ! df2/dy
+mat print JC
+!****************************************
+! calculation inverse jacobian =JC_(-1)
+dim JC_i(1,1)
+mat redim jc_i(nu,nu)
+call JC_inv(jc(,),jc_i(,))
+print " J^(-1) = inverse of the jacobian : = 'first step'  = "
+print
+mat print jc_i
+ff(1) = f1(x,y)
+ff(2) = f2(x,y)
+! hulp mat q
+dim q(1)
+mat redim q(2)
+mat q = jc_i*ff
+xx(1)=x
+xx(2)=y
+mat q = xx-q
+print " first update  to find the solution = "
+mat print q
+print " next  updates to find the solution = "
+for i=1 to k
+x=q(1)
+y=q(2)
+ff(1)=f1(x,y)
+ff(2)=f2(x,y)
+xx(1)=x
+xx(2)=y
+JC(1,1) = (f1(x+dx,y)-f1(x,y))/dx ! df1/dx
+JC(1,2) = (f1(x,y+dx)-f1(x,y))/dx ! df1/dy
+JC(2,1) = (f2(x+dx,y)-f2(x,y))/dx ! df2/dx
+JC(2,2) = (f2(x,y+dx)-f2(x,y))/dx ! df2/dy
+call JC_inv(jc(,),jc_i(,))
+mat q = jc_i*ff
+mat q = xx-q
+mat print q
+print
+x=q(1)
+y=q(2)
+next i
+print " output = "
+print " function zero = f1(";x;",";y;")= ";f1(x,y)
+print " function zero = f2(";x;",";y;")= ";f2(x,y)
+
+
+
+!print (f2(x+dx,y)-f2(x,y))/dx,(f2(x,y+dx)-f2(x,y))/dx
+!print (f1(x+dx,y)-f1(x,y))/dx,(f1(x,y+dx)-f1(x,y))/dx
+end
+
+sub JC_inv(jc(,),jc_i(,))
+! determinant = d =dd= a*d-b*c
+d=jc(1,1)*jc(2,2)-jc(1,2)*jc(2,1)
+! inv = inverse = AA^(-1)
+!     | a  b|                   | d    -b |
+! aa= |     | => inv(aa) = 1/dd*|         |
+!     | c  d|                   | -c    a |
+!
+jc_i(1,1) = 1/d*Jc(2,2)
+jc_i(1,2) = -1/d*JC(1,2)
+jc_i(2,1) = -1/d*JC(2,1)
+jc_i(2,2) =1/d* JC(1,1)
+end sub
+
+def f2(x1,x2)
+f2=x1*x1+x2*x2-50
+end function
+
+def f1(x1,x2)
+f1=x1*x2-25
+end function

@@ -1,0 +1,326 @@
+option nolet
+!simplebroydenfinal.tru
+print "----------------------------------------------"
+print " three non-linear equations =>   version 1.0  "
+print " algo : broyden,solve x1,x2,x3                "
+print " ---------------------------------------------"
+print " 1e)f1: 3*x1-cos(x2*x3)-1/2 = 0               "
+print " 2e)f2: x1^2-81*(x2+0.1)^2+sin(x3)+1.06 = 0   "
+print " 3e)f3: exp(-x1*x2)+20*x3+(10*pi-3)/3   = 0   "
+print " peter.vlasschaert@gmail.com ,24/08/2015      "
+print "----------------------------------------------"
+!*************************************************
+! info : algo : pg 455 to 460
+! Quasi-Newton Method
+! numerical analysis (second edition)
+! Richard L.Burden,J.Douglas Faires
+! Prindle,Weber& Schmidt,Boston ,Massachusetts
+!*************************************************
+nu = 3    ! number of equations
+n = 12    ! number of iterations
+ep = 1e-7 ! tolerance
+print " number of iterations = ";n
+print " tolerance            = ";ep
+print
+!*******************************************
+! database
+!-------------------------------------------
+dim data_b(1,4)
+mat redim data_b(2,4)
+!*******************************************
+! partial derivatives (use maxima,see below)
+!*******************************************
+declare function df1dx,df1dy,df1dz
+declare function df2dx,df2dy,df2dz
+declare function df3dx,df3dy,df3dz
+! function
+!**************************
+declare function f1,f2,f3
+declare function det_mat
+dim x(1,1)
+mat redim x(nu,1)
+dim test_f(1,4)
+! try values
+! input values x(1) ?
+x(1,1)=.1
+x(2,1)=.1
+x(3,1)=-.1
+!*******************************************
+! computation of the inverse through formula
+!*******************************************
+dim aa(1,1)
+mat redim aa(nu,nu)
+aa(1,1)=df1dx(x(1,1),x(2,1),x(3,1))
+aa(1,2)=df1dy(x(1,1),x(2,1),x(3,1))
+aa(1,3)=df1dz(x(1,1),x(2,1),x(3,1))
+aa(2,1)=df2dx(x(1,1),x(2,1),x(3,1))
+aa(2,2)=df2dy(x(1,1),x(2,1),x(3,1))
+aa(2,3)=df2dz(x(1,1),x(2,1),x(3,1))
+aa(3,1)=df3dx(x(1,1),x(2,1),x(3,1))
+aa(3,2)=df3dy(x(1,1),x(2,1),x(3,1))
+aa(3,3)=df3dz(x(1,1),x(2,1),x(3,1))
+dim bb(1,1)
+mat redim bb(nu,nu)
+t1 =aa(1,1)
+t2 =aa(1,2)
+t3 =aa(1,3)
+t4 =aa(2,1)
+t5 =aa(2,2)
+t6 =aa(2,3)
+t7 =aa(3,1)
+t8 =aa(3,2)
+t9 =aa(3,3)
+m1=t1*(t5*t9-t6*t8)
+m2=t2*(t6*t7-t4*t9)
+m3=t3*(t4*t8-t5*t7)
+! determinant to make calculation J^(-1)
+m=m1+m2+m2
+dim aainv(1,1)
+mat redim aainv(nu,nu)
+aainv(1,1)=1/m*(t5*t9-t6*t8)
+aainv(1,2)=1/m*(t3*t8-t2*t9)
+aainv(1,3)=1/m*(t2*t6-t3*t5)
+aainv(2,1)=1/m*(t6*t7-t4*t9)
+aainv(2,2)=1/m*(t1*t9-t3*t7)
+aainv(2,3)=1/m*(t3*t4-t1*t6)
+aainv(3,1)=1/m*(t4*t8-t5*t7)
+aainv(3,2)=1/m*(t2*t7-t1*t8)
+aainv(3,3)=1/m*(t1*t5-t2*t4)
+print " symbolic calculation with wMaxima ="
+!**************************************************
+! startup Wmaxima
+! Menu : Algebra ,choose : enter matrix (give) name
+! after choose : invert matrix
+!**************************************************
+mat print aainv
+
+!***** imput **************
+dim ainv(1,1)
+mat redim ainv(nu,nu)
+! print inverse jacobian
+print " ***you need only evaluated one time*** "
+call jacob_val(ainv(,))
+print " J^(-1) = jacobian inverse matrix 'x1=.1,x2=.1,x3=-.1' => "
+print
+mat print ainv
+call database(1,data_b(,),x(,))
+! try values put in the function
+dim v(1,1)
+mat redim v(nu,1)
+call func_eval(v(,),x(,))
+! copy ainv in a matrix
+dim a(1,1),b(1,1)
+mat redim a(nu,nu),b(nu,nu)
+    mat a=ainv
+call neg_mat(nu,a(,),b(,))
+!******************************************
+!************broyden***********************
+!******************************************
+! start calculation x(2) ?
+dim s(1,1)
+mat redim s(nu,1)
+k=2
+    mat s = b*v
+    mat x = x + s
+call database(2,data_b(,),x(,))
+!****** hulp w,z,y***************
+dim w(1,1),z(1,1),y(1,1)
+mat redim w(nu,1),z(nu,1),y(nu,1)
+!********************************
+! transpose of s
+!********************************
+dim s_t (1,1),s_t_neg(1,1)
+mat redim s_t(1,nu),s_t_neg(1,nu)
+     mat s_t = trn(s)
+! negativ transpose
+  for j=1 to nu
+     s_t_neg(1,j) = - s_t(1,j)
+  next j
+!********************************
+!**** hulp C,D,D1 ***************
+dim c(1,1),d(1,1)
+mat redim c(nu,nu),d(nu,1)
+dim d1(1,1)
+mat redim d1(nu,nu)
+dim d2(1,1)
+mat redim d2(nu,nu)
+!********************************
+dim c1(1,1)
+mat redim c1(nu,nu)
+!********************************
+dim b1(1,1)
+mat redim b1(nu,nu)
+dim p(1,1)
+mat redim p(nu,1)
+!********************************
+!********************************
+for k=3 to n
+mat redim data_b(k,4)
+     mat w = v ! set
+ call func_eval(v(,),x(,))
+     mat y = v-w
+     mat z = b*y
+     mat p = s_t_neg*z
+ q = p(1,1)
+     mat d = s+z
+     mat d1 = d*s_t
+     mat d2 = q*idn
+     mat c = d1+d2
+! mat c1 =c divided through q
+ q1= 1/q
+     mat c1 = q1*c
+     mat a = c1*ainv
+call neg_mat(nu,a(,),b1(,))
+     mat s=b1*v
+     mat x=x+s
+call database(k,data_b(,),x(,))
+mat redim test_f(k,4)
+call data_b_f(k,data_b(,),test_f(,))
+!*********************
+!*** check of cvg  ***
+!*********************
+dim p1(1),p2(1)
+mat redim p1(nu),p2(nu)
+for j=1 to nu
+    p2(j)=data_b(k,j+1)
+    p1(j)=data_b(k-1,j+1)
+next j
+call two_norm(nu,p1(),p2(),h)
+if h < ep then
+   exit for
+end if
+!*********************
+!*** end cvg check ***
+!*********************
+next k
+!*****************************************
+!****** end broyden **********************
+!*****************************************
+print "-----------------------------------------"
+print " check cvg: with the 2-norm 'vector norm'"
+print "-----------------------------------------"
+print " number = "," x1= "," x2= "," x3= "
+mat print data_b
+call data_b_f(1,data_b(,),test_f(,))
+call data_b_f(2,data_b(,),test_f(,))
+mat redim test_f(k-1,4)
+print " evaluation of the functions "
+print
+print " f1 = "," f2= "," f3= "," number= "
+mat print test_f
+end
+
+sub data_b_f(k,data_b(,),test_f(,))
+declare function f1,f2,f3
+test_f(k,1)=f1(data_b(k,2),data_b(k,3),data_b(k,4))
+test_f(k,2)=f2(data_b(k,2),data_b(k,3),data_b(k,4))
+test_f(k,3)=f3(data_b(k,2),data_b(k,3),data_b(k,4))
+test_f(k,4)=k
+end sub
+
+sub two_norm(nu,p1(),p2(),m)
+m=0
+for i=1 to nu
+m = m+(p2(i)-p1(i))*(p2(i)-p1(i))
+next i
+m = sqr(m)
+end sub
+
+sub jacob_val(ainv(,))
+ainv(1,1)=.3333331
+ainv(1,2)=1.023852e-4
+ainv(1,3)=1.615703e-5
+ainv(2,1)=2.108606e-3
+ainv(2,2)=-3.086882e-2
+ainv(2,3)=1.535838e-3
+ainv(3,1)=1.660522e-3
+ainv(3,2)=-1.527579e-4
+ainv(3,3)=5.000774e-2
+end sub
+
+sub func_eval(v(,),x(,))
+declare function f1,f2,f3
+ v(1,1)=f1(x(1,1),x(2,1),x(3,1))
+ v(2,1)=f2(x(1,1),x(2,1),x(3,1))
+ v(3,1)=f3(x(1,1),x(2,1),x(3,1))
+end sub
+
+sub database(k,data_b(,),x(,))
+data_b(k,1)=k 
+data_b(k,2) = x(1,1)
+data_b(k,3) = x(2,1)
+data_b(k,4) = x(3,1)
+end sub
+
+sub neg_mat(nu,ainv(,),b(,))
+for i=1 to nu
+ for j=1 to nu
+b(i,j) = - ainv(i,j)
+ next j
+next i
+end sub
+
+def df1dx(x1,x2,x3)
+! use maxima *
+df1dx = 3
+end function
+
+def df1dy(x1,x2,x3)
+! use maxima (sse main program)
+df1dy = x3*sin(x2*x3) 
+end function
+
+def df1dz(x1,x2,x3)
+! use maxima
+df1dz = x2*sin(x2*x3)
+end function
+
+def df2dx(x1,x2,x3)
+! use maxima *
+df2dx = 2*x1
+end function
+
+def df2dy(x1,x2,x3)
+! use maxima (sse main program)
+df2dy = -162*(x2+.1)
+end function
+
+def df2dz(x1,x2,x3)
+! use maxima
+df2dz = cos(x3)
+end function
+
+def df3dx(x1,x2,x3)
+! use maxima *
+df3dx = -x2*exp(-x1*x2)
+end function
+
+def df3dy(x1,x2,x3)
+! use maxima (sse main program)
+df3dy = -x1*exp(-x1*x2)
+end function
+
+def df3dz(x1,x2,x3)
+! use maxima
+df3dz = 20
+end function
+
+def f1(x1,x2,x3)
+f1=3*x1-cos(x2*x3)-1/2
+end function
+
+def f2(x1,x2,x3)
+f2=x1^2-81*(x2+0.1)^2+sin(x3)+1.06
+end function
+
+def f3(x1,x2,x3)
+f3=exp(-x1*x2)+20*x3+(10*pi-3)/3
+end function
+
+
+
+
+
+
+
+

@@ -1,0 +1,194 @@
+option nolet
+! serie :analytical chemistry
+declare function ph,pOH
+!***************************************************
+!filename:PHbasesaltWITHSTRONGacidfinalversion1a.tru
+! more info then before (without graphics)
+!***************************************************
+print
+print "**********************************************"
+print " titration : base salt with strong acid       "
+print " peter.vlasschaert@gmail.com,26/08/2016       "
+print "**********************************************"
+print " Na(2)CO3 + HCl -> NaHCO3 + NaCl (version1.0a)"
+print " NaHCO3   + HCl -> H(2)CO3+ NaCl              "
+print "**********************************************"
+!***************************************************
+! titration of base salt with strong acid.
+!***************************************************
+!  zones :
+! def : ph = - log [H+]
+!       ph+pOH = 14 = pkw,  pka+pkb = 14 = pkw
+!  H(2)CO3 = H(+) + HCO3(-)  => ka1 (1)
+!  HCO3(-) = H(+) + CO3(2-)  => ka2 (2)
+! Begin : pure  Na(2)CO3 ( 0 ml)
+!  Before EP1 :'buffer' "CO3(2-)/HCO3(-) "
+!         EP1 :  salt   "NaHCO3          "
+!  After  EP1 : 'buffer' "HCO3(-)/H(2)CO3"
+!         EP2 :  pure   "H(2)CO3         "
+! End   : pure HCl  
+!****************************************************
+! pratical : 
+!****************************************************
+print " dutch : buret(ENG:burette) :x  ml HCl        0.1M"
+print "         erlenmeyer(ENG:)   :10 ml Na(2)CO3   0.1M"
+!----------------------------------------------------------------
+!****************************************************************
+!****************************************************************
+! mathematics : ' titration curve'=' base(salt) with strong acid
+!****************************************************************
+! Begin (pH):  HCO3(-)         = H(+) + CO3(2-)         (2)
+!              HCO3(-) + OH(-) = H(+) + OH(-) + CO3(2-) (2')
+!              HCO3(-) + OH(-) = H(2)O + CO3(2-) -> kb2 (2'')
+!                 x       x                                  
+!                x^2 = kb2 * C_base  -> [OH(-)] = sqr(kb2*C_base)
+!*****************************************************************
+! Before EP1 : ka2 =([H(+)]*[CO3(2-)])/[HCO3(-)] -> solve [H(+)]  
+!*****************************************************************
+!        EP1 : NaHC03 = Na(+)+HCO3(-) 'amphoteric anion'
+!               HC03(-) = H(+) + CO3(2-) 'acid'   (3)
+!               HCO3(-) + H(+) = H(2)CO3 'base'   (4)
+!               HCO3(-) + HCO3(-) = H(2)CO3 + CO3(2-)  (5)=(3)+(4)
+!                                      x       x
+!    'check'    K = ([H(2)CO3]*[CO3(2-)])/[HCO3(-)]^2 = ka2/ka1 (6)
+!               K = [H(2)CO3]^2/[HCO3(-)]^2  from (5) combine (1)
+!               [H+]^2 = ka1^2*K = ka1*ka2     -> solve [H+]
+!*****************************************************************
+! After EP1 : ka1 = ([H(+)]*[HCO3(-)])/[H(2)CO3] -> solve [H(+)]
+!*****************************************************************
+!        EP2 : weak acid ( H(2)CO3) from ka1
+!              H(2)CO3 = H(+) + HCO3(-) 
+!                         x      x
+!              ka1 = x^2/C_acid  -> x=[H(+)]=sqr(ka1*C_acid)
+!*****************************************************************
+! END : [H(+)] = C_acid = [HCL]
+!*****************************************************************
+!*****************************************************************
+!-----------------------------------------------------------------
+!*************************
+! info : see above
+!*************************
+ka1= 3.5e-7 
+ka2= 5e-11 
+kw = 1e-14
+kb1 = kw/ka1
+kb2 = kw/ka2
+!**************
+!* pratical   *
+!**************
+!***********************************
+!***********************************
+!  erlenmeyer :
+!--------------
+V0_Na2C03=10  ! ml
+C0_Na2C03=.1  ! M
+!  buret      :
+!--------------
+C_HCL = .1    ! M
+! 0 to 10 ml ( CO3(2-) to HCO3(-))
+! 10 to 20 ml ( HCO3(-) to H(2)CO3 )
+!***********************************
+!***********************************
+! begin
+print
+print " mlHCl"," mlNa(2)CO3"," mlNaHCO3"," mlH(2)CO3"," [H+]"," pH"
+print
+print "*******************************************************"
+print " begin 'pure Na(2)CO3' and Before EP1: CO3(2-)/HCO3(-) "
+print "*******************************************************"
+for i=0 to V0_Na2C03 - 1
+call  beg_before(ka2,kb2,i,C0_Na2C03,V0_Na2C03,H_c)
+print  i,V0_Na2C03-i,i,0,H_c,pH(H_c)
+next i
+print "****************************"
+print " EP1 : pure NaHCO3          "
+print "****************************"
+call EP1(ka1,ka2,H_c)
+V_HCL = (V0_Na2C03 *C0_Na2C03)/C_HCL
+print V_HCL,0,V_HCL,0,H_c,pH(H_c)
+print "****************************"
+print " after EP1: HCO3(-)/H(2)CO3 "
+print "****************************"
+for i=V_HCL+1 to 2*V_HCL-1 ! 2*[H(+)]
+call after_EP1(ka1,V_HCl,i,H_c)
+print i,0,2*V_HCl-i,i-V_HCl,H_c,pH(H_C)
+next i
+print "****************************"
+print " EP2 : weak acid H(2)CO3    "
+print "****************************"
+for i=2*V_HCL to 2*V_HCL
+call EP2(ka1,V_HCl,C_HCl,H_c)
+print i,0,0,V_HCl,H_c,pH(H_c)
+next i
+print
+print "*******************************"
+print " END : [H(+)] = C_acid = [HCL] "
+print "*******************************"
+print
+print " mlHCl"," excess mlHCl"," total:volume"," [H(+)]"," pH"
+print
+for i=2*V_HCL+1 to 2*V_HCL+5
+call end_ (C_HCL,V_HCl,i,H_c)
+print i,i - 2*V_HCl,i+V_HCl,H_c,pH(H_c)
+next i
+end
+
+sub end_ (C_HCL,V_HCl,V_ml,H_c)
+! excess HCL
+ss = V_ml - 2*V_HCl
+tt = V_ml+V_HCl
+ratio  = ss/tt
+H_c =  C_HCL * ratio
+end sub
+
+
+sub EP2(ka1,V_HCl,C_HCl,H_c)
+! weak acid H(2)CO3
+ratio  = V_HCL/(2*V_HCL+V_HCl)
+C_acid = C_HCL * ratio
+H_c = sqr(ka1*C_acid)
+end sub
+
+
+sub after_EP1(ka1,V_HCl,V_ml,H_c)
+! buffer HCO3(-)/H(2)CO3
+ss = V_ml-V_HCl
+tt = 2*V_HCl-V_ml
+ratio = ss/tt
+H_c = ka1*ratio
+end sub
+
+
+sub EP1(ka1,ka2,H_c)
+! pure NaHCO3
+H_c = sqr(ka1*ka2)
+end sub
+
+
+sub  beg_before(ka2,kb2,V_ml,C0_Na2C03,V0_Na2C03,H_c)
+!*************
+! H_c = [H(+)]
+!*************
+kw = 1e-14
+if V_ml = 0 then
+! begin    : pure Na(2)CO3
+OH_c = sqr(kb2*C0_Na2C03)
+H_c = kw/OH_c
+ else
+! before EP1 : buffer 
+ ratio  = V_ml/(V0_Na2C03-V_ml)
+H_c = ratio*ka2
+end if
+end sub 
+
+function pH(C)
+! conversion from base (e) to base(10)
+pH = -1/log(10)*log(C)
+end function
+
+function pOH(C)
+! conversion from base (e) to base(10)
+pOH = -1/log(10)*log(C)
+end function
+
+

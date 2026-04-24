@@ -1,0 +1,233 @@
+option nolet
+print"*******************************************************************"
+print"*   called : Thiele-Geddes (ith-component) 'without theta cvg'    *"
+print"*******************************************************************"
+print"peter.vlasschaert@gmail.com (28/02/2014)   version (1.0)           "
+print"*******************************************************************"
+!comp=3 ! choose n-butane 3 column (data statement keq)
+numcomp=4
+do
+print " zfeed => comp=1 n-butane;comp=2 i-pentane;comp=3 n-pentane;comp=4 n-hexane"
+      input prompt "comp = ":comp
+clear
+loop until comp < numcomp+1 and comp > 0
+comp=comp+2
+! info about result 
+test=comp-2
+dim distc$(1)
+mat redim distc$(numcomp)
+distc$(1)="n-butane"
+distc$(2)="i-pentane"
+distc$(3)="n-pentane"
+distc$(4)="n-hexane"
+print
+!********************************************************************
+print"********************************************************************"
+print"*   called : Thiele-Geddes (component feed) 'without theta cvg'    *"
+print"********************************************************************"                                 
+!********************************************************************
+!info :example 8.12 ,(version 2007), pg: 432-439                    *
+!     :chemical engineering series                                  *
+!     :Introduction process engineering and Design                  *
+!     :S B Thakore,B I Bhatt,McGraw Hill(India) Private Limited     *
+!********************************************************************
+!********************************************************************
+!   |->  input:        Data
+!********************************************************************
+!********************************************************************
+!           1e)Number of equilibrium stages above and below the feed
+!           2e)Column pressure(given)                    : Keq=K(T,p)
+!           3e)Temperature (stage wise)     -> Keq(temparature)=Keq22
+!           4e)Reflux flow rate=Rratio
+!           5e)Distillate rate= Dfl
+!           6e)Feed flow rate=Ffl,feed quality=qf,feed composition=Zf
+!           7e)Liquid flow rate=Ffl,Vapour flow rate=Vfl leaving each 
+!              stage.
+!********************************************************************
+!*  |->  software : computation of sum(products)-(see sub below end)
+!********************************************************************
+!   |->  algorithme =        Thiele-Geddes    "without (+) Theta cvg"
+!********************************************************************
+!(+) Fundamentals of multicomponent distillation (Charles D.Holland)
+! theta =(= Newton Raphson "theta(n+1)=theta(n)-f(theta)/f'(theta)")
+!********************************************************************
+!********************************************************************
+! A(0)=R
+! A(1..3)=Lfl/(keq(1..3)*Vfl) !'1'-> first plate on top of the column
+! sum(prod(A(j),j= i to n),i=0 to n)+1  ...................... -> som
+! Lbar=Lfl+Ffl*qf
+! Vbar=Vfl+Ffl*(qf-1)
+! A(f=feed)=Lbar/(keqf*Vbar)
+! S(f+1..reboiler)=(keq(f+1..reboiler)*Vbar)/Lbar
+! sum(prod(S(j),j=f+1..(reboiler-i)),i=0 to ((reboiler-1)-f))+1->som1
+!--------------------------------------------------------------------
+! Wfl*x_w/(Dfl*x_D)=(som/som1)*A(f)=M
+! Wfl*x_w+Dfl*z_d = Ffl*z_f                   rearange 'Mass Balance'
+! D*z_d=(Ffl*zF_nb)/((theta)*M+1)   ->(+) Theta=1
+! from above:compute   z_d=x_d  and  x_w
+!********************************************************************
+! rem :  A(i)=1/S(i)
+!********************************************************************
+!********************************************************************
+numcomp=4
+dim zf(1)
+mat redim zf(numcomp)
+!nb=.37  n-Butane
+!ip=.32  i-Pentane
+!nP=.21  n-Pentane
+!nH=.10  n-Hexane
+for i=1 to numcomp
+  read zf(i)
+next i
+print
+print "feed composition zf: nb,ip,np,nh  (example nb=.37 n-butane)"
+data .37,.32,.21,.1
+mat print zf
+Ffl=4750 !feed is saturated at its bubblept (mol/h)
+Rratio=3      !refluxratio
+Dfl=1250 
+Wfl=3500
+qf=1     !feedquality
+pt=2     !atm
+!** model:specification *************
+!condition :constant molar overflow
+!condition :total condensor
+!************************************
+dim a(0 to 1)
+dim b(0 to 1)
+dim s(1)
+dim bb(0 to 1)
+numfeedtray=4
+numtraydist=5 !   exclusief (reboiler)
+reboiler=6
+n=numfeedtray-1
+Lfl=Rratio*Dfl
+Vfl=(Rratio+1)*Dfl
+!*************************************
+dim distk(6,6)
+for i=1 to 6
+   for j=1  to 6
+       read distk(i,j)
+   next j
+next i
+print "database components in function of temperature"
+mat print distk
+mat redim a(0 to n)
+mat redim b(0 to n)
+print " =>     distribution i th-component in distillation (stage wise)"
+print
+print "*********************"
+print "above the feed 0 to 3"
+print "*********************"
+a(0)=Rratio  ! for every component
+for i=1 to n
+  a(i) = Lfl/(distk(i,comp)*Vfl)
+next i
+!mat print a
+call prodsum_above(a(),b(),n,som)
+print
+print "*********************"
+print "  the feed=4         "
+print "*********************"
+Lfl_bar=Lfl+Ffl*qf
+Vfl_bar=Vfl+Ffl*(1-qf)
+AF=Lfl_bar/(distk(numfeedtray,comp)*Vfl_bar)
+print "AF = ";AF
+print "*********************"
+print "below the feed 5 to 6"
+print "*********************"
+mat redim s(numfeedtray+1 to reboiler)
+mat redim bb(0 to reboiler-(numfeedtray+1))
+s(numfeedtray+1)=(distk(numfeedtray+1,comp)*Vfl_bar)/Lfl_bar
+s(reboiler)     =(distk(reboiler,comp)*Vfl_bar)/Lfl_bar
+!mat print s
+call prodsum_below(s(),bb(),numfeedtray+1,numfeedtray,som1)
+print "------->            end distribution                         "
+dim Wx_w_div_Dx_d_nb(1),Dz_d(1)
+mat redim Wx_w_div_Dx_d_nb(numcomp),Dz_d(numcomp)
+Wx_w_div_Dx_d_nb(test)= (som/som1)*AF
+print
+print
+print "W*x_w/(D*x_d) 'n-butane' = ";Wx_w_div_Dx_d_nb(test)
+Dz_d(test)=(Ffl*Zf(test))/(Wx_w_div_Dx_d_nb(test)+1)
+print "D*z_D         'n-butane' = ";Dz_d(test)
+print
+print "*******************"
+print "W*x_w+D*z_d = F*z_f"
+print "*******************"
+print
+print "W*x_w = ";Ffl*Zf(test)-Dz_d(test) 
+print
+print
+dim x_D(1),x_W(1)
+mat redim x_D(numcomp),x_W(numcomp)
+x_D(test)=Dz_d(test)/Dfl
+x_W(test)=(Ffl*Zf(test)-Dz_d(test))/Wfl
+print " (z_D=)x_D= ";x_D(test),             distc$(test)
+print "       x_W= ";x_W(test),             distc$(test)
+
+!*****************************************
+! numtray,temperature,k_nb,k_ip,k_np,k_nH*
+!*****************************************
+!*****************************************
+! number first column is traynumber:
+! top=1 ....feed=4.....reboiler=6
+!*****************************************
+data 1,22,1.086,0.4046,0.3,0.0870
+data 2,24,1.156,0.4346,0.3230,0.0550
+data 3,28,1.308,0.5,0.3747,0.1125
+data 4,32,1.474,0.5730,0.4324,0.1330
+data 5,41,1.904,0.7660,0.5877,0.19
+data 6,48,2.3,0.95,0.7360,0.25
+!*******************************
+! solution Thiele-geddes problem
+!*******************************
+end
+
+sub prodsum_above(a(),b(),n,som)
+!-----------------------
+! products:A0*A1*....*Ai
+!-----------------------
+prod=1   !init
+for i=0 to n
+    prod=1
+  for j=i to n
+    prod=prod*a(j)
+  next j
+    b(i)=prod
+next i
+!print
+!print"!---------------------"
+!print"! (sum of products) +1"
+!print"!---------------------"
+som=1    !init
+for i=0 to n
+  som=som+b(i)
+next i
+print "sum = ";som,"above the feed"
+end sub
+
+sub prodsum_below(s(),bb(),n1,f1,som1)
+!-------------------------------
+! products:S(f+1)*S(f+2)*....*Si
+!-------------------------------
+prod1=1   !init
+for i=0 to n1-f1
+    prod1=1
+  for j=f1+1 to (n1+1)-i
+    prod1=prod1*s(j)
+  next j
+    bb(i)=prod1
+next i
+!print
+!print"!---------------------"
+!print"! (sum of products) +1"
+!print"!---------------------"
+som1=1    !init
+for i=0 to n1-f1
+  som1=som1+bb(i)
+next i
+print "sum = ";som1,"below the feed"
+end sub
+
+

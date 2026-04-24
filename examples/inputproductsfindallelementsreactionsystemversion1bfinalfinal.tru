@@ -1,0 +1,345 @@
+option nolet
+print "*************************************************************"
+print "* input products find all elements 'reactionsystem'         *"
+print "* & products representation in the reaction    version 1.0b *"
+print "* peter.vlasschaert@gmail.com,    05/03/2017                *"
+print "*************************************************************"
+print
+!filename:INPUTPRODUCTSFINDALLELEMENTSREACTIONSYSTEMVERSION1bFINALfinal
+!*************************************************
+! make list of all elements in the reaction system
+!*************************************************
+print "**********************************************"
+print "* first ,second,third,fourth .               *"
+print "**********************************************"
+print "1e)    K4Fe(CN)6   =>  input K,4,Fe,1,C,6,N,6*"
+print "2e)    H2SO4       =>  input H,2,S,1,O,4     *"
+print "3e)    HNO3        =>  input H,1,N,1,O,3     *"
+print "4e)    KMnO4       =>  input K,1,Mn,1,O,4    *"
+print "**********************************************"
+!********************************
+! input of the above products =>
+!********************************
+dim a$(1) ! input
+dim b$(1) ! output 'display product in reaction'
+np=4      ! number of products
+test = 2  ! example (test = 1,input)
+print " number of products                   = ";np
+print " give number : input (=1),example(=2) = ";test
+mat redim a$(np),b$(np)
+if test =1 then
+print " product ' input '     => "
+for i=1 to np
+    print " product(";i;" )   => "
+    line input prompt " name  =  ":a$(i)
+next i
+else 
+a$(1)="K,4,Fe,1,C,6,N,6"
+a$(2)="H,2,S,1,O,4"
+a$(3)="H,1,N,1,O,3" 
+a$(4)="K,1,Mn,1,O,4"
+end if
+mat b$=a$
+print " display input products => "
+mat print b$
+!*****************************
+! concatenate strings (plural)
+!*****************************
+for i=1 to np-1
+    call concatenate_string(a$(1),a$(i+1))
+next i
+!print a$(1)
+!*******************************************
+! print ' string '
+!*******************************************
+! print a$(1)
+!*******************************************
+! find length of the string ' len command  '
+!*******************************************
+element$ = a$(1)
+n_string = len(element$)
+!print " elements string         = ";element$
+!print " length   string         = ";n_string
+!*******************************************
+! find number comma's and position
+!*******************************************
+dim commas(1)
+call pos_commas(n_string,element$,k,commas())
+!print " number of comma's       = ";k
+!print
+!print "********************************"
+!print " position array$ from comma's =>"
+!print "********************************"
+!mat print commas 
+dim elements$(1)
+!****************************
+! even : 1,2,3,4
+! odd  : 1,2,3,4,5
+!****************************
+mat redim elements$(k+1)
+!****************************
+! parse the string 'element$'
+!****************************
+call list_elements(k,n_string,element$,commas(),elements$())
+print "**********************************************"
+print " list of all elements from reaction system => "
+print "**********************************************"
+dim index(1,2)
+!***********************************
+!find numbers in string all elements
+!***********************************
+call find_numbers_string(tel,element$,index(,))
+print "string of all elements ,how much from each element =  "
+print element$
+dim list_el$(1)
+mat redim list_el$(tel)
+!*****************
+! remove comma's
+!*****************
+call remove_commas(tel,index(,),element$,list_el$())
+!print " all elements with duplicates => "
+!print
+!mat print list_el$
+print " remove all duplicates        => "
+dim  result$(1)
+call removes_duplicates(list_el$(),result$(),target)
+mat print result$
+!********************************
+! output display in the reaction
+!********************************
+mat print b$
+dim lengte(1),commas_prod(1),kk(1),c$(1)
+mat redim lengte(np),kk(np),c$(np)
+for i=1 to np
+  lengte(i)=len(b$(i))
+next i
+dim temp1$(1)
+mat redim temp1$(np)
+for l=1 to np
+call pos_commas(lengte(l),b$(l),kk(l),commas_prod())
+temp1$(l) = b$(l)[1:commas_prod(1)-1]
+for j=1 to kk(l)-1
+ temp1$(l) = temp1$(l) &  b$(l)[commas_prod(j)+1:commas_prod(j+1)-1]
+next j
+ temp1$(l) = temp1$(l) & b$(l)[commas_prod(kk(l))+1:commas_prod(kk(l))+1]
+next l
+print "*******************************************"
+print " output : display products for reaction => "
+print "*******************************************"
+mat print temp1$
+dim lengte1(1)
+mat redim lengte1(np)
+for i=1 to np
+  lengte1(i)=len(temp1$(i))
+next i
+!*********************
+! find ones to removes
+!*********************
+print "*******************************************"
+print " removes ones from products representation "
+print "*******************************************"
+! removes something from a string here 'ones' = "1"
+print
+dim temp22$(1)
+mat redim temp22$(np)
+mat temp22$ = temp1$
+print " before => "
+print
+mat print temp22$
+for v = 1 to np
+for j=1 to lengte1(v)            ! search the string
+ if temp22$(v)[j:j] = "1" then 
+    tem$ = temp22$(v)[1:j-1] & temp22$(v)[j+1:lengte1(v)]
+    temp22$(v)=tem$              ! string :changed
+    lengte1(v) = lengte1(v)-1    ! length = length - 1
+        else
+    tem$ = temp22$(v)            ! nothing to change
+  end if
+  temp22$(v)=tem$
+next j
+next v
+print " result => "
+print
+mat print temp22$
+! representation products in a 'matrix'
+dim array_mat$(1,1)
+mat redim array_mat$(np,1) ! max value$ (a$(i),i=1..np)
+!******************************************************
+! find ' max = number of columns '
+!******************************************************
+mat print b$
+! number of elements in each string
+dim nu(1),tt(1),kw(1)
+mat redim nu(np),kw(np)
+!******************************************************
+! length string b$(i) ,(i=1..np) 
+!******************************************************
+for j=1 to np
+  nu(j) = len(b$(j))
+next j
+mat print nu
+tt(1) = max(nu(1),nu(2))
+nz=1
+!******************************************************
+! even ,odd :number of products
+!******************************************************
+if mod(np,2) = 0 then
+   qp = np/2+1
+ else
+   qp = np-2
+end if
+for i=2 to qp
+ nz = nz + 1
+ mat redim tt(nz)
+ tt(i) = max(tt(i-1),nu(i+1))
+next i
+col=tt(qp)   ! size of columns,matrix,array_mat$(np,col)
+!*******************************************************
+mat redim array_mat$(np,col)
+dim comma_p(1)
+dim list_p$(1)
+for vv=1 to np
+ call pos_commas(nu(vv),b$(vv),k1,comma_p())
+ mat redim list_p$(k1+1)
+    list_p$(1)=b$(vv)[1:comma_p(1)-1]
+ for j=1 to k1-2
+    list_p$(j+1) = b$(vv)[comma_p(j)+1:comma_p(j+1)-1] 
+ next j
+    list_p$(k1)=b$(vv)[comma_p(k1-1)+1:comma_p(k1)-1]
+    list_p$(k1+1)=b$(vv)[comma_p(k1)+1:nu(vv)]
+kw(vv)=k1+1
+!******************************************************
+!matrix dimension np = number of products (example = 4)
+!                 col= longest string (b$(i),i=1..np)
+!                      (length string (nu(i),i=1..np)
+!******************************************************
+for m=1 to kw(vv)
+    array_mat$(vv,m)=list_p$(m)
+next m
+next vv
+ mat print kw
+!******************************************************
+! max kw,number of columns 'redimension',smaller
+!******************************************************
+   call sort_bubble(np,kw()) ! sorting
+   col1=kw(np)               ! max ( value)
+dim hulpm$(1,1)
+mat redim hulpm$(np,col1)
+for i=1 to np
+  for j=1 to col1
+ hulpm$(i,j)= array_mat$(i,j) 
+  next j
+next i
+print " number : columns = ";col1;" rows = ";np
+print " matrix :  contains only 'strings ' "
+print
+mat print hulpm$
+end
+
+sub sort_bubble(np,array())
+! simple sort algo
+flag = 0
+do while flag = 0
+     flag = 1
+ for z=1 to np-1
+  if array(z) > array(z+1) then
+   ! interchange principle for variables
+     temp = array(z)
+     array(z)=array(z+1)
+     array(z+1) = temp
+     flag = 0
+  end if
+ next z
+loop
+end sub
+
+sub pos_commas(n_string,element$,k,commas())
+! find position of commas in the string element$
+k=0
+for i=1 to n_string 
+  if element$[i:i] = "," then    
+     k=k+1
+     mat redim commas(k)
+     commas(k)=i     
+  end if
+next i
+end sub
+
+sub remove_commas(tel,index(,),element$,list_el$())
+if tel <> 1 then
+    list_el$(1) = element$[1:index(1,2)-2]
+for j=1 to tel-1
+    list_el$(j+1) = element$[index(j,2)+2:index(j+1,2)-2]
+next j
+     else ! only one element H2
+          list_el$(1) = element$[1:index(1,2)-2]
+end if
+end sub
+
+sub pos_ones(n_string,element$,k,oness())
+! find position of commas in the string element$
+k=0
+for i=1 to n_string 
+  if element$[i:i] = "1" then    
+     k=k+1
+     mat redim oness(k)
+     oness(k)=i     
+  end if
+next i
+end sub
+
+sub find_numbers_string(tel,element$,index(,))
+length = len(element$) !number of symboles in the string
+i=0   
+for n=1 to length
+  symbol = ORD(element$[n:n]) 
+  if symbol > 48 and symbol <= 56 then
+        i=i+1
+    mat redim index(i,2)
+    index (i,1) = symbol-48 ! number
+    index (i,2) = n         ! position string from numbers
+  end if
+next n
+tel = i     ! number of elements and number of indexes
+end sub
+
+sub removes_duplicates(el$(),result$(),target)
+target = 1
+for i=1 to size(el$)
+  value$ = el$(i)
+  find = 0   ! begin nothing to find
+  for j=1 to target-1  ! first value target = 1 (nothing to do)
+      if result$(j) = value$ then
+         find = 1 !  find duplicates
+      end if
+  next j
+  if find = 0 then
+           result$(target)= value$
+     target = target + 1
+     mat redim result$(target)
+  end if
+next i
+end sub
+
+sub list_elements(k,n_string,element$,commas(),elements$())
+!****************************************************
+! find elements from the string put them in the array 
+! ,elements$()
+!****************************************************
+elements$(1) = element$[1:commas(1)-1]
+for i=2 to k
+   elements$(i) = element$[commas(i-1)+1:commas(i)-1]
+next i
+elements$(k+1) = element$[commas(k)+1:n_string]
+end sub
+
+sub concatenate_string(result$,new$)
+!****************************************
+! combine two strings and a comma between
+!****************************************
+result$ = result$ & "," & new$ 
+end sub
+
+
+
+

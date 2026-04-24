@@ -1,0 +1,91 @@
+option nolet
+!********************************
+! -> process material balances 1*
+!********************************
+! compiler :truebasic
+!*******************************************
+!info : Myers and seider
+!book : introduction to chemical engineering
+!       and computer calculations
+!       Prentice-Hall Inc
+!       isbn:0-13-479238-6
+!*******************************************
+print "************************************"
+print " binairy distillation:alcohol,aqua  "
+print " component 1 = alcohol              "
+print " component 2 = aqua                 "
+print "************************************"
+print "auth: peter.vlasschaert@gmail.com   "
+print "bindist version 1,datum :18/05/2015 "
+print "************************************"
+print
+num_str       = 3
+num_comp      = 2
+num_equipment = 0
+num_eq        = num_comp
+num_var = num_str*(num_comp+1)+num_equipment
+num_decision=num_var-(num_eq+num_str)
+print "number of decision variables = ";num_decision
+! one input feed,three mol fractions
+print "---------------------"
+print "input stream = 1     "
+print "---------------------"
+input prompt "feed rate = ":F1
+print "---------------------"
+print "output streams       "
+print "---------------------"
+print " number destillate stream = 2 ,flowrate = F2 "
+print " number bottoms    stream = 3 ,flowrate = F3 "
+!****************************
+! -> stream component matrix* 
+!****************************
+dim x(1,1) 
+mat redim x(num_str,num_comp)
+dim a(1)
+mat redim a(num_str)
+print 
+print "----------------------"
+print "input mol fractions = "
+print "----------------------"
+for i=1 to num_str
+   for j=1 to num_comp
+print " x(stream,component)= " & "x(";i;",";j;")"
+   input prompt " mol fraction = ": x(i,j) 
+       if x(i,j)=0 then
+! missing mol fraction i_th stream
+          a(i)=j
+       end if
+   next j
+next i
+! sum from all entries in each row
+dim s(1)
+mat redim s(num_str)
+for k=1 to num_str
+  for j=1 to num_comp
+      s(k)=s(k)+x(k,j)
+  next j
+next k
+!********************
+! find missing value
+!********************
+for k=1 to num_str
+ ! check when all values ,when not missing
+ if a(k) <> 0 then
+    x(k,a(k))=1-s(k)
+ end if
+next k
+print
+print "final result = off all mol fractions"
+print
+print "alcohol ,aqua "
+print
+mat print x
+print "******************************"
+print "solutions for flow rate F2,F3 "
+print "******************************"
+delta=(x(2,1)*x(3,2)-x(3,1)*x(2,2))
+F2=F1*(x(1,1)*x(3,2)-x(1,2)*x(3,1))/delta
+F3=F1*(x(1,2)*x(2,1)-x(1,1)*x(2,2))/delta
+print " flowrate 'destillate F2 mole/h' = ";F2
+print " flowrate 'bottoms    F3 mole/h' = ";F3
+end

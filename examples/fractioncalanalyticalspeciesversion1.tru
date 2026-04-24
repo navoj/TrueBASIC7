@@ -1,0 +1,107 @@
+option nolet
+! serie : analytical chemistry
+print "************************************************"
+print "* calculation : species present in solutions   *"
+print "* of polyprotic acid at given pH = -Log(10)[H+]*"
+print "* version 1.0 (no graphics)                    *"
+print "************************************************"
+print "------------------------------------------------"
+print " peter.vlaschaert@gmail.com,06/09/2016          "
+print "------------------------------------------------"
+print
+print "************************************************"
+print " polyprotic acid: H(2)S = H(+) + HS(-) => ka(1) "
+print "                  HS(-) = H(+) + S(2-) => ka(2) "
+print "************************************************"
+print " general : polyprotic acid ,m=n-1 => H(m)A ,m=2 "
+print "************************************************"
+print " (di)protic acid : n=3,m=2 (see code)           "
+print " sum = (H[+])^2+ka(1)*H[+] + Ka(1)*ka(2)        "
+print "  C= [H(2)S]+[HS(-)]+[S(2-)]                    "
+print " alpha(0) = (H[+])^2/ sum   = [H(2)S]/C         "
+print " alpha(1) = ka(1)*H[+]/sum  = [HS(-)]/C         "
+print " alpha(2) = Ka(1)*ka(2)/sum = [S(2-)]/C         "
+print " check = alpha(0)+alpha(1)+alpha(2)=1           "
+print "************************************************"
+! filename :fractioncalanalyticalspeciesversion1.tru
+print
+!**********************************************************
+! rem : use for polyprotic base : x=[0H(-)] ,ka(i) -> kb(i)
+!**********************************************************
+print 
+n=3     ! diprotic acid ( n = 4, triprotic acid H(3)PO4)
+dim ka(1)
+dim p(1)
+m=n-1
+mat redim ka(m) ! acid equilibruim constant (see above)
+! p(i) numerator
+mat redim p(n) 
+print "*********"
+print " given = "
+print "*********"
+ka(1) = 1E-7
+ka(2) = 1E-14
+!*******************************************
+! ka(3) = ? value
+!*******************************************
+! change this n=4,m=4-1 =3,extra ka(3) .....
+!*******************************************
+for i=1 to m 
+ print " ka(";i;") = ";ka(i)
+next i
+x=0.1      ! pH of solution or [H(+)] concentration 
+print " [H(+)] = ";x
+print " pH     = ";-log(x)/log(10)
+call frac_denominator(x,ka(),m,som,p())
+print " sum = ";som
+!**********************
+! build the fractions 
+!**********************
+print "**********"
+print " result = "
+print "**********"
+print
+dim alpha(0 to 1)
+mat redim alpha(0 to m)
+for i=0 to m
+    alpha(i) = p(i+1)/som
+print " alpha (";i;") = "; alpha(i)
+next i
+print
+!--------------------------------
+! rem :  ka(1) >>>>> ka(2)
+! from above "C : pratical"
+!  C= [H(2)S]+[HS(-)],use Ka(1)
+!  approx => [H(+)] = [HS(-)]
+!  ka(1) = [H(+)]^2/(C-[H(+)])
+!--------------------------------
+! see also : alpha(2) very small
+! => [S(2-)] = 0 (see above)
+!--------------------------------
+!***************************
+! check sum of the fractions
+!***************************
+print "**********************"
+print " check of fractions = "
+print "**********************"
+som1 = 0
+for i=0 to m
+    som1 = som1 + alpha(i)
+next i
+print " sum ( alpha(i),i=0..";m;" ) = ";som1
+end
+
+sub frac_denominator(x,k(),m,som,p())
+som = x^m
+p(1) = som
+for i=1 to m
+    prod = 1
+    for j=1 to i
+        prod = prod * x^(m-i)*k(j)
+    next j
+        p(i+1) = prod
+  !*** denominator ***
+  som = som + p(i+1)
+next i
+end sub
+

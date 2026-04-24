@@ -1,0 +1,97 @@
+option nolet
+print "****************************************"
+print " IVP RK4 version1.0                     "
+print " peter.vlasschaert@gmail.com,14/03/2016 "
+print "****************************************"
+print " example : dy/dt =f(t,y)=(t-y)/2,y(0)=1 "
+print "****************************************"
+print " t(0) = a  t(end) = b                   "
+print "****************************************"
+print
+!*************************************
+! How to IVP = Initial Value Problem *
+! solve : dy/dt = f(y,t) y(a) = y(0) *
+!*************************************
+!declare function f
+!***************************
+! endpoints of the interval*
+!***************************
+a=0          ! begin point interval
+b=3          ! end   point interval
+n=10         ! number of steps
+init_val = 1 ! initial value
+h=(b-a)/n ! step size
+print " a = begin point (interval) = ";a
+print " b = end   point (interval) = ";b
+print " n = number of steps        = ";n
+print " h = stepsize               = ";h
+print
+dim t(0),y(0)
+mat redim t(0 to n),y(0 to n)
+t(0) = a    ! t(0) = a             ( x values)
+print " t(0) = ";a
+y(0) = 1    ! y(0) = initial value ( y values)
+print " y(0) = ";init_val
+!*******************************************
+! Generate mesh point to divide the interval
+!*******************************************
+call mesh_points(n,h,t())
+print " t(";n;") = ";t(n)
+!********************
+!*integration f(t,y)*
+!********************
+call rk4(n,h,t(),y())
+print
+print "***************"
+print "*matrix output*"
+print "***************"
+print
+mat print t,y ! output
+print "**************"
+print "*print output*"
+print "**************"
+print
+call out_print(n,t(),y())
+end
+
+sub mesh_points(n,h,t())
+tt=t(0)
+for j=0 to  n-1
+! =>    ' j=0 => t(1)=t(0)+h '
+    t(j+1) = tt + h*(j+1) ! mesh point
+next j
+end sub
+
+
+sub out_print(n,t(),y())
+print "j","time ","y "
+print "-----------------------------------------"
+for j=0 to n
+  print j,t(j),y(j)
+next j
+end sub
+
+function f(q1,q2)
+!********************
+! q1 = t ,q2 = y
+! dy/dt = ( t-y)/2
+!********************
+f = (q1-q2)/2
+end function
+
+sub rk4(n,h,t(),y())
+!*************************************
+! rk4 : Runge-Kutta Method of Order 4
+!*************************************
+declare function f
+for j=0 to n-1
+tt = t(j)  ! local variable
+yy = y(j)  ! local variable
+k1 = h*f(tt,yy)
+k2 = h*f(tt+h/2,yy+0.5*k1)
+k3 = h*f(tt+h/2,yy+0.5*k2)
+k4 = h*f(tt+h,yy+k3)
+! integration f(t,y)
+y(j+1) = yy +(k1+2*k2+2*k3+k4)/6
+next j
+end sub

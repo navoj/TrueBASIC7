@@ -1,0 +1,50 @@
+! introduction example chemical engineering (ODE)
+option nolet
+print "-------------------------------------------------------------"
+print " chem model (1)  :chemical engineering                       "
+print " ------------------------------------------------------------"
+print " first order : dx/dt=(1-x)*delta_t                           "
+print " initial condition (x=0,t=0)                                 "
+print " method :rk4 (Runge-Kutta-4)                                 "
+print "-------------------------------------------------------------"
+print " peter.vlasschaert@gmail.com   (28/11/2014)                  "
+print "-------------------------------------------------------------"
+print "-------------------------------------------------------------"
+print
+declare function dfdt
+print "-------------------------"
+print " initial condition ->    "
+print "-------------------------"
+t0=0
+t=t0
+print " t(0)        = ";t0;" s"
+x0=0
+x=x0
+print " x(t(0))     = ";x0
+print 
+delta_t = .2
+print "--------------------------------------"
+print " domain: t0.........tf                "
+print "--------------------------------------"
+tf=2.0
+print "simulation time = ";tf; " s"
+print
+print
+print " time           x         k1        k2         k3         k4      "
+print "------------------------------------------------------------------"
+print
+do while (t <= tf)
+k1=dfdt(x,delta_t)
+k2=dfdt(x+k1/2,delta_t)
+k3=dfdt(x+k2/2,delta_t)
+k4=dfdt(x+k3,delta_t)
+print t,x,k1,k2,k3,k4
+x=x+(k1+2*k2+2*k3+k4)/6
+t=t+delta_t
+loop
+get key done
+end
+
+function dfdt(x,delta_t)
+dfdt=(1-x)*delta_t
+end function

@@ -1,0 +1,127 @@
+option nolet
+! Cholesky decompositionfinal.tru
+print "----------------------------------------"
+print "Cholesky decomposition   A=L*L^T        "
+print "----------------------------------------"
+print "--------------------------------------------"
+print " find = L,L^T from A=a(nu,nu)               "
+print " algo :Cholesky decomposition (version 1.0) "
+print " peter.vlasschaert@gmail.com ,13/08/2015    "
+print "--------------------------------------------"
+print
+!*****************************************************************
+! info : Digital computation for chemical engineers      
+!        Leon Lapidus
+!        Mc Graw-Hill Series in Chemical Engineering
+! algo : pg 249
+!*****************************************************************
+!*****************************************************************
+! use : positiv definite x^T*A*x > 0 and a(i,j)=a(j,i)
+!*****************************************************************
+! L,L^T  => Cholesky decomposition
+!*****************************************************************
+!    |l(1,1)               |         |l(1,1) l(1,2)   l(1,3)|
+! L= |l(1,2) l(2,2)        | L^T = U=|0      l(2,2)   l(2,3)|
+!    |l(1,3) l(2,3) l(3,3) |         |0      0        l(3,3)|
+!*****************************************************************
+nu = 3
+! input
+dim a(1,1),b(1,1)
+mat redim a(nu,nu),b(nu,nu) 
+print " A matrix => 'a(i,j) = a(j,i)'"
+a(1,1)= 2
+a(1,2)= 3
+a(1,3)= 4
+a(2,1)= 3
+a(2,2)= 6
+a(2,3)= 7
+a(3,1)= 4
+a(3,2)= 7
+a(3,3)= 10
+mat b = a
+mat print b
+!****************************************
+! find L
+!****************************************
+print "-------------------------"
+print " Matrix Decomposition => "
+print "-------------------------"
+a(1,1)=sqr(a(1,1))
+for k=2 to nu
+ a(k,1) = a(k,1)/a(1,1)
+ for i=2 to k-1
+    s=0
+   for j=1 to i-1
+       s=s+a(i,j)*a(k,j)
+   next j
+   a(k,i)=(a(k,i)-s)/a(i,i)
+ next i
+    s=0
+    for j=1 to k-1
+      s=s+a(k,j)^2
+    next j
+ a(k,k)=sqr(a(k,k)-s)
+next k
+!************************************
+! place zero above the main diagonal
+!************************************
+dim l(1,1)
+mat redim l(nu,nu)
+mat l=a
+for i=1 to nu-1
+  for j=i+1 to nu
+      l(i,j)=0
+  next j
+next i
+print
+print "*****************************"
+print " lower triangular matrix L = "
+print "*****************************"
+mat print l
+print "*****************************"
+print " upper triangular matrix L^T="
+print "*****************************"
+dim tr_l(1,1)
+mat redim tr_l(nu,nu)
+mat tr_l = l
+! *** symmetric  (main diagonal) ***
+for i=1 to nu-1
+  for j=i+1 to nu     
+      tr_l(i,j)=l(j,i)     
+  next j
+next i
+!*********************************
+! removes zero below main diagonal
+!*********************************
+for i=2 to nu
+    for j=1 to  i-1
+   tr_l(i,j)=0
+    next j
+next i
+mat print tr_l
+print "------------------"
+print " check  A=L*L^T = "
+print "------------------"
+dim q(1,1)
+mat redim q(nu,nu)
+mat q = l *tr_l
+mat print q
+
+
+end
+
+sub somprod(i,j,m(,),n(,),c(,),bg,be)
+ som=0
+ for k=bg to be
+  som = som + m(i,k)*n(k,j)
+ next k
+  c(i,j) = som
+end sub
+
+sub somprodvec(i,m(,),z(),cc(),bg,be)
+  som=0
+ for k=bg to be
+  som = som + m(i,k)*z(k)
+ next k
+ cc(i) = som
+end sub

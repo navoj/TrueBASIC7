@@ -1,0 +1,133 @@
+option nolet
+! program ADI method 'steady laplace'
+! laplace2DsteadyADIfinal.tru
+option base 0
+print "-------------------------------------------------"
+print "Laplace method ( ADI method )  version 1.0       "
+print " temperature distribution inside a 'square plate'"
+print " d/dx(dT/dx)+d/dy(dT/dy) = 0                     "
+print " peter.vlasschaert@gmail.com,  11/07/2015        "
+print "-------------------------------------------------"
+input prompt " side of square z   (m)       = ": z
+input prompt " number of division (integer) = ":div
+dx = z/div
+! I want to find out dimension of the matricess
+! n=2*(div-1)+(div+1)*(div-1)
+n = div
+dim a(0),b(0),c(0),d(0),x(0) ! a,b,c tridiagonal ,aa*x=d 
+dim beta(0),gamma(0)         ! TDMA calculation
+dim t(0,0),t_star(0,0)       ! t,t_star = temperature
+mat redim a(n),b(n),c(n),d(n),x(n) ! a,b,c tridiagonal ,aa*x=d 
+mat redim beta(n),gamma(n)         ! TDMA calculation
+mat redim t(n,n),t_star(n,n)       ! t,t_star = temperature
+! coef ? tridiagonal
+b(1)=-4
+c(1)=1
+for i=2 to div-2
+  a(i) = 1
+  b(i) = -4
+  c(i) = 1
+next i
+a(div-1)=1
+b(div-1)=-4
+print
+input prompt " max number of iterations 'integer'  = ":iter
+input prompt " (l)eft   side (temperature )  =      ":lt
+input prompt " (r)ight  side (temperature )  =      ":rt
+input prompt " (b)ottom side (temperature )  =      ":bt
+input prompt " (t)op    side (temperature )  =      ":tt
+input prompt " 'initial temperature' inside square =  ":to
+print
+! left side => ' square temperature '
+for j = 1 to div-1
+  t(0,j) = lt
+  t_star(0,j) = lt
+next j
+! right side => ' square temperature '
+for j = 1 to div-1
+  t(div,j) = rt
+  t_star(div,j) = rt
+next j
+! bottom side => ' square temperature '
+for i = 1 to div-1
+  t(i,0) = bt
+  t_star(i,0) = bt
+next i
+! top side => ' square temperature '
+for i = 1 to div-1
+  t(i,div) = tt
+  t_star(i,div) = tt
+next i
+! initial values for inside points
+!*********************************
+for i=1 to div-1
+  for j=1 to div-1
+   t(i,j) = to
+  next j
+next i
+! ********************************
+print " initial state : square plate "
+mat print t
+print
+for nt=1 to iter
+!***********************************************************
+! j sweep
+!***********************************************************
+ for jj = 1 to div-1
+    d(1) = - t(0,jj) - t(1,jj+1)-t_star(1,jj-1)
+     for ii=2 to div-2
+         d(ii)= - t_star(ii,jj+1)-t_star(ii,jj-1)
+     next ii
+    d(div-1) = - t(div,jj)-t(div-1,jj+1)-t_star(div-1,jj-1)
+   nn=div-1
+   call beta_gamma(nn,a(),b(),c(),d(),beta(),gamma())
+   call back_solve (nn,beta(),gamma(),c(),x())
+  t_star(1,jj)=x(1)
+  for l=2 to div-2
+    t_star(l,jj)=x(l)
+  next l
+  t_star(div-1,jj)=x(jj)
+ next jj
+!***********************************************************
+! i sweep
+!***********************************************************
+ for ii = 1 to div-1
+    d(1) = - t(ii,0) - t_star(ii+1,1)-t_star(ii-1,1)
+     for jj=2 to div-2
+         d(jj)= - t_star(ii+1,jj)-t_star(ii-1,jj)
+     next jj
+    d(div-1) = - t(ii,div)-t_star(ii+1,div-1)-t_star(ii-1,div-1)
+     nn=div-1
+   call beta_gamma(nn,a(),b(),c(),d(),beta(),gamma())
+   call back_solve (nn,beta(),gamma(),c(),x())
+  t(ii,1)=x(1)
+  for l=2 to div-2
+    t(ii,l)=x(l)
+  next l
+  t(ii,div-1)=x(div-1)
+ next ii
+next nt
+print " final temperature distribution inside a 'square plate' "
+mat print t
+
+end
+
+sub beta_gamma(no,a(),b(),c(),d(),beta(),gamma())
+beta(1) = b(1)
+gamma(1)= d(1)/beta(1)
+for j=2 to no
+ beta (j)=b(j)-a(j)*c(j-1)/beta(j-1)
+ gamma(j)=(d(j)-a(j)*gamma(j-1))/beta(j)
+next j
+end sub
+
+sub back_solve (no,beta(),gamma(),c(),x())
+x(no)=gamma(no)
+! back substitution : solve n->n-1->....1
+for k=no-1 to 1 step -1
+  x(k)=gamma(k)-c(k)*x(k+1)/beta(k)
+next k
+end sub
+
+
+

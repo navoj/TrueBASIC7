@@ -1,0 +1,81 @@
+option nolet
+!chemistry analytical serie
+! filename :amphotericsaltphfinal.tru
+print "********************************************************"
+print " amphoteric salt : MH(n)A = M(+)+ H(n)A(-)'version 1.0'*"
+print " general         : MHB    = M(+)+ HB(-) = m + hb       *"
+print " peter.vlasschaert@gmail.com,02/10/2016                *"
+print "********************************************************"
+print
+print "************************************************************"
+print "examples: NaHCO3,NaHSO3,KH-Ftalaat  n=1 -> Na(+)+HB(-)      "
+print "          NaH(2)PO4                 n=2 -> Na(+)+H(2)PO4(-) " 
+print "************************************************************"
+print "************************************************************"
+print " formula: H(m)B ( m=2),ka1,ka2,pkw=pH+pOH                   "
+print " definition :amphoteric salt : nature acid (give H(+)) or   "
+print "                               nature base (take H(+))      "
+print "                      up     give                           "
+print "nature acid : HB(-)        = H(+)  + B(2-) (1)              "                
+print "nature base : HB(-) + H(+) = H(2)B         (2)              "
+print "aqua        : H(2)O        = H(+)+OH(-)    (3)              "
+print " [H(+)]tot = [B(2-)]-[H(2)B]+[0H(-)]=h=b-h2b+oh             "
+print "H(m)B   = H(+) + H(m-1)B(-)    -> H(2)B = H(+) + HB(-)-> ka1"
+print "H(m-1)B(-) = H(+) + H(m-2)B(2-)-> HB(-)= H(+) + B(2-) -> ka2"    
+print " nature acid :   (1) -> ka2   = ([H(+)]*[B(2-)])/[HB(-)]    "
+print " nature base :   (2) -> 1/ka1 = ([H(2)B])/([HB(-)]*[H(+)])  "
+print "************************************************************"
+print
+print "**********"
+print " input => "
+print "**********"
+print
+hb=0.01     ! concentration amphoteric salt NaH(n)A
+ka1=0.0001 !equilibrium constant (first  weak acid)
+ka2=0.00001!equilibrium constant (second weak acid)
+kw  = 1E-14 ! pH+pOH = 14 = pKw
+print "concentration amphoteric salt (hb)  = ";hb;" M"
+print "equilibrium constant,first, k1a1    = ";ka1
+print "equilibrium constant,second,k2a2    = ";ka2
+print
+print "***********"
+print " result => "
+print "***********"
+print
+!  take kw<>0
+print " kw = 1e-14 => [0H(-)] 'aq' <> 0"
+call gen_amphotericsalt(kw,hb,ka1,ka2,h)
+print " kw<>0,[H(+)] = ";h;" M"
+print
+print " pH  = ";-log(h)/log(10)
+print
+!  take kw = 0
+print " kw = 1e-14 => [0H(-)] 'aq' = 0"
+call gen_amphotericsalt(0,hb,ka1,ka2,h)
+print " kw=0,[H(+)] = ";h;" M"
+print
+print " pH  = ";-log(h)/log(10)
+! formula first approximation
+call first_amphotericsalt(ka1,ka2,h)
+print
+print "****************************"
+print " first approximation => 'h' "
+print "****************************"
+print " pH  = ";-log(h)/log(10)
+end
+
+sub gen_amphotericsalt(kw,hb,ka1,ka2,h)
+part_1 = (ka1*kw)/(ka1+hb)
+part_2 = (hb*ka1*ka2)/(ka1+hb) 
+h=sqr(part_1+part_2)
+end sub
+
+sub first_amphotericsalt(ka1,ka2,h)
+!**************************************************************
+!why :use for pH calculation by jump (= EP) of polyprotic acids
+!     with strong base
+!**************************************************************
+h=sqr(ka1*ka2)
+get key done
+end sub
+

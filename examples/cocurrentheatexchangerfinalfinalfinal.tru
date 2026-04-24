@@ -1,0 +1,125 @@
+option nolet
+! filename :cocurrentheatexchangerfinalfinalfinal.tru
+n=12       ! number of elements  (integer)
+print "*********************************************"
+print "* Co-current double pipe heat Exchanger     *"
+print "* (without: metal wall capacity),version 1.0*"
+print "* peter.vlasschaert@gmail.com,29/03/2016    *"
+print "*********************************************"
+print "****************************************************************"
+print " ode:(shell,tube)    i = ";n;" to 1 'see code '                 *"            
+print " der_s(i)=bs*(t_so(i-1)-t_so(i))-cs*(t_so(i)-t_to(i)) ! shell  *"
+print " der_t(i)=bt*(t_to(i-1)-t_to(i))+ct*(t_so(i)-t_to(i)) ! tube   *"
+print "****************************************************************"
+print "* solve : 2 ode => Euler Integration                           *"
+print "****************************************************************"
+dim t_so(1),t_to(1),t_sn(1),t_tn(1)
+dim der_s(1),der_t(1)
+!******************************************
+! working condition for the heat exchanger*
+!******************************************
+q_s=.015   ! flow rate of shell fluid ( cm^3/s )
+q_t=.01    ! flow rate of tube  fluid ( cm^3/s )
+l=1000     ! length of exchanger (cm     )
+d_s=60     ! diameter (shell)   (mm     )
+dt_t = 30  ! diameter (tube )   (mm     )
+cp_s = .9  ! heat capacity of shell fluid ( cal/(g*s))
+cp_t = .95 ! heat capacity of tube  fluid ( cal/(g*s))
+ro_s = .9  ! shell fluid density (g/cm^3)
+ro_t = .95 ! tube  fluid density (g/cm^3)
+a=(pi*dt_t*l)/100  ! Heat transfer area (cm^2)
+v_t = (pi*dt_t*dt_t*l)/4000      ! tube
+v_s = ((pi*d_s*d_s*l)/4000-v_t)  ! shell
+an = a/n
+v_sn = v_s/n       !  shell
+v_tn = v_t/n       !  tube
+u = .02            ! Heat transfer coefficient (cal/(s*cm^2*°C))
+!coef : differential equations ,shell,tube.
+bs = (q_s*1000)/v_sn
+cs = (u*an)/(v_sn*cp_s*ro_s)
+bt = (q_t*1000)/v_tn
+ct = (u*an)/(v_tn*cp_t*ro_t)
+print " bs = ";bs;" ct = ";ct;" cs = ";cs;" bt = ";bt
+print
+!  => initial values,shell,tube.
+tsoo = 100 ! shell
+ttoo = 20  ! tube
+tsi  = 100 ! shell
+for i = 1 to n-1
+ mat redim t_so(i),t_to(i)
+  t_so(i) = 100 ! shell
+  t_to(i) = 20  ! tube
+next i
+! => time loop values
+t=0      ! initial value of time
+dt = .5  ! stepvalue of time
+tf = 15  ! total simulation time
+mat redim t_so(n),t_to(n),t_sn(n),t_tn(n)
+mat redim der_s(n),der_t(n)
+k=0      ! counter
+! => solve ode : shell and tube ( with euler integration )
+do
+der_s(n) = bs*(t_so(n-1)-tsoo)-cs*(tsoo-ttoo) ! shell
+der_t(n) = bt*(t_to(n-1)-ttoo)+ct*(tsoo-ttoo) ! tube
+tson=tsoo+der_s(n)*dt ! shell
+tton=ttoo+der_t(n)*dt ! tube
+  for i=2 to n-1
+    j  = n-i ! numbering down ( some use step with negativ integer)
+    j1 = j+1
+ der_s(j1)=bs*(t_so(j)-t_so(j1))-cs*(t_so(j1)-t_to(j1)) ! shell
+ der_t(j1)=bt*(t_to(j)-t_to(j1))+ct*(t_so(j1)-t_to(j1)) ! tube
+  ! integration ( Euler)
+   t_sn(j1)=t_so(j1) + der_s(j1)*dt ! shell
+   t_tn(j1)=t_to(j1) + der_t(j1)*dt ! tube
+  next i
+der_s(1) = bs*(tsi-t_so(1))-cs*(tsi-t_to(1)) ! shell
+der_t(1) = bt*(tti-t_to(1))+ct*(tsi-t_to(1)) ! tube
+t_sn(1)=t_so(1)+der_s(1)*dt ! shell
+t_tn(1)=t_to(1)+der_t(1)*dt ! tube
+! new values => old values
+! values 1->n-1
+ for i=1 to n-1
+     t_so(i) = t_sn(i) ! shell
+     t_to(i) = t_tn(i) ! tube
+ next i
+!  value n
+ tsoo=tson
+ ttoo=tton
+t_so(n)=tsoo  ! shell
+t_to(n)=ttoo  ! tube
+k = k +1  ! number of calculations
+!*********************************
+! restrict printing on the screen
+!*********************************
+! => output (temperature distribution: tube and shell)
+call out_tube_shell(k,t,tf,t_to(),t_so())
+t = t + dt
+loop until (t > tf)
+get key done
+end
+
+sub out_tube_shell(k,t,tf,t_to(),t_so())
+if k=1 then
+print " k = ";k;", t = ";t;" sec. "
+   print " temperature distribution °C: tube  "
+      mat print t_to  ! tube
+   print " temperature distribution °C: shell "
+      mat print t_so  ! shell
+else
+ ! values between int(tf/k) = tf/k
+   if int(tf/k) = tf/k then
+print " k = ";k;", t = ";t;" sec. "
+    print " temperature distribution °C: tube   "
+      mat print t_to  ! tube
+    print " temperature distribution °C: shell  "
+      mat print t_so  ! shell
+   end if
+end if
+if tf = t then
+   print " k = ";k;", t = ";t;" sec. "
+   print " temperature distribution °C: tube  "
+      mat print t_to  ! tube
+   print " temperature distribution °C: shell "
+      mat print t_so  ! shell
+end if
+end sub

@@ -1,0 +1,98 @@
+option nolet
+print
+print "--------------------------------------------"
+print " Theory : Txy diagram (version 1.0)         "
+print " use : Psat = A -B/(T+C) ,T='K' Psat='kPa'  "
+print "--------------------------------------------"
+print " A,B,C =cte :pure product (Benzene,Toluene) "
+print "--------------------------------------------"
+print " peter.vlasschaert@gmail,27/08/2015         "
+print "--------------------------------------------"
+!TXYDIAGRAMtheoryfinal.tru
+nu = 2    ! number components
+dim Cp(1,3),Tb(1),Psat(1)
+mat redim Cp(nu,3),Tb(nu),Psat(nu)
+dim w$(1)
+mat redim w$(nu)
+! to read data in the matrix { psat(),cp(,)}
+!********************************************
+!********************************************
+for i=1 to nu
+  read w$(i)
+next i
+for i=1 to nu
+ read psat(i)
+next i
+for i=1 to nu
+for j=1 to 3
+ read cp(i,j)
+next j
+next i
+! **** end data *****************************
+!********************************************
+print
+print "  = Antoine Coef. = >  at ";psat(1); " kPa"
+mat print w$
+print "****************************************"
+mat print cp
+print "****************************************"
+p=psat(1) ! pressure for calculation txy diagram
+print
+print "***********************************"
+print " construct txy diagram at ";p;" kPa"
+print "***********************************"
+print
+call Antoine_Tb_Psat(nu,Cp(,),Tb(),Psat(),temp,1)
+print
+print "boiling point = ";w$(1),w$(2)
+mat print tb
+!************************************************
+Tbp = (tb(1)+tb(2))/2
+tb(1)=tbp
+tb(2)=tbp
+call Antoine_Tb_Psat(nu,Cp(,),Tb(),Psat(),temp,0)
+print "At ";tbp;" °K,the vapor pressure of "
+print "";w$(1);",";w$(2)," are given by"
+print
+mat print psat
+!********************************************************
+print "*************************************************"
+print "  example :nu = 2                                "
+print "-------------------------------------------------"
+print " yi/xi=psat/p=f(i)=k(i)   i=1..nu,x1+x2=1,y1+y2=1"
+print " y1/x1         = psat(1)/p=f(1)= k(1)            "
+print " (1-y1)/(1-x1) = psat(2)/p=f(2)= k(2)            "
+print "*************************************************"
+!********************************************************
+dim f(1)
+mat redim f(nu)
+for i=1 to nu
+  f(i)=psat(i)/p
+next i
+mat print f
+xx=(1-f(2))/(f(1)-f(2))
+print "horizontal line : temperature ";tbp;" °K"
+print
+print "one point ' x curve ' => (";xx;",";tbp;")"
+print "one point ' y curve ' => (";f(1)*xx;",";tbp;")"
+! data info (pure products)
+data benzene,toluene
+data 200,200
+data 14.1603,2948.78,-44.5633
+data 14.2515,3242.38,-47.1806
+end
+
+
+
+sub Antoine_Tb_Psat(nu,Cp(,),Tb(),Psat(),temp,s1)
+j=1
+if s1=1 then
+for i=1 to nu
+ tb(i)=(cp(i,j+1)/(cp(i,j)-log(psat(i))))-cp(i,j+2)
+next i
+else
+for i=1 to nu
+  psat(i) =exp(cp(i,j) - cp(i,j+1)/(Tb(i)+cp(i,j+2)))
+next i
+end if
+end sub

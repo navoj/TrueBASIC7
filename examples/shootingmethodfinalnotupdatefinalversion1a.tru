@@ -1,0 +1,149 @@
+option nolet
+!**************************************************
+!filename:SHOOTINGMETHODfinalnotupdatefinalversion1a
+!**************************************************
+print "****************************************"
+print " shooting method euler 'version  1.0a'  "
+print " peter.vlasschaert@gmail.com,14/03/2016 "
+print "****************************************"
+print " second order diffential equations      "
+print " d(2)y/dx(2) -2*y = 8*x*(9-x)           "
+print "****************************************"
+print " given : BC  y(0) = 0 and y(9) = 0      "
+print "****************************************"
+print " reduce : 2 first order equations       "
+print " dy/dx = z = f1(x,y,z)   y(0)=0         "
+print " dz/dx =2*y+8*x*(9-x)    z(0)=y'(0)=4   "
+print "****************************************"
+print " youtube : numericalmethodsguy          "
+print "  => shooting method  :BVP -> 2 IVP *   "
+print "****************************************"
+!BVP = Boundary Value Problem *
+!IVP = Initial  Value Problem *
+!***********************************************
+! d(2)y/dt(2) = y",dy/dt = y'
+!***********************************************
+! engineering : power to estimate ,z(0) = y'(0)
+! ' angle to fire to the target '
+!***********************************************
+! youtube :numericalmethodsguy
+!Shooting Method: Example: Part 1 of 4 
+!https://www.youtube.com/watch?v=ZMgikZ-lcS8
+!Shooting Method: Example: Part 2 of 4 
+!https://www.youtube.com/watch?v=R7I8FrlB_KM
+!Shooting Method: Example: Part 3 of 4 
+!https://www.youtube.com/watch?v=R7I8FrlB_KM
+!Shooting Method: Example: Part 4 of 4 
+!https://www.youtube.com/watch?v=Sc0Z_qIndz0
+print " What is the shooting method => "
+!***********************************
+! How to IVP = Initial Value Problem
+! solve : dy/dt = f(y,t) y(a) = y(0)
+!***********************************
+declare function f1,f2
+!***************************
+! endpoints of the interval*
+!***************************
+a=0          ! begin point interval
+b=9          ! end   point interval
+n=3          ! number of steps
+h=(b-a)/n    ! step size
+init_val = 0 ! y(0) = 0
+print " a = begin point (interval) = ";a
+print " b = end   point (interval) = ";b
+print " n = number of steps        = ";n
+print " h = stepsize               = ";h
+print "**************"
+print "*print output*"
+print "**************"
+dim x(0),y(0),z(0)
+mat redim x(0 to n),y(0 to n),z(0 to n)
+x(0) = a           ! t(0) = a             ( x values)
+y(0) = init_val    ! y(0) = initial value ( y values)
+z(0) = 4           ! suppose : shooting value y'(0)=4
+call integrate(n,h,x(),y(),z())
+p_0 = z(0)    ! you tube: p0 = z(0) => info y(9),h=3
+q_0 = y(3)    ! you tube: q0 = y(3) => info y(9),h=3
+print " estimate : z(0)=y'(0) => ";z(0)
+call out_print(n,h,x(),y(),z())
+!****************************************************
+! you tube video :estimate to high, y(3)=1548 (wrong)
+! => y(3) = 0  to high estimate  => z(0) = 4 
+! info : y(9)=y(3) reason h=3 (start)
+!****************************************************
+! you tube : part 3
+! We must estimate : lower value z(0)=y'(0)=-24
+! repeat process 'above'
+!*****************************************************
+z(0)=-24
+call integrate(n,h,x(),y(),z())
+p_1 = z(0)    ! you tube: p0 = z(0) => info y(9),h=3
+q_1 = y(3)    ! you tube: q0 = y(3) => info y(9),h=3
+print " estimate : z(0)=y'(0) => ";z(0)
+call out_print(n,h,x(),y(),z())
+!****************************************************
+! you tube video :estimate to low, y(3)=-216 (wrong)
+! => y(3) = 0  to low estimate  => z(0) = -24 
+! info : y(9)=y(3) reason h=3 (start)
+!****************************************************
+! get beter estimate : z(0) ? How to do this see you
+! tube in part4
+!****************************************************
+! equation of line (through two points)
+! code : p-p_0/p_1-p_0 = q-q_0/q_1-q_0
+! solve :  p = ? 'see code ' ! q_1<q<q_0
+!****************************************************
+q = 0 !
+p = p_0 + ((p_1-p_0)/(q_1-q_0))*(q-q_0)
+!****************************************************
+print " from linear interpolation ( equation of line) "
+print " new estimate z(0) = ";p
+z(0) = p
+call integrate(n,h,x(),y(),z())
+call out_print(n,h,x(),y(),z())
+print
+print " info :y(9) = 0, stepsize h=3  y(9)=y(3) => y(3*h) "
+print " we get the target = ";y(3); " = 0 "
+end
+
+sub integrate(n,h,x(),y(),z())
+declare function f1,f2
+for i=0 to n-1
+x(i)=x(0)+i*h
+y(i+1)=y(i)+f1(x(i),y(i),z(i))*h
+z(i+1)=z(i)+f2(x(i),y(i),z(i))*h
+y(i+1)=y(i)+f1(x(i),y(i),z(i))*h
+z(i+1)=z(i)+f2(x(i),y(i),z(i))*h
+y(i+1)=y(i)+f1(x(i),y(i),z(i))*h
+z(i+1)=z(i)+f2(x(i),y(i),z(i))*h
+next i
+end sub
+
+
+sub out_print(n,h,x(),y(),z())
+print "j","x ","y ","z"
+print "--------------------------------------------------"
+for j=0 to n
+  x(j)=x(0)+j*h
+  print j,x(j),y(j),z(j)
+next j
+end sub
+
+function f1(q1,q2,q3)
+!***********************
+! dy/dx = z = f1(x,y,z)*
+!***********************
+q1=0  !x=0
+q2=0  !y=0
+f1=q3 !z
+end function
+
+function f2(q1,q2,q3)
+!********************
+! dz/dx = 2*y+8*x*(9-x)
+!********************
+q3=0  !z=0
+f2=2*q2+8*q1*(9-q1)
+end function
+
+

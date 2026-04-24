@@ -1,0 +1,136 @@
+option nolet
+! Cholesky decompositionbandedfinal.tru
+print "----------------------------------------"
+print " Cholesky banded  A=L*L^T,solve Ax=b    "
+print "----------------------------------------"
+print "--------------------------------------------"
+print " find = L,L^T from A=a(nu,nu)               "
+print " algo :Cholesky banded        (version 1.0) "
+print " peter.vlasschaert@gmail.com ,14/08/2015    "
+print "--------------------------------------------"
+print
+!*****************************************************************
+! info : see : wikipedia ' Cholesky '  ," banded cholesky decomp.    
+!*****************************************************************
+!*****************************************************************
+!use :1e) A strongly nonsingular ,if not all di>0 then LL^T 
+!      factorization of  A may be unstable.
+!     2e) A = symmetric 
+!*****************************************************************
+! L,L^T  => Cholesky decomposition
+!*****************************************************************
+!    |l(1,1)               |         |l(1,1) l(1,2)   l(1,3)|
+! L= |l(1,2) l(2,2)        | L^T = U=|0      l(2,2)   l(2,3)| 
+!    |l(1,3) l(2,3) l(3,3) |         |0      0        l(3,3)|
+!*****************************************************************
+!       ' banded storage = '
+!      |              l(1,1)|
+!  lB =|       l(1,2) l(2,2)| =>  l(i,j) = l(j,i) symmetric also i=j
+!      |l(3,1) l(3,2) l(3,3)|     bandwidth = iw
+!  lb(i,j) = lb(n,iw+1)
+!******************************************************************
+nu = 3
+Iw=2   ! bandwidth doesn't contains leading diagonal
+! input
+dim a(1,1),b(1,1)
+mat redim a(nu,nu),b(nu,nu) 
+print " A matrix => 'a(i,j) = a(j,i)'"
+! below part : leading diagonal = main diagonal
+a(1,1)= 16
+a(2,1)= 4
+a(2,2)= 5
+a(3,1)= 8
+a(3,2)= -4 
+a(3,3)= 22
+mat b = a
+! symmetric (main diagonal)
+for i=1 to nu-1
+   for j=i+1 to nu
+    b(i,j)=a(j,i)
+   next j
+next i
+mat print b
+! Make the LB = lowerband matrix
+iwb = iw +1 ! bandwidth +1
+dim lb(1,1)
+mat redim lb(nu,iwb)
+mat print lb
+! because reason : j=f(i,j)
+! dimension both matrices are different.
+for i=1 to nu
+   for j=1 to i
+     lb(i,iwb-(i-j))=b(i,j)
+   next j
+next i  
+print " lower band storage = "
+mat print lb
+! A*x=bb
+dim bb(1)
+mat redim bb(nu)
+print " right hand A*x=bb, bb= "
+bb(1)=4.0
+bb(2)=2.0
+bb(3)=5.0
+mat print bb
+call cho_fac_band(LB(,),nu,iw)
+call cho_fw_bw(lb(,),bb(),nu,iw)
+print " A*x =bb,solution  x=  "
+mat print bb
+print " check   result = "
+dim q(3)
+mat q=b*bb
+mat print q
+get key done
+end
+
+
+
+Sub cho_fac_band(LB(,),N,IW)
+for i=1 to n
+    s=0
+    for j=1 to IW
+       s=s+lb(i,j)*lb(i,j)
+    next j
+    LB(i,iw+1) = sqr(lb(i,iw+1)-s)
+  for k=1 to iw
+    s=0
+   if  i+k =< n then
+       if k <> iw then
+     for l=IW-k to 1 step -1
+      s=s+lb(i+k,l)*lb(i,l+k)
+     next l
+       end if
+     ia=i+k
+     ib=iw-k+1
+     lb(ia,ib) = (lb(ia,ib)-s)/lb(i,iw+1)
+   end if
+  next k
+next i
+end sub
+
+sub cho_fw_bw(lb(,),b(),n,iw)
+b(1)=b(1)/lb(1,iw+1)
+for i=2 to n
+    s=0
+    k=1
+  if i <= iw+1 then k=iw-i+2
+   for j=k to iw
+     s=s+lb(i,j)*b(i+j-iw-1)
+   next j
+  b(i)=(b(i)-s)/lb(i,iw+1)
+next i
+b(n) = b(n)/lb(n,iw+1)
+for i=n-1 to 1 step -1
+  s=0
+  L=i+iw
+ if i > n-iw then l = n
+  m = i+1
+ for j = m to l
+  s=s+lb(j,iw+i-j+1)*b(j)
+ next j
+ b(i) = (b(i)-s)/lb(i,iw+1)
+next i
+end sub
+
+
+

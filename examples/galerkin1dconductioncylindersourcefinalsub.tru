@@ -1,0 +1,225 @@
+option nolet
+print "--------------------------------------------------"
+print " galerkin 'finite element method,solid cylinder'  "     
+print " kk*(dT/dx(dT/dr+1/r*dT/dr)+G=0 version 1.0       "
+print " G = internal heat generation                     "
+print " r=ro : T=Tw=T5                                   "
+print " r=ro : -kk*dT/dx=h(Tw-Ta)                        "
+print " peter.vlasschaert@gmail.com , 30/07/2015         "
+print "--------------------------------------------------"
+!***************************************
+! input
+!***************************************
+! if ri<> 0 then correction,next version ?
+!***************************************
+n_div = 4            ! 'integer' number of finite elements
+no = n_div+1         !  number of equations
+Ta = 20              ! '°C '   
+print " Ta (°C)       = ";Ta
+GG=35.3e6            ! 'W/m^3' ,G=GG
+print " volumetric heat generation (W/m^3) = ";GG
+! thermal conductivity
+kk=21                ! 'W/(m*°C)'
+print " thermal conductivity  ( W/m*°C)  = ";kk
+ho =4000             ! 'W/m^3' 
+print " h: surface heat transfer coef.  ( W/m^3 )  = ";ho
+! info : cylinder
+ri = 0               ! 'm' inner radius
+ro = 0.025           ! 'm' outer radius
+print " radius of cylinder ( m )  = ";ro
+l = ro-ri            ! 'm'
+dx = l/n_div
+! stifness coef:for each each element  (e)='NiNj'
+! 2*pi : ? need not be taken in account (both side)
+AA= 1 ! 1D A=1
+print
+dim r(1)
+mat redim r(n_div)
+for i=1 to n_div
+  r(i)=kk/dx*((ri+(i-1)*dx)+(ri+i*dx))/2 ! pi:missing
+next i
+for i=1 to n_div
+print "stiffness coef1. = ";r(i)
+next i
+print
+! load     coef:for each each element  (e)='NiNj'
+coef_load =ho*Ta*ro
+print "load coef.      = ";coef_load
+print
+!***********************************************
+! build : load vector      {f(e)},linear element
+! A*x = b    b={f(e)} ? d(no)=coef_load ,d(i)=0
+!***********************************************
+dim fe(1)
+mat redim fe(no)
+!fe(1)= fe(2)=.........=fe(no-1)=0
+fe(no) = 1 * coef_load
+!****************************************
+! d(i) from TDMA i=1,2,..no
+!****************************************
+dim d(1)
+mat redim d(no)
+d(no)=fe(no)
+!****************************************
+! load vector : result of internal source
+!****************************************
+print " load vector = "
+mat print fe
+!***********************************************
+! build : stiffness matrix [k(e)],linear element
+!***********************************************
+dim ke(2,2)
+ke(1,1)=1
+ke(1,2)=-1
+ke(2,1)=-1
+ke(2,2)=1 
+!*************************************
+! build element ' matrix ' :sum [k(e)]
+!*************************************
+nt = n_div * 2
+dim kh(2,2)
+mat redim kh(nt,2)
+call n_model_stif (ro,h,nt,r(),kh(,),ke(,))
+!******************************************************************
+! global stiffness matrix :found by summing up these equations [ks]
+!******************************************************************
+dim ks(1,1)
+mat redim ks(no,no)
+call  ks_matrix_sum(no,ks(,),kh(,))
+print " global stiffness matix = "
+! last element ks ( stiffness matrix correction)
+!****************************************************
+! i=1..n_div
+!                        | 1 -1|            | 0  0 | *
+![k(e)] = 2*pi*kk/l*r(i)*|     |+2*pi*ro*ho*|      |
+!                        |-1  1|            | 0  1 |
+! * correction for n_div (below)
+!****************************************************
+ks(no,no)=ks(no,no)+ro*ho
+mat print ks
+!****************************************************
+! part : load vector from volumetric heat generation
+!****************************************************
+!                        | 2*ri+rj| 
+![k(e)] = vol_heat      *|        |
+!                        | ri+2*rj|            
+!****************************************************
+vol_heat = (dx * gg)/6
+dim fh(1,1)
+mat redim fh(n_div,2)
+for i=1 to n_div
+   fh(i,1) = vol_heat*(2*(i-1)*dx+i*dx)
+   fh(i,2) = vol_heat*((i-1)*dx+2*i*dx)
+next i
+!****************************************************
+print " load vector :from volumetric heat generation = "
+mat print fh
+d(1)=fh(1,1)
+for i=2 to n_div
+ d(i)=fh(i-1,2)+fh(i,1)
+next i
+d(no)=d(no)+fh(no-1,2)
+!****************************************************
+print " result = load vector ===> "
+mat print d
+!****************************************************
+! solve : TDMA ,a(),b(),c(),' d() see above '
+!****************************************************
+dim a(1),b(1),c(1)
+mat redim a(no),b(no),c(no)
+call tdma_coef(no,a(),b(),c(),ks(,))
+!****************************************************
+dim beta(1),gamma(1)
+mat redim beta(no),gamma(no)
+call beta_gamma(no,a(),b(),c(),d(),beta(),gamma())
+dim x(1)
+mat redim x(no)
+call back_solve (no,beta(),gamma(),c(),x())
+dim g(1)
+mat redim g(no)
+print " temperature distribution : from center (ri=0) of the cylinder  =  to outside "
+call total_temperature_distr(no,g(),x())
+end
+
+sub tdma_coef(no,a(),b(),c(),ks(,))
+a(1)=0
+b(1)=ks(1,1)
+c(1)=ks(1,2)
+for i=2 to no-1
+  a(i)=ks(i,i-1)
+  b(i)=ks(i,i)
+  c(i)=ks(i,i+1)
+next i
+a(no)=ks(no,no-1)
+b(no)=ks(no,no)
+c(no)=0
+end sub
+
+
+sub n_model_stif(ro,ho,nt,r(),kh(,),ke(,))
+! this solve with different (2,2) linear elements
+! through k loop
+k=0
+for i=1 to nt step 2
+k=k+1
+ kh(i,1)=r(k)*ke(1,1)
+ kh(i,2)=r(k)*ke(1,2)
+ kh(i+1,1)=r(k)*ke(2,1)
+ kh(i+1,2)=r(k)*ke(2,2) 
+next i
+end sub
+
+sub  ks_matrix_sum(no,ks(,),kh(,))
+! no = number of elements +1
+for k=1 to no-1
+ for i=k to k+1
+     for j=k to k+1
+ ks(i,j)=kh(i+k-1,j-(k-1))
+     next j
+ next i
+next k
+! diagonal : global matrix correction
+ks(2,2) = kh(2,2)+kh(3,1)
+! **************************************
+!ks(3,3) = kh(4,2)+kh(5,1) ! 3 -> 4 -> 5
+!ks(4,4) = kh(6,2)+kh(7,1) ! 4 -> 6 -> 7
+!ks(5,5) = kh(8,2)+kh(9,1) ! 5 -> 8 -> 8
+!***************************************
+! see : sub below to do this
+!***************************************
+k=0
+for i=3 to no-1
+ k=k+1
+ ks(i,i)=kh(i+k,2)+kh(i+1+k,1)
+next i
+end sub
+
+sub beta_gamma(no,a(),b(),c(),d(),beta(),gamma())
+beta(1) = b(1)
+gamma(1)= d(1)/beta(1)
+for j=2 to no
+ beta (j)=b(j)-a(j)*c(j-1)/beta(j-1)
+ gamma(j)=(d(j)-a(j)*gamma(j-1))/beta(j)
+next j
+end sub
+
+sub back_solve (no,beta(),gamma(),c(),x())
+x(no)=gamma(no)
+! back substitution : solve n->n-1->....1
+for k=no-1 to 1 step -1
+  x(k)=gamma(k)-c(k)*x(k+1)/beta(k)
+next k
+end sub
+
+sub total_temperature_distr(no,g(),x())
+for i=1 to no
+ g(i)=x(i)
+next i
+for i=1 to no
+  print g(i);" °C",
+next i
+end sub
+
+
+
+

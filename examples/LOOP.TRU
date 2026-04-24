@@ -1,0 +1,128 @@
+! compute the magnetic field from a circular current loop
+! Program to accompany "Computational Physics" by N. Giordano and H. Nakanishi
+! Copyright Prentice Hall 1997, 2006
+! Slightly modified by HN
+
+program current_loop
+   option nolet
+   library "sgfunc.trc"
+   library "sglib.trc"
+   dim field(0,0,0)      ! magnetic field at grid location i,j,k
+   call initialize(field,max,out$,out2$,n)
+   call calculate(field,max,n)
+   call display(field,max,out$,out2$,n)
+end
+
+! initialize variables
+! True basic initializes all variables to zero, so no need to zero out 
+! field array        max determines number of grid steps
+sub initialize(field(,,),max,out$,out2$,nstep)
+   print "B due to a current loop of radius = 0.5 at Z=0 in box of side 2 ..."
+   input prompt "number of grid steps -> ": max
+   input prompt "angle steps per loop in integration -> ":nstep
+   line input prompt "output file name for vector B (Y=0) -> ": out$
+   line input prompt "output file name for magnitude of B (Y=0) -> ": out2$
+   mat redim field(3,-max to max,-max to max)  ! resize field array
+end sub
+
+! sweep through the lattice here  
+sub calculate(field(,,),max,nstep)
+   for i = -max to max        ! compute field in x-z plane
+      for k = -max to max
+         call calculate_field(bx,by,bz,max,i/max,0,k/max,nstep)
+         field(1,i,k) = bx    ! vector components of the field
+         field(2,i,k) = by
+         field(3,i,k) = bz
+      next k
+   next i
+end sub
+
+! calculate the field components here
+! bx,by,bz are the field components at site x,y,z
+sub calculate_field(bx,by,bz,max,x,y,z,nstep)
+   radius = 0.5    ! radius of circular current loop
+   dtheta = 2*pi/nstep    ! step size for integration along theta
+   bx = 0
+   by = 0
+   bz = 0
+   for theta = 0 to 2*pi-dtheta step dtheta
+      dlx = -radius * dtheta * sin(theta)    ! components of dr
+      dly = radius * dtheta * cos(theta)      
+      rx = x - radius*cos(theta)             ! components of r
+      ry = y - radius*sin(theta)
+      rz = z 
+      r = sqr(rx^2 + ry^2 + rz^2)
+      if r > 1 / max then                    ! avoid the wire itself
+         bx = bx + dly * rz / r^3            ! Biot-Savart law (cross product)
+         by = by - dlx * rz / r^3
+         bz = bz + (dlx * ry - dly * rx) / r^3
+      end if
+   next theta
+end sub
+
+! display the results
+sub display(field(,,),max,out$,out2$,nstep)
+   set background color "white"
+   call setcanvas("white")
+   set color "black"
+   dim x(0),z(0),bx(0),by(0),bz(0)  ! arrays used for plotting
+   max2 = (2 * max + 1)^2
+   mat redim x(max2),z(max2),bx(max2),by(max2),bz(max2)
+   m = 0
+   if out$ <> "" then
+      open #1: name out$, organization text, create newold
+      erase #1
+   end if
+   if out2$ <> "" then
+      open #2: name out2$, organization text, create newold
+      erase #2
+   end if
+   for i = -max to max
+      for k = -max to max
+         m = m + 1
+         x(m) = i/max
+         z(m) = k /max
+         bx(m) = field(1,i,k)
+         bz(m) = field(3,i,k)
+         if out$ <> "" then
+            set #1: ZONEWIDTH 12
+            print #1, using "+#.#####^^^^": x(m);
+            set #1: ZONEWIDTH 3
+            print #1: ", ";
+            set #1: ZONEWIDTH 12
+	    print #1, using "+#.#####^^^^": z(m);
+            set #1: ZONEWIDTH 3
+	    print #1: ", ";
+	    set #1: ZONEWIDTH 12
+	    print #1, using "+#.#####^^^^": bx(m);
+	    set #1: ZONEWIDTH 3
+	    print #1: ", ";
+	    set #1: ZONEWIDTH 12
+	    print #1, using "+#.#####^^^^": bz(m)
+         end if
+         if out2$ <> "" then
+	    set #2: ZONEWIDTH 12
+            print #2, using "+#.#####^^^^": x(m);
+            set #2: ZONEWIDTH 3
+            print #2: ", ";
+            set #2: ZONEWIDTH 12
+            print #2, using "+#.#####^^^^": z(m);
+            set #2: ZONEWIDTH 3
+	    print #2: ", ";
+	    set #2: ZONEWIDTH 12
+	    print #2, using "+#.#####^^^^": sqr(bx(m)^2+bz(m)^2)
+         end if
+      next k
+      if out2$ <> "" then print #2: ""
+   next i
+   if out$ <> "" then close #1
+   if out2$ <> "" then close #2
+   mat redim x(m),z(m),bx(m),bz(m)
+   call settitle("Magnetic field from a current loop")
+   call sethlabel("X")
+   call setvlabel("Z")
+   call vectorgraph(x,z,bx,bz,.005,3,"black")
+   set cursor 3,10
+   print "Number of angle steps per loop = ";nstep
+   get key zz
+end sub

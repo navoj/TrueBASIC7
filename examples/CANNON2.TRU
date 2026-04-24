@@ -1,0 +1,73 @@
+! simulation of velocity vs. time for a large cannon
+! include the effect of air resistance 
+! Program to accompany "Computational Physics" by N. Giordano and H. Nakanishi
+! Copyright Prentice Hall 1997, 2006
+! modified by H. Nakanishi to include the air density effect
+
+program cannon
+   option nolet
+   library "sgfunc.trc"
+   library "sglib.trc"
+   dim x(5000), y(5000)
+   call initialize(dt,v_init,theta,A_m,y0)
+   call calculate(x,y,dt,v_init,theta,A_m,y0)
+   call display(x,y,v_init,theta,A_m,y0,dt)
+   get key z
+end
+
+sub initialize(dt,v_init,theta,A_m,y0)
+   ! v_init = 700 m/s
+   input prompt "initial speed (m/s) -> ": v_init
+   ! theta = 55  firing angle in degrees
+   input prompt "firing angle (degrees) -> ": theta
+   ! A_m = 4e-5 (1/m) A2/m
+   input prompt "air resistance term B2/m (1/m) -> ": A_m
+   ! y_0 = 1e4 (m) Use 0 here for infinity (i.e., no density change)
+   input prompt "air density decrease distance scale h (m) -> ": y0
+   ! dt = 0.25      seconds - all unit mks
+   input prompt "dt (s) -> ": dt
+end sub
+
+! x() and y() are the position of the projectile
+! dt = time step   v_init = initial speed   theta = launch angle
+! A_m = proportional to drag force = B2/m
+sub calculate(x(),y(),dt,v_init,theta,A_m,y0)
+   option angle degrees    ! use degrees rather than radians
+   x(1) = 0
+   y(1) = 0
+   vx = v_init * cos(theta)
+   vy = v_init * sin(theta)
+   nmax = size(x)    ! this is the number of elements in the array x()
+   for i = 2 to nmax
+      x(i) = x(i-1) + vx * dt            ! Euler method equations
+      y(i) = y(i-1) + vy * dt
+      if y0 <> 0 then
+        f=A_m*sqr(vx^2+vy^2)*exp(-y(i-1)/y0) ! drag force from air resistance
+      else
+        f=A_m*sqr(vx^2+vy^2)
+      end if
+      vy = vy - 9.8 * dt - f * vy * dt
+      vx = vx - f * vx * dt
+      if y(i) <= 0 then exit for         ! shell has hit the ground
+   next i
+   a = -y(i) / y(i-1)              ! interpolate to find landing point
+   x(i) = (x(i) + a*x(i-1)) / (1+a)
+   y(i) = 0
+   mat redim x(i),y(i)
+end sub
+
+sub display(x(),y(),v_init,theta,A_m,y0,dt)     ! display the results with datagraph
+   set background color "white"
+   clear
+   open #1: screen 0.1,0.9,0.1,0.9
+   call setcanvas("white")
+   call settitle("Cannon Shell Trajectory")
+   call sethlabel("x (m)")
+   call setvlabel("y (m)")
+   call datagraph(x,y,0,1,"black")
+   set cursor 3,15
+   print "v_nit (m/s) =";v_init;", angle (deg) ="; theta,", B2/m (1/m) =";A_m,
+   set cursor 4,15
+   print "h (m) =";y0,", time step (s) = "; dt
+   close #1
+end sub

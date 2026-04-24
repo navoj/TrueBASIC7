@@ -1,0 +1,74 @@
+option nolet
+print
+print "*****************************************"
+print "* use superval: x=pi/2,y=pi/2,...       *"
+print "* z = sin(x*y) with use : superval      *"
+print "* peter.vlasschaert@gmail.com,25/01/2017*"
+print "*****************************************"
+! filename :supervalvar2principlefinal.tru
+print 
+!******************************************
+!1e) use lib: strlib.trc {superval,.......}
+!2e) need full path: c:\...................
+!******************************************
+LIBRARY "C:\Prog\TrueBASIC GOLD v6\TBLibs\StrLib.trc"
+! use function 'superval' from TBLibs 
+print "example :                     x=  "
+print
+line input prompt " give in variable   -> ":a1$
+print "example :                     pi/2"
+print
+line input prompt " give in value      -> ":v1$
+b1$ = a1$ & v1$
+print "example :                     y=  "
+print
+line input prompt " give in variable   -> ":a2$
+print
+print "example :                     pi/2"
+print
+line input prompt " give in value      -> ":v2$
+b2$ = a2$ & v2$
+print
+print "example :                   sin(x*y)" 
+print
+line input prompt " give in expression ->":d$
+!*******************************************
+!****superval*******************************
+!*******************************************
+dim var$(1)
+call superval(var$(),b1$,result_b1)
+call superval(var$(),b2$,result_b2)
+call superval(var$(),d$,result_d)
+!*******************************************
+!*******************************************
+print
+print "**********"
+print "result  = "
+print "**********"
+print
+print "*************************"
+print " symbolic evaluation  => "
+print "*************************"
+print
+print " x = pi/2   -> ";result_b1
+print " y = pi/2   -> ";result_b2
+print
+z = result_d
+print " z = sin(x*y)   -> ";z
+! check result
+z=0   ! remove result z
+print "*************************"
+print " numerical evaluation => "
+print "*************************"
+print
+print "******************"
+print "* x=pi/2,y=pi/2  *"
+print "******************"
+print
+x=pi/2
+y=pi/2
+z = sin(x*y)
+print "check :  y = sin(x*y) => ";z
+print
+end
+

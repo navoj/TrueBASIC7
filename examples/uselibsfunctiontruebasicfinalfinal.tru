@@ -1,0 +1,134 @@
+OPTION NOLET
+print
+print "***********************************************"
+print "* evaluation ( expression) =>superval,function*"
+print "* peter.vlasschaert@gmail.com,23/01/2017      *"
+print "***********************************************"
+! use command : superval ,function
+!filename:uselibsfunctiontruebasicfinalfinal.tru
+print
+!*******************************
+! both methods 1,2: range values
+!*******************************
+t_begin    = 1             ! start value
+t_end      = 10            ! end   value
+number_p   = 10            ! number of points (interval)
+print "----------------------------------------------"
+print " ranges values :"; t_begin;" < x < ";t_end;" " 
+print "----------------------------------------------"
+print " t_begin = ";t_begin
+print " t_end   = ";t_end
+print " number of points (interval) = ";number_p
+if t_begin > t_end then
+ print "***************************"
+ print "check : t_begin < t_end  ! " !error
+ print " <puss a key> !            "
+ print "***************************"
+ get key input
+ stop
+end if
+print
+!**********************************************************
+! formule :  t_begin + ((m-1)/(number_p-1))*(t_begin-t_end)
+!    m=1          => t_begin
+!    m=number_p   => t_end
+!**********************************************************
+! use : for lus  , m=1 to number_p
+!**********************************************************
+print "*********************"
+print "* method1 'superval'*"
+print "*********************"
+print
+!*********
+!one value
+!*********
+! where to find *.trc : give full path
+LIBRARY "C:\Prog\TrueBASIC GOLD v6\TBLibs\StrLib.trc"
+! use function 'superval' from TBLibs 
+print "example :                     x=  "
+line input prompt " give in variable   -> ":a$
+print "example :                     pi/2"
+line input prompt " give in value      -> ":v1$
+b$ = a$ & v1$
+print "example :                   sin(x)" 
+line input prompt " give in expression ->":d$
+!****superval****
+dim var$(1)
+call superval(var$(),b$,result_b)
+call superval(var$(),d$,result_d)
+print "result  = "
+print " x = pi/2 -> ";result_b
+print " sin(x)   -> ";result_d
+print
+!************
+!range values
+!************
+dim gr_1(1),fr_1(1)     ! x values,y values
+mat redim gr_1(number_p),fr_1(number_p)
+! init superval
+dim d1$(1)              ! x values in string
+mat redim d1$(number_p)
+dim d2$(1)              ! y values in string
+mat redim d2$(number_p)
+for m=1 to number_p
+  g1 = t_begin + ((m-1)/(number_p-1))*(t_begin-t_end)
+  d1$(m) = " x= " & str$(g1)
+next m
+print " x values (string) = "
+mat print d1$
+!****superval****
+!**************************
+! < x values >,< y values >
+!**************************
+!*****************************************************
+!*****************************************************
+for m=1 to number_p
+d2$(m) = d$  !  see above 'sin(x)'
+call superval(var$(),d1$(m),gr_1(m)) ! x values,result
+call superval(var$(),d2$(m),fr_1(m)) ! y values,result
+next m
+!*****************************************************
+!*****************************************************
+print " y values (string) = "
+mat print d2$
+print " x values (values) = "
+mat print gr_1
+print " y values (values) = "
+mat print fr_1
+print "*********************"
+print "* method2 'function'*"
+print "*********************"
+print
+!*********
+!one value
+!*********
+DECLARE FUNCTION  f   ! outside function 'sin(x)'
+print "example:                   pi/2  " 
+w2=pi/2 
+print " value pi/2     = ";w2
+input prompt " value  x= ":w2
+PRINT "example:                 f(pi/2) "
+print " f(pi/2)                 -> ";f(w2)
+print
+!************
+!range values
+!************
+dim gr_2(1),fr_2(1)     ! x values,y values
+mat redim gr_2(number_p),fr_2(number_p)
+for m=1 to number_p
+  gr_2(m) = t_begin + ((m-1)/(number_p-1))*(t_begin-t_end)
+  fr_2(m) = f(gr_2(m))
+next m
+print " x values = "
+mat print gr_2
+print
+print " y values = "
+mat print fr_2
+END
+
+FUNCTION f(x)
+! outside the program 
+! ? check always 
+
+    f=sin(x)
+END FUNCTION

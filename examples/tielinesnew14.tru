@@ -1,0 +1,259 @@
+ option nolet
+print "-----------------------------------"
+print " draw tielines from x,y diagram :  " 
+print " in the enthalpy diagram (example) "
+print "-----------------------------------"
+print " peter.vlasschaert@gmail.com       "
+print " data: 18/06/2015 (version 1:model)"
+print "-----------------------------------"
+print
+declare function f,x_cv
+alpha=3.5
+print "----------------------"
+print " above diagram  =>    "
+print "----------------------"
+print " alpha = ";alpha
+print "----------------------------"
+print " VLE (equilibrium) equation "
+print " y = x*alpha/(1+(alpha-1)*x)"
+print " legend = red color         "
+print "----------------------------"
+print
+xb=0.05
+xd=0.92
+print " xb    = ";xb
+print " xd    = ";xd
+yb=f(xb,alpha)
+print "yb = ";yb
+yd=f(xd,alpha)
+print "yd = ";yd
+print "----------------------"
+print " below diagram  =>    "
+print "----------------------"
+print
+print "------------------------------------"
+print "blue :liquidline of enthalpy        "
+print "green:vapourline of enthalpy        "
+print "cyan : tielines in enthalpy diagram "
+print "------------------------------------"
+print
+! ideal (between 0->1 :line otherwise curve)
+! liquid enthalpy line: hlo->hl1
+!------------------------------------------
+hl0=7000 
+hl1=3000
+! vapour enthalpy line: hvo->hv1
+!------------------------------------------
+! to convert axis (need smallest,highest one)
+hv0=15700
+hv1=10000
+!*******************************************
+! to find max and min
+! max
+qm1=max(hl0,hl1)
+qm2=max(qm1,hv0)
+qm3=max(qm2,hv1)
+print " max = ";qm3
+! min
+ql1=min(hl0,hl1)
+ql2=min(ql1,hv0)
+ql3=min(ql2,hv1)
+print " min = ";ql3
+if ql3*qm3 >0 then
+ c=qm3+qm3/10
+ d=0
+end if 
+
+call draw_asp(asp)
+open #1:screen 0.5,1.0,0.5,1.0
+window #1
+xmin=0
+xmax=1
+ymin=0
+ymax=1
+set window xmin,xmax*asp,ymin,ymax
+call box_plot(xmin,xmax,ymin,ymax)
+!***********************************
+! bottom
+x_2=yb
+plot lines:xb,yb;x_2,yb !1e
+! next point
+x_3=yb
+y_3=f(x_3,alpha)
+plot lines:x_2,yb;x_3,y_3 !2e
+! horizontal plateau
+x_4=x_3
+y_4=f(x_4,alpha)
+plot lines:x_3,y_3;y_4,y_3 ! 3e
+! vertical plateau
+x_3=y_4
+y_5=f(x_3,alpha)
+plot lines:y_4,y_3;x_3,y_5 ! 4e
+! horizontal plateau
+x_4=y_5
+y_6=f(x_4,alpha)
+plot lines:x_3,y_5;x_4,y_5 ! 5e
+! vertical plateau
+x_5=y_6
+y_7=f(x_5,alpha)
+plot lines:x_4,y_5;x_4,y_6 ! 6e
+! horizontal plateau
+x_6=y_7
+y_8=f(x_6,alpha)
+plot lines:x_4,y_6;x_5,y_6 ! 7e
+! vertical plateau
+x_7=y_8
+y_9=f(x_7,alpha)
+plot lines:x_5,y_6;x_5,y_7 ! 8e
+! horizontal plateau (end)
+plot lines:x_5,y_7;xd,y_7  ! 9e
+
+!**********************************
+set color "green"
+plot lines : xd,0;xd,ymax
+plot text ,at xd,0.01:" xd "
+! bottom
+plot lines : xb,0;xb,ymax
+plot text ,at xb,0.01:" xb "
+set color "red"
+for tt=0 to 1 step 0.0001
+  plot tt,f(tt,alpha);
+next tt
+plot text,at xb,0.9: " x-y diagram "
+!!**********************************
+call draw_asp(asp)
+set color "black"
+open #2:screen 0.498,1.0,0,0.498
+window #2
+q=100
+xmin=0
+xmax=q
+ymin=0
+ymax=q
+!**********************
+! conversion => x -> y
+!**********************
+! above:      q=100
+!**********************
+! x: 0 -> q y: -d -> c 
+!**********************
+! y=(c-1*(-d))/q*x-d
+!**********************
+!q*(y+d)/(c+d)=x
+!**********************
+
+set window xmin,xmax*asp,ymin,ymax
+! diagonaal
+! plot lines: 0,0;xmax,ymax
+! square around the graph
+plot lines : x_2*q,0;x_2*q,ymax
+plot lines : x_3*q,0;x_3*q,ymax
+plot lines : x_4*q,0;x_4*q,ymax
+plot lines : x_5*q,0;x_5*q,ymax
+plot text,at xb,90: " enthalpy diagram (vapour,liquid) "
+call box_plot(xmin,xmax,ymin,ymax)
+! destillate
+set color "green"
+plot lines : xd*q,0;xd*q,ymax
+! bottom
+plot lines : xb*q,0;xb*q,ymax
+h_l0=x_cv(hl0,q,c,d)
+h_l1=x_cv(hl1,q,c,d)
+h_v0=x_cv(hv0,q,c,d)
+h_v1=x_cv(hv1,q,c,d)
+!**********************************
+!equation line (enthalpy of liquid)
+!**********************************
+pt1x = 0
+pt1y = h_l0
+pt2x = 1     !  1 or q
+pt2y = h_l1
+call eq_line(pt1x,pt1y,pt2x,pt2y,rico,ctb)
+rico_l=rico
+ctb_l =ctb
+!-----------------------
+! a(odd) a1,a3,a5,a7,a9
+!-----------------------
+y_a1=rico_l*xb+ctb_l
+!print " y_a1 = ";y_a1
+y_a3=rico_l*x_2+ctb_l
+!print " y_a3 = ";y_a3
+y_a5=rico_l*x_3+ctb_l
+!print " y_a5 = ";y_a5
+y_a7=rico_l*x_4+ctb_l
+!print " y_a7 = ";y_a7
+y_a9=rico_l*x_5+ctb_l
+!print " y_a9 = ";y_a9
+!**********************************
+!equation line (enthalpy of vapour)
+!**********************************
+pt1x = 0
+pt1y = h_v0
+pt2x = 1    !   1 or q
+pt2y = h_v1
+call eq_line(pt1x,pt1y,pt2x,pt2y,rico,ctb)
+rico_v=rico
+ctb_v=ctb
+!-------------------------
+! a(even) a2,a4,a6,a8,a10
+!-------------------------
+y_a2=rico_v*x_2+ctb_v
+!print " y_a2 = ";y_a2
+y_a4=rico_v*x_3+ctb_v
+!print " y_a4 = ";y_a4
+y_a6=rico_v*x_4+ctb_v
+!print " y_a6 = ";y_a6
+y_a8=rico_v*x_5+ctb_v
+!print " y_a8 = ";y_a8
+y_a10=rico_v*xd+ctb_v
+!print " y_a10 = ";y_a10
+!*******************************
+! draw:tielines enthalpy diagram
+!*******************************
+! reason multiply 1-> 100 (q=100)
+set color "cyan"
+plot lines:xb*q,y_a1;x_2*q,y_a2
+plot lines:x_2*q,y_a3;x_3*q,y_a4
+plot lines:x_3*q,y_a5;x_4*q,y_a6
+plot lines:x_4*q,y_a7;x_5*q,y_a8
+plot lines:x_5*q,y_a9;xd*q,y_a10
+
+! draw blue enthalpy liquid line
+set color "blue"
+plot lines : 0,h_l0;q,h_l1
+! draw green enthalpy vapour line
+set color "green"
+plot lines : 0,h_v0;q,h_v1
+end
+
+sub eq_line(pt1x,pt1y,pt2x,pt2y,rico,ctb)
+rico=(pt2y-pt1y)/(pt2x-pt1x)
+ctb=pt1y-rico*pt1x
+end sub
+
+sub box_plot(xmin,xmax,ymin,ymax)
+plot lines: 0,0;xmax,ymax
+plot lines: xmin,0;xmax,0
+plot lines:0,0;0,ymax
+plot lines:xmax,xmax;xmax,0
+end sub
+
+function f(tt,alpha)
+f=(tt*alpha)/(1+(alpha-1)*tt)
+end function
+
+function x_cv(yy,q,c,d)
+x_cv=(yy+d)*q/(c+d)
+end function
+
+
+
+
+sub draw_asp(asp)
+ask pixels px,py
+if px>py then
+   asp=px/py
+else
+   asp=py/px
+end if
+end sub

@@ -1,0 +1,57 @@
+option nolet
+!heatconductionexplicitnondimensional.tru
+! Non-dimensional form ? Transformation
+! dimensional form : dU/dT = k * d/dX(dU/dX) : U = U (T,X)
+! x = X/L; t= k*T/L^2 ; u=U/Uo
+! Non-dimensional form : du/dt= d/dx(du/dx)  : u = u (t,x)
+! info: G.D.Smith,Numerical solutions of partial differential
+!       Oxford press 
+print " parabolic equation : explicit method ,unsteady        "
+print " peter.vlasschaert@gmail.com  (07/07/2015) version 1.0 "
+print "----------------------------------------------------"
+print " parabolic equation : du/dt = d/dx(du/dx)  : u(x,t) "
+print " IC :u (0,x)    u = 2*x          domain : 0=<x=<1/2 "
+print "                u = 2*(1-x)      domain : 1/2=<x=<1 "
+print " BC : left                           u = u(t,0) = 0 "
+print "      right                          u = u(t,1) = 0 " 
+print " FD : FTCS   r  = dt/dx^2 = 1/10                    "
+print " u(j+1,i) = u(j,i)+ r*(u(j,i-1)-2*u(j,i)+u(j,i+1))  "
+print "----------------------------------------------------"
+dt =.001
+r=0.1
+dx = sqr(dt/r)
+print " dx = ";dx
+print " dt = ";dt
+print "  r = ";r
+OPTION BASE 0             ! to start array from zero
+! IC :Initial condition ,BC :Boundary condition
+  N = 10
+  dim  u(0)
+  mat reDIM u(N )
+! we need hulp array 
+  dim  uo(0)
+  mat redim uo(N)
+
+  FOR i = 0 TO N / 2
+    u(i) = 2 * i / N
+  NEXT i
+  FOR i = N / 2 + 1 TO N
+    u(i) = 2 * (1 - i / N)
+  NEXT i
+mat print u ,
+! because explicit method for 1D we don't need double array
+! values change only for condition between  i=1......i=n-1 :IC
+! bc:left i=0 ,right i=n : BC 
+t=0
+for j = 0 to N    ! step vaue=dt
+for i =1 to n-1
+    uo(i) = u(i) + r * (u(i - 1) - 2 * u(i) + u(i + 1))
+next i
+FOR i = 1 TO N - 1
+      u(i) = uo(i)
+NEXT i
+print " time = ";t
+mat print u 
+t=t+dt
+next j
+end

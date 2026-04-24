@@ -1,0 +1,94 @@
+option nolet
+print
+print "****************************************************"
+print "* product formule (display) 'version 1.0a'  , sub  *"
+print "* peter.vlasschaert@gmail.com,    27/02/2017       *"
+print "****************************************************"
+print
+!////////////////////////////////////////////////////////////!
+!/principles : to format formule                             !
+!/filename : howdisplaychemicalproductfinalversion1asub.tru  !
+!////////////////////////////////////////////////////////////!
+print
+print "************************************"
+print "*product formule                 =>*"
+print "************************************"
+print
+print "******************************"
+print "*orginal : Cl2 =>Cl2         *" ! use index '1'
+print "******************************"
+!******************************************
+! correction H2,Cl2,not working version 1.0
+!******************************************
+! tel = 1 'problem in the code no working'
+!******************************************
+print
+product$ = "Cl2"
+print "before => "
+print
+print product$
+call display_product(product$,temp$)
+print
+print "after =>  "
+print
+print temp$
+get key done
+end
+
+sub display_product(product$,temp$)
+dim index(1,2),elements$(1)
+length = len(product$) !number of symboles in the string
+i=0   
+for n=1 to length
+  symbol = ORD(product$[n:n]) 
+  if symbol > 48 and symbol <= 56 then
+        i=i+1
+    mat redim index(i,2)
+    index (i,1) = symbol-48 ! number
+    index (i,2) = n         ! position string
+  end if
+next n
+tel = i     ! number of elements and number of indexes
+mat redim elements$(tel)
+if tel <> 1 then
+elements$(1) = product$[1:index(1,2)-1]
+for j=1 to tel-2
+    elements$(j+1) = product$[index(j,2)+1:index(j+1,2)-1]
+next j
+elements$(tel) = product$[index(tel-1,2)+1:length-1]
+else ! only one element H2
+elements$(1) = product$[1:index(1,2)-1]
+end if
+dim element_index(1)
+mat redim element_index(tel)
+for i=1 to tel
+    element_index(i) = index(i,1)
+next i
+dim  part$(1)
+mat redim part$(tel)
+if element_index(1) <> 1  then
+part$(1)= elements$(1)& str$(element_index(1))
+    else 
+!<< remove ones from the input of the product>>
+part$(1)= elements$(1)
+end if
+for j=2 to tel-1
+if element_index(j) <> 1  then
+part$(j) = elements$(j)& str$(element_index(j))
+else
+!<< remove ones from the input of the product>>
+part$(j) = elements$(j)
+end if
+next j
+if element_index(tel) <> 1  then
+part$(tel)= elements$(tel)& str$(element_index(tel))
+else
+!<< remove ones from the input of the product>>
+part$(tel)= elements$(tel)
+end if
+! display products
+temp$ = ""
+for j=1 to tel
+temp$ = temp$ & part$(j)
+next j
+end sub

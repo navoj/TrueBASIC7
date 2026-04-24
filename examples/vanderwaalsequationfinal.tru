@@ -1,0 +1,56 @@
+option nolet
+print "-------------------------------------------"
+print "-------------------------------------------"
+print " vanderwaals version 1.0;                  "
+print " peter.vlasschaert@gmail.com,date:29/05/15 "
+print "solution of the cubic equation of state    "
+print "-------------------------------------------"
+print "-------------------------------------------"
+print "a=27*R^2*Tc^2/(64*Pc) ,b=R*Tc/(8*Pc)     "
+print " f=V^3-(b+R*T/p)*V^2+a/p*V-a*b/p = 0     "
+print "-----------------------------------------" 
+print " solve: NewtonRaphson                    "
+print " v=v-f/df         df=differential(f)     "
+print "-----------------------------------------"
+print " calculate :molar volume m^3/mol in a    "
+print "liquid at given temperature and pressure "
+print " compiler : truebasic                    "
+print " => vanderwaalsequationfinal.tru         "
+print "-----------------------------------------"
+print " example:100°C and 101.325kPa            "
+print "molar volume:saturated liquid,vapor water"
+print " Tc=647.1 K ,Pc=220.55 bar               "
+print "-----------------------------------------"
+!********input p,t**********************
+p=101325      ! in Pa (Pascal)
+t=273.15+100  ! kelvin conversion (°C->K)
+!*************************************
+r=8.314       ! info              (idealgas,pv=rt )
+tc= 647.1     ! kelvin            (K = °C+273.15  )
+pc= 220.55*1e5! pascal            ( 1bar = 1e5 pascal )
+a=27*R^2*Tc^2/(64*Pc)
+b=R*Tc/(8*Pc)
+q=r*t/p
+! two solutions: v_new =b ,v_new=rt/p
+dim sol(2)
+print
+print " iterative value (liquid) : v=b     => ";b
+print " iterative value (vapour) : v=r*t/p => ";q
+print
+    v_new = b ! first solution
+for i=1 to 2
+  do
+    v_old = v_new
+    f =V^3-(b+q)*V^2+a/p*V-a*b/p
+    df=3*v^2-2*v*(b+q)+a/p
+       v_new = v_old - f/df
+       dv = abs(v_new-v_old)
+  loop while (dv < 1e-8)
+sol(i)=v_new
+   v_new=q   ! second solution
+next i
+print
+print " saturated liquid volume (van der waals equation of state)  = ";sol(1);" m^3/mol"
+print " saturated vapour volume (van der waals equation of state)  = ";sol(2);" m^3/mol"
+end
+

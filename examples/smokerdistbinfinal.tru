@@ -1,0 +1,157 @@
+option nolet
+!smokerdistbinfinal.tru
+print "---------------------------------------------------------------"
+print " smoker equation =>   version 1.0                              "
+print " Number of theoretical trays and stages: binairy distillation  "
+print " --------------------------------------------------------------"
+print
+print "----------------------------------------------"
+print " bottom to top :distillation unit             "
+print " enriching section : top                      "              
+print " yi = xi*R/(R+1)+xd/(R+1) (3e)                "
+print " q line            : feed                     "
+print " yi = xi*q/(q-1)-zf/(q-1) (2e)                "
+print " stripping section : below feed               "
+print "----------------------------------------------"
+print " peter.vlasschaert@gmail.com ,26/08/2015      "
+print "----------------------------------------------"
+!/////////////////////////////////////////////////
+!*************************************************
+! info : algo : smoker equation :pg 155-161
+! Design equilibrium stage processes
+! Buford D.Smith
+! McGraw - Hill
+!*************************************************
+!/////////////////////////////////////////////////
+r=1.2
+xb=0.05
+zf=0.45
+xd=0.95
+alpha = 3.8
+q=0.55
+print "**************"
+print " input values "
+print "**************"
+print
+print " R =L/V = reflux ratio = ex: 1.2    = ";r
+print "      0 < xb < zf < xd < 1 =>      "
+print " xb    = 'bottom'         ex: 0.05  = ";xb
+print " zf    = 'feed  '         ex: 0.45  = ";zf
+print " xd    = 'top   '         ex: 0.95  = ";xd
+print " q     = ' feed quality ' ex: 0.55  = ";q
+print " alpha = 'relativ volatility' ex: 3.8 = ";alpha
+print
+print "***************"
+print " solve =>      "
+print "***************"
+print
+print " solve((2e) and (3e)) find : intersection => (xi,yi) "
+m = r/(r+1)
+bb = xd/(r+1)
+qt = q/(q-1)
+dim a(2,2),b(2)
+a(1,1) = m
+a(1,2) = -1
+a(2,1) = qt
+a(2,2) = -1
+b(1) = -bb
+b(2) = zf*qt/q
+dim xx(2)
+! solve 2 by 2 by Cramer ( here use inversion matrix )
+! system : a*xx=b
+mat a = inv(a)
+mat xx = a * b
+print
+print "(xi,yi) => (";xx(1);",";xx(2);")"
+print
+print " find number: Number of stages 'enriching section' "
+! coef of ce(1)*x*x+ce(2)*x + ce(3) = 0
+dim ce(3)
+ce(1) = m *(alpha-1)
+ce(2) = m + bb*(alpha-1)-alpha
+ce(3) = bb
+call QuadraticEquation(ce(1),ce(2),ce(3),root1e,root2e)
+print " root = ";root1e,root2e
+k1e = min(root1e,root2e)
+k2e = max(root1e,root2e)
+call n_stage_enr(xx(),k1e,k2e,alpha,xd,ne)
+print
+print " ne = ";ne
+print
+print " find number: Number of stages 'stripping section' "
+! coef of cs(1)*x*x+cs(2)*x + cs(3) = 0
+ms1 = r*zf+q*xd-(R+q)*xb
+ms2 = (r+1)*zf+(q-1)*xd-(r+q)*xb
+ms = ms1/ms2
+dd = (1-ms)*xb
+dim cs(3)
+cs(1) = ms *(alpha-1)
+cs(2) = ms + dd*(alpha-1)-alpha
+cs(3) = dd
+call QuadraticEquation(cs(1),cs(2),cs(3),root1s,root2s)
+print " root = ";root1s,root2s
+k1s = min(root1s,root2s)
+k2s = max(root1s,root2s)
+call n_stage_str(xx(),k1s,k2s,alpha,xb,ns)
+print
+print " ns = ";ns
+print
+nt = ne + ns
+print "//// total number of stages (reboiler including)////"
+print " total number of stages = ";int(nt) + 1
+print " number of trays        = ";int(nt)
+print "////////////////////////////////////////////////////"
+end
+
+sub n_stage_str(xx(),k1s,k2s,alpha,xb,ns)
+! log (10) =2.3...
+z1=((xx(1)-k1s)/(xb-k1s))
+z2=((k2s-xb)/(k2s-xx(1)))
+zt=log(z1*z2)
+w1=1+(alpha-1)*k2s
+w2=1+(alpha-1)*k1s
+wt=log(w1/w2)
+ns=zt/wt
+end sub
+
+sub n_stage_enr(xx(),k1e,k2e,alpha,xd,ne)
+! log (10) =2.3...
+z1=((xd-k1e)/(xx(1)-k1e))
+z2=((k2e-xx(1))/(k2e-xd))
+zt=log(z1*z2)
+w1=1+(alpha-1)*k2e
+w2=1+(alpha-1)*k1e
+wt=log(w1/w2)
+ne=zt/wt
+end sub
+
+
+
+
+
+
+
+
+
+
+
+
+sub QuadraticEquation(a,b,c,root1,root2)
+ !  compute the square root of discriminant d
+
+   d = b*b - 4.0*a*c
+   IF (d >= 0.0) THEN              ! is it solvable?
+      d    = SQR(d)
+      root1 = (-b + d)/(2.0*a)     ! first root
+      root2 = (-b - d)/(2.0*a)     ! second root     
+   ELSE                            ! complex roots
+      print " There is no real roots! "
+      print "  'Discriminant = ' => "; d
+   END IF
+end sub
+
+
+
+
+
+

@@ -1,0 +1,168 @@
+option nolet
+print "*******************************************************************"
+print "*find 'input matrix' and 'display'  'reactionsystem',version 1.0  *"       
+print "* peter.vlasschaert@gmail.com,    06/03/2017  (part :a)           *"
+print "*******************************************************************"
+print
+print "**************************"
+print " one product  => part : a "
+print "**************************"
+print
+!******************************************************
+! part b : 'more than one product' and " all elements " 
+!******************************************************
+print 
+print "**********************************************"
+print "* first ,second,third,fourth .'all strings ' *"
+print "**********************************************"
+print "1e)    K4Fe(CN)6   =>  input K4Fe1C6N6       *"
+print "2e)    H2SO4       =>  input H2S1O4          *"
+print "3e)    HNO3        =>  input H1N1O3          *"
+print "4e)    KMnO4       =>  input K1Mn1O4         *"
+print "**********************************************"
+!*****************************************
+! <   example  > 'above input ' = test = 2
+!*****************************************
+np = 4     ! number of products
+v1=2       ! select one product from i=1..np ( second product)
+print " which product to show                = ";v1;"e)"
+dim a$(1),b$(1),c$(1)
+mat redim a$(np),b$(np),c$(np)
+test = 2   ! exampple
+print " give number : input (=1),example(=2) = ";test
+mat redim a$(np),b$(np)
+if test =1 then
+print " product ' input '     => "
+for i=1 to np
+    print " product(";i;" )   => "
+    line input prompt " name  =  ":a$(i)
+next i
+else 
+a$(1) = "K4Fe1C6N6"     ! string
+a$(2) = "H2S1O4"        ! string 
+a$(3) = "H1N1O3"        ! string
+a$(4) = "K1Mn1O4"       ! string
+end if
+mat b$ = a$     ! find, matrix input
+mat c$ = a$     ! find, display products
+dim el_list$(1) ! el_list$ =(K,Fe,C,N,H,O,Mn)
+print "*********************************************"
+print " input 'products',number of input products = ";np
+print "*********************************************"
+print
+mat print a$
+!*******************************
+! find 'numbers' in string b$(1)
+!*******************************
+dim index(1,1)
+call find_numbers_string(tel,b$(v1),index(,))
+print " number ","position : number"
+print "------------------------------------"
+print
+mat print index
+!************************************
+! find 'elements' in the string b$(1)
+!************************************
+dim el$(1)
+mat redim el$(tel)
+call find_elements_string(tel,v1,b$(),index(,),el$())
+mat print el$
+! display matrix ' input one of products '
+dim display_mat$(1,1)
+mat redim display_mat$(tel,3)
+print
+print "***************************"
+print " display matrix        =>  "
+print "***************************"
+print
+print "element","number","position"
+print "----------------------------------------"
+print
+for i=1 to tel
+   display_mat$(i,1)=el$(i)           ! element
+   display_mat$(i,2)=str$(index(i,1)) ! number 
+   display_mat$(i,3)=str$(index(i,2)) ! position
+next i
+mat print display_mat$
+print "****************************************"
+print " display product :reaction system   =>  "
+print "****************************************"
+print
+print "**************************"
+print " removes ones a$(1)   =>  "
+print "**************************"
+print
+!****************************************
+!   < removes ones from b$(1) >
+!****************************************
+!example c$(1)  "K4Fe1C6N6" -> "K4FeC6N6"
+!****************************************
+!***********************
+! dummie string = 'tem$'
+!***********************
+call removes_ones_string(v1,c$())
+print
+print " result = ";c$(v1)
+end
+
+sub removes_ones_string(v1,c$())
+length1=len(c$(v1)) 
+for j=1 to length1           ! search string for ones
+ if c$(v1)[j:j] = "1" then   ! find symbol (= "1") in a string
+    tem$ = c$(v1)[1:j-1]& c$(v1)[j+1:length1]
+    c$(v1)=tem$              ! new string = one smaller string
+    length1 = length1-1      ! find ones ,string one smaller in length
+  else
+    tem$ = c$(v1)
+  end if
+  c$(v1)=tem$
+next j
+
+end sub
+
+sub find_elements_string(tel,v1,elm$(),index(,),el$())
+!*********************************
+! 1e) first element 'string b$(1)'
+!*********************************
+if index(1,2)=3 then
+   el$(1) = elm$(v1)[1:2]
+  ! element 'two variables'
+else
+   el$(1) = elm$(v1)[1:1]
+  ! element 'one variable' 
+end if
+!*******************************
+!2e) all other elements 2 to tel
+!*******************************
+for i=1 to tel-1
+  ! distance between two numbers
+    g=index(i+1,2)-index(i,2)
+   if g=3 then  
+  ! element 'two variables'
+ el$(i+1)=elm$(v1)[index(i,2)+1:index(i+1,2)-1]
+    else
+  ! element 'one variable' 
+ el$(i+1)=elm$(v1)[index(i,2)+1:index(i,2)+1]
+   end if
+next i
+
+end sub
+
+sub find_numbers_string(tel,element$,index(,))
+length = len(element$) !number of symboles in the string
+i=0
+for n=1 to length
+  symbol = ORD(element$[n:n])
+  if symbol > 48 and symbol <= 56 then
+        i=i+1
+    mat redim index(i,2)
+    index (i,1) = symbol-48 ! number
+    index (i,2) = n         ! position string from numbers
+  end if
+next n
+tel = i     ! number of elements and number of indexes
+end sub
+
+
+
+

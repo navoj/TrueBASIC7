@@ -1,0 +1,85 @@
+option nolet
+print "------------------------------------------"
+print "algo: TDMA = TriDiagonalMatrixAlgorithm   "
+print "peter.vlasschaert@gmail.com (27/06/2015)  "
+print " model (vesion 1.0)                       "
+print "------------------------------------------"
+print
+print "------------------------------------------"
+print " a(i)*x(i-1)+b(i)*x(i)+c(i)*x(i+1) = d(i) "
+print " a(1)=0, c(no)=0    =>                    "
+print " x(i)=gamma(i)-c(i)*x(i+1)/beta(i)        "
+print "------------------------------------------"
+print " d(i)=aa(i,j)*x(j)                        "
+print "------------------------------------------"
+print
+input prompt " Number of equations = ":no
+input prompt " Main  Diagonal = ":md_b  ! -2
+input prompt " Above Diagonal = ":ad_c  ! 1
+input prompt " Below Diagonal = ":bd_a  ! 1
+dim a(1),b(1),c(1),d(1)
+mat redim a(no),b(no),c(no),d(no)
+!=> coef main diag
+for i=1 to no
+  b(i)=md_b
+next i
+!=> coef above diag
+for i=1 to no-1
+  c(i)=ad_c
+next i
+!=> coef below diag
+for i=2 to no
+  a(i)=bd_a
+next i
+!=> aa*x=d
+d(1)=-240
+for i=2 to no-1
+  d(i)=-40
+next i
+d(no)=-60
+!---------------------------
+! solve TDMA
+!---------------------------
+! x(i) -> i=1..no
+!---------------------------
+dim beta(1),gamma(1)
+mat redim beta(no),gamma(no)
+beta(1) = b(1)
+gamma(1)= d(1)/beta(1)
+! why changes index i->ii because dim beta(i-1) doesn't exit
+for j=2 to no
+ beta (j)=b(j)-a(j)*c(j-1)/beta(j-1)
+ gamma(j)=(d(j)-a(j)*gamma(j-1))/beta(j)
+next j
+!///////////////solve (back substitution) //////////////////
+dim x(1)
+mat redim x(no)
+x(no)=gamma(no)
+! back substitution : solve n->n-1->....1
+for k=no-1 to 1 step -1
+  x(k)=gamma(k)-c(k)*x(k+1)/beta(k)
+next k
+dim aa(1,1)
+mat redim aa(no,no)
+for i=1 to no
+!=> main diagonal
+  aa(i,i)=b(i)
+!=>above diagonal
+ if i<no then
+  aa(i,i+1)=c(i)
+ end if
+!=>below diagonal
+ if i>=2 then
+  aa(i,i-1)=a(i)
+ end if
+next i
+print " d(i)=aa(i,j)*x(j) => show: d(i) "
+print
+mat print d
+print " matrix aa(i,j)    =>            "
+print
+mat print aa
+print " column x(j)       =>            "
+print
+mat print x
+end

@@ -1,0 +1,132 @@
+option nolet
+!azeotropemargulus2final
+print
+print "-----------------------------------------------------"
+print " find : bubblepoint azeotrope (P= given) version 1.0 "
+print "        composition yi=xi , 0<yi,xi<1                "
+print " method : vapor pressure => antoine equation         "
+print "          non-ideality   => Margules coef.'s         "
+print "-----------------------------------------------------"
+print " peter.vlasschaert@gmail.com , 01/09/2015            "
+print "-----------------------------------------------------"
+print
+! engineering problem
+!study:big problem for distillation unit(distillation azeotrope)
+!*************************************************************
+! info: thermodynamics
+!       book :Introductory Chemical Engineering Thermodynamics 
+!              HFst 10-11 second edition
+!             J. Richard Elliott.Carl T.Lira
+!              Prentice Hall 
+!*************************************************************
+print "***************"
+print " input =>      "
+print "***************"
+print
+nu=2      ! " number of pure products " =integer
+p=760     ! "! mmmHg ( 1atm =760 mmHg)" =pressure
+print " pressure ' mmHG '   => ' p  ' = ";p;" mmHg"
+temp = 60 ! "! guess value °C         " =temperature
+print " guess : temperature => 'temp' = ";temp;" °C"
+print
+!******************************************
+! data for system : (1) benzene (2) ethanol 
+!(Margulus coef ,two pure substance)
+!******************************************
+! parametric values(margules,antoine equation)
+print "*****************************************************"
+print " thermodynamic model => benzene (1),ethanol  (2)     "
+print "*****************************************************"
+print "-----------------------------"
+print " margules coef's :a12,a21 => "
+print "-----------------------------"
+a12=1.2947
+a21=1.8373
+print a12,a21
+print
+dim x(2),gamma(2),y(2)
+x(1)=0.5
+x(2)= 1-x(1)
+dim ant_coef(2,3)
+for i=1 to 2
+  for j=1 to 3
+read ant_coef(i,j)
+  next j
+next i
+print "-------------------------------------"
+print " antoine coef => (1e) line : benzene "
+print "                 (2e) line : ethanol "
+print "-------------------------------------"
+mat print ant_coef
+dim psat(2)
+call margules_2(a12,a21,x(),gamma())
+call antoine_eq(nu,ant_coef(,),temp,psat())
+call raoult(nu,p,gamma(),psat(),x(),y())
+call sum_up(nu,y(),s)
+print " s = ";s
+print 
+print " s < 1 => guess temperature is to low  of 'temp' "
+print " s > 1 => guess temperature is to high of 'temp' "
+print
+!**********************!
+! data antoine equation
+!**********************!
+! benzene
+data 6.87987,1196.76,219.161
+! ethanol
+data 8.1122,1592.86,226.18
+!**********************
+if s < 1 then
+dx = 0.01
+else
+dx = - 0.01
+end if
+do
+temp = temp + dx
+! thermdynamic model' margulus '
+call margules_2(a12,a21,x(),gamma())
+call antoine_eq(nu,ant_coef(,),temp,psat())
+call raoult(nu,p,gamma(),psat(),x(),y())
+call sum_up(nu,y(),s)
+if s > 0.9999 and s < 1.0000 then
+ exit do
+end if
+loop
+print "*****************"
+print " output =>       "
+print "*****************"
+print
+print "---------------------------------"
+print " bubble temperature  =>          "
+print "---------------------------------"
+print "temperature : azeotrope = ";temp;" °C"
+print " vapor composition  = ";y(1)
+x(1)=y(1)
+print " liquid composition = ";x(1)
+get key done
+end
+
+sub margules_2(a12,a21,x(),gamma())
+gamma(1)=exp((x(2))^2*(a12+2*(a21-a12)*x(1)))
+gamma(2)=exp((x(1))^2*(a21+2*(a12-a21)*x(2)))
+end sub
+
+sub antoine_eq(nu,ant_coef(,),temp,psat())
+for i=1 to nu
+psat(i) = 10^(ant_coef(i,1)-ant_coef(i,2)/(temp+ant_coef(i,3)))
+next i
+end sub
+
+sub sum_up( nu,z(),s)
+s=0
+for i=1 to nu
+s=s+z(i)
+next i 
+end sub
+
+sub raoult(nu,p,gamma(),psat(),x(),y())
+for i=1 to nu
+y(i)=x(i)*gamma(i)*(psat(i)/p)
+next i
+end sub
+

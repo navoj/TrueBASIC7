@@ -1,0 +1,234 @@
+option nolet
+open #1:screen 0,0.5,0,1
+open #2:screen .5,1,.5,1
+window #1
+! serie :analytical chemistry
+! filename :redoxtitrationfe2ce4tfinalversion1.tru
+print
+print "*********************************************"
+print "* redoxtitration Fe/Ce    'version 1.0'     *"
+print "*  Fe(2+)+Ce(4+) = Fe(3+)+Ce(3+)            *"
+print "*  E = Eo+0.059/n log([Ox]/[Red])           *"
+print "*[Ox] = must be reduced  (Fe(3+) -> Fe(2+)) *"
+print "*[Red]= must be oxidated (Fe(2+) -> Fe(3+)) *"
+print "* Eo = reduction potential (table)          *"
+print "*********************************************"
+print "****************************************************"
+print "*  titration curve:Fe(2+)/Ce(4+),a=1,b=1           *"
+print "*Before:EP,E=Eo(Fe)+0.059/a*log([Fe(3+)]/[Fe(2+)]) *"
+print "*By:EP => E_eq =(Eo_Fe*a+Eo_Ce*b)/(a+b)            *"
+print " after :EP E=Eo(Ce)+0.059/b*log([Ce(4+)]/[Ce(3+)]) *"
+print "****************************************************"
+print "*********************************************"
+print "* buret           : x ml Ce(4+) 0.1N        *"
+print "* erlenmeyer flask:(Fe(2+) 10 ml 0.1N)      *"
+print "*********************************************"
+print "*********************************************"
+print "* peter.vlasschaert@gmail.com,05/10/2016    *"
+print "*********************************************"
+print
+print "************"
+print "* given =  *"
+print "************"
+a=1  ! Nernst Equation n=1 Fe(3+)/Fe(2+)
+!**********************************************************
+! Fe(3+)+e(-) -> Fe(2+) => reduction pontential,Eo_Fe,table
+!**********************************************************
+b=1  ! Nernst Equation n=1 Ce(4+)/Ce(3+)
+!**********************************************************
+! Ce(4+)+e(-) -> Ce(3+) => reduction pontential,Eo_Ce,table
+!**********************************************************
+Eo_Fe   = 0.77  ! table books analytical chemistry,crc book
+Eo_Ce   = 1.45  ! table books analytical chemistry,crc book
+! crc handbook chemistry and physics
+c_Fe2 = 0.1
+c_Ce4 = 0.1
+v0_Fe = 10 
+print " Eo_Fe                = ";Eo_Fe;" Volt         "
+print " Eo_Ce                = ";Eo_Ce;" Volt         "
+print " a:number exchange e(-) 'Fe(3+)/Fe(2+)' = ";a
+print " b:number exchange e(-) 'Ce(4+)/Ce(3+)' = ";b
+print " conc Ce(4+)          = ";c_Ce4;" N,buret      "
+print " conc Fe(2+)          = ";c_Fe2;" N,erlenmeyer "
+print "initial volume Fe(2+) = ";v0_Fe;" ml,erlenmeyer"
+print
+print "************"
+print "* result = *"
+print "************"
+print " **************************************************"
+print " x ml,added Ce(4+)to Fe(2+) solution of 0.1N,10ml *"
+print " **************************************************"
+print " Before EP => "," a = ";a
+print
+print "x ml,Ce(4+)","ml Fe(2+),erl.","ml,Fe(3+)","Fe3/Fe2","E(Volt)"
+x0 = 0.1
+c0 = x0/(v0_Fe-x0)
+print  x0,v0_Fe-x0,x0,c0,Eo_Fe+0.059/a*log10(c0)
+x0 = 1
+c0 = x0/(v0_Fe-x0)
+print  x0,v0_Fe-x0,x0,c0,Eo_Fe+0.059/a*log10(c0)
+x0 = 2
+c0 = x0/(v0_Fe-x0)
+print  x0,v0_Fe-x0,x0,c0,Eo_Fe+0.059/a*log10(c0)
+x0 = 5
+c0 = x0/(v0_Fe-x0)
+print  x0,v0_Fe-x0,x0,c0,Eo_Fe+0.059/a*log10(c0)
+x0 = 9
+c0 = x0/(v0_Fe-x0)
+print  x0,v0_Fe-x0,x0,c0,Eo_Fe+0.059/a*log10(c0)
+x0 = 9.9
+c0 = x0/(v0_Fe-x0)
+print  x0,v0_Fe-x0,x0,c0,Eo_Fe+0.059/a*log10(c0)
+print
+print " By     EP => "
+print
+x_eq = 10
+x0=x_eq
+E_eq =(Eo_Fe*a+Eo_Ce*b)/(a+b)            
+print x0,v0_Fe-x0,x0,"inf",E_eq
+print
+print " After EP => "," b = ";b
+print " x_excess Ce(4+) =>  " ! x_excess
+print
+print "x ml,Ce(4+)","x_excess Ce(4+)","Ce(3+)sol.","Ce4/Ce3","E(Volt)"
+x_excess =0.1
+x = x_eq + x_excess
+c1 = x_excess/x_eq 
+print x,x_excess,x_eq,c1,Eo_Ce+(0.059)/b*log10(c1)
+x_excess =1
+x = x_eq + x_excess
+c1 = x_excess/x_eq 
+print x,x_excess,x_eq,c1,Eo_Ce+(0.059)/b*log10(c1)
+x_excess =5
+x = x_eq + x_excess
+c1 = x_excess/x_eq 
+print x,x_excess,x_eq,c1,Eo_Ce+(0.059)/b*log10(c1)
+
+
+!*******************************************
+window #2 ! draw graph right part of screen
+!*******************************************
+! windows 2 ,subs ,for :before,by,after 'EP'
+!*******************************************
+dim xp(2),yp(2)
+ntx = 15! tick marks x-axis
+nty = 20! tick marks y-axis
+xp(1)=0   ! xmin
+xp(2)=ntx ! xmax 
+yp(1)=0   ! ymin
+yp(2)=nty ! ymax
+ask pixels px,py
+asp_r = 1! px/py  !aspect ratio correction(rectangular window)
+set window xp(1)*asp_r,xp(2)*asp_r,yp(1),yp(2)
+call draw_axes(xp(1)*asp_r,xp(2)*asp_r,yp(1),yp(2),ntx,nty)
+set color "black"
+!*********************************************************
+! info : graph,title,numbering,label axes
+!*********************************************************
+title$ = "redox titration curve:Fe(2+)+Ce(4+)->Fe(3+)+Ce(3+)"
+x_txt$ = "ml Ce(4+)"
+y_txt$ = "E*10"
+txt = 2  !  distance from right part of the window
+!**********************************************************
+call num_txt_axes(title$,x_txt$,y_txt$,xp(),yp(),txt)
+!**********************************************************
+! draw graph in the window x-axes ,y-axes(right part)
+!**********************************************************
+set color "red" ! color of the graph
+!***********************************
+! before EP =>
+!***********************************
+for x=0.01 to x_eq-0.001 step 0.0001
+ call before_EP(x,x_eq,Eo_Fe,a,E_before)
+ plot points:x,E_before*10
+next x
+!***********************************
+! by EP => point ( only one value)
+!***********************************
+set color "green"
+!*****************************
+!x_eq = 10
+!x0=x_eq
+!E_eq =(Eo_Fe*a+Eo_Ce*b)/(a+b) 
+!*****************************
+!*************************************************
+!coordinate EP 
+!*************************************************
+!*************************************************
+! cross hair
+!*************************************************
+z=.1
+E_eq_cross = E_eq *10
+plot lines :x_eq-z,E_eq_cross;x_eq+z,E_eq_cross
+plot lines :x_eq,E_eq_cross+z;x_eq,E_eq_cross-z
+plot text,at x_eq,E_eq_cross+0.2:"EP"
+!***********************************
+! after  EP =>
+!***********************************
+set color "red"
+for x_excess=x_eq+0.001 to xp(2) step 0.00001
+call after_EP(x_excess,x_eq,Eo_Ce,b,E_after)
+plot points:x_excess,E_after*10
+next x_excess
+end
+
+sub before_EP(x,x_eq,Eo_Fe,a,E_before)
+!Before:EP,E=Eo(Fe)+0.059/a*log([Fe(3+)]/[Fe(2+)]) 
+E_before = Eo_Fe + 0.059/a*log10(x/(x_eq-x)) !after
+end sub
+
+sub after_EP(x_excess,x_eq,Eo_Ce,b,E_after)
+!Before:EP,E=Eo(Ce)+0.059/b*log([Fe(3+)]/[Fe(2+)]) 
+E_after = Eo_Ce + 0.059/b*log10(x_excess/(x_eq))
+end sub
+
+
+sub num_txt_axes(title$,x_txt$,y_txt$,xp(),yp(),txt)
+plot text,at 1,yp(2)-1:title$
+!*****************************************
+!**** range x axis  0 to xmax      *******
+!*****************************************
+for i=0 to xp(2)
+ plot text,at i,0.2/yp(2):str$(i)
+next i !,
+plot text,at xp(2)-txt,0.5:x_txt$
+!*****************************************
+!**** range y axis  0 to ymax ************
+!*****************************************
+for i=1 to yp(2)
+ plot text,at 0.2,i:str$(i)
+next i
+plot text,at 0.3,yp(2)-0.5:y_txt$
+end sub
+
+
+
+SUB draw_axes(xmin,xmax,ymin,ymax,ntx,nty)
+! axis :for distribution function
+! see extra,website
+    ! distance between tick marks on x-axis
+    LET dx = (xmax - xmin)/ntx
+    ! distance between tick marks on y-axis
+    LET dy = (ymax - ymin)/nty
+    SET WINDOW xmin ,xmax ,ymin ,ymax
+    LET x0 = max(0,xmin)
+    LET y0 = max(0,ymin)
+    IF ymin*ymax < 0 then
+       LET y0 = 0
+    ELSE
+       LET y0 = ymin
+    END IF
+    PLOT LINES: xmin,y0;xmax,y0   ! horizontal axis
+    PLOT LINES: x0,ymin;x0,ymax   ! vertical axis
+    LET tx = 0.1*dy               ! size of tick mark
+    LET ty = 0.1*dx
+    FOR itick = 0 to ntx
+        LET x = xmin + itick*dx
+        PLOT LINES: x,y0 - tx; x,y0 + tx    ! draw ticks on x axis
+    next itick
+    FOR itick = 0 to nty
+        LET y = ymin + itick*dy
+        PLOT LINES: x0 - ty,y; x0 + ty,y    ! draw ticks on y axis
+    NEXT itick
+END SUB
+

@@ -1,0 +1,162 @@
+! Time independent quantum mechanics - square well with matching method
+! Modified from "shooting.tru" by N. Giordano and H. Nakanishi
+! m=1/2 here to be consistent with other programs here H. Nakanishi
+
+program match
+   option nolet
+   dim psiL(-1 to 5000),psiR(-1 to 5000)
+   call initialize(dx,x_left,x_right,x_match,sigma,epsilon,e_guess,de,inter,sde)
+   call calculate(psiL,psiR,dx,x_left,x_right,x_match,sigma,epsilon,e_guess,de,inter,sde)
+end
+
+! initialize variables
+sub initialize(dx,x_left,x_right,x_match,sigma,epsilon,energy,de,inter,sde)
+   input prompt "Lennard-Jones energy scale (in hbar^2/2mL^2) => ": epsilon
+   input prompt "Lennard-Jones length scale (in units of L) => ": sigma
+   input prompt "System is (0,5*sigma) (in units of L). dx => ": dx
+   input prompt "initial guess for energy => ": energy
+   input prompt "initial energy increment => ": de
+   input prompt "interactive looping? yes [1], no [2] => ": inter
+   if inter <> 1 then
+      input prompt "stop iteration when de = => ": sde
+   end if
+   clear
+   if inter <> 1 then
+      print "q (quit), p (pause), h (half), d (double), n (change dir)"
+   else
+      print "q (quit), h (half), d (double), n (change dir)"
+   end if
+   x_match = 1.4 * sigma
+   x_left = 0.5 * sigma
+   x_right = 5 * sigma
+   set window -3,5.5*sigma,-2,2    ! set up for plotting
+   set background color "white"
+   set color mix(45) 2/3, 2/3, 2/3
+   set color "black"
+   call axes(sigma,epsilon)
+end sub
+
+sub calculate(psiL(),psiR(),dx,x_left,x_right,x_match,sigma,epsilon,energy,de,inter,sde)
+   declare def potential     ! potential energy function
+   psiL(0) = 0
+   psiL(-1) = -0.0001*dx
+   psiR(0) = 0
+   psiR(-1) = -0.0001*dx
+   last_match = 0
+   if inter = 1 then
+     print "Energy (hit any key to go to the next trial energy)"
+   end if
+   Lmatch = (x_match-x_left)/dx
+   Rmatch = (x_right-x_match)/dx
+   n = 0
+   do                        
+      n = n + 1
+      set color 45
+      if n > 1 then
+        call display(psiL,dx,x_left,Lmatch+14)
+        call display(psiR,-dx,x_right,Rmatch+14)
+      end if
+      for i = 0 to Lmatch+14
+         psiL(i+1)=2*psiL(i)-psiL(i-1)-(energy-potential(x_left+i*dx,sigma,epsilon))*dx^2*psiL(i)
+      next i
+      psimatch=psiL(Lmatch)
+      for i = 1 to Lmatch+15
+         psiL(i)=psiL(i)/psimatch
+      next i
+      for i = 0 to Rmatch+14
+         psiR(i+1)=2*psiR(i)-psiR(i-1)-(energy-potential(x_right-i*dx,sigma,epsilon))*dx^2*psiR(i)
+      next i
+      psimatch=psiR(Rmatch)
+      for i = 1 to Rmatch+15
+         psiR(i)=psiR(i)/psimatch
+      next i
+      set color "red"
+      call display(psiL,dx,x_left,Lmatch+14)
+      set color "green"
+      call display(psiR,-dx,x_right,Rmatch+14)
+      ldev=0.5*(psiL(Lmatch+1)-psiL(Lmatch-1))/dx
+      rdev=0.5*(psiR(Rmatch-1)-psiR(Rmatch+1))/dx
+      if inter = 1 then
+        set color "black"
+        print energy;ldev;rdev
+        get key z                   ! wait for a key stroke before continuing
+        c$ = chr$(z)
+        if c$ = "q" then
+          exit do
+        else if c$ = "h" then
+          de = 0.5*de
+        else if c$ = "d" then
+          de = 2*de
+        else if c$ = "n" then
+          de = -de
+        end if
+      else if abs(de) < sde then
+        set color "black"
+        print "Energy=","dpsi/dx="
+        print energy;ldev;rdev
+        print "Iteration=";n
+        print "dx=";dx
+        print "dE0=";sde
+        print "dE=";de
+        exit do
+      else if key input then
+        get key z
+        c$ = chr$(z)
+        if c$ = "q" then     
+          exit do  
+        else if c$ = "p" then
+          get key z
+        else if c$ = "h" then
+          de = 0.5*de          
+        else if c$ = "d" then   
+          de = 2*de          
+        else if c$ = "n" then
+          de = -de
+        end if
+      end if
+      if ldev > rdev then
+        match = +1
+      else
+        match = -1
+      end if
+      if c$="h" or c$="d" or c$="n" then
+        c$ = ""
+      else if match*last_match < 0 then 
+        de = -de / 2
+      end if
+      energy = energy + de
+      last_match = match
+   loop
+end sub
+
+! Lennard-Jones potential
+def potential(x,sigma,epsilon)
+   r6 = (x/sigma)^(-6)
+   potential = 4 * epsilon * (r6^2 - r6)
+end def
+
+! plot axes and potential
+sub axes(sigma,epsilon)
+   declare def potential
+   min = 0.7*sigma
+   max = 5*sigma
+   set color "black"
+   plot 0,0;max,0
+   plot lines: 1.4*sigma,-0.05;1.4*sigma,0.05
+   plot 0,-1.8;0,1.8
+   plot lines: -0.1,1;0.1,1
+   set color "blue"
+   for x = min to max step 0.02*sigma
+      plot x,potential(x,sigma,epsilon) / (0.6*epsilon);
+   next x
+   plot x,potential(x,sigma,epsilon) / (0.6*epsilon)
+end sub
+
+! display wave function
+sub display(psi(),dx,x1,j)
+   mat redim psi(-1 to 5000)
+   for n = 0 to j-1
+      plot x1+n*dx,psi(n);
+   next n
+   plot x1+j*dx,psi(j)
+end sub

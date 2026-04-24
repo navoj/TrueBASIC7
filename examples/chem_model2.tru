@@ -1,0 +1,68 @@
+! introduction example chemical engineering (ODE)
+option nolet
+print "-------------------------------------------------------------"
+print " chem model (2)  :chemical engineering                       "
+print " gravity-flow tank                                           "
+print " ------------------------------------------------------------"
+print " diff eq :1e) dv/dt=0.0107*h-0.00205*v*v      (dvdt)         "  
+print "          2e) dh/dt=0.311   -0.0624*v         (dhdt)         "
+print "-------------------------------------------------------------"
+print " initial condition case 1(v=3.40,h=2.05)                     "
+print "                   case 2(v=2.50,h=1.2 )                     "
+print " method :euler                                               "
+print "-------------------------------------------------------------"
+print " peter.vlasschaert@gmail.com   (28/11/2014)                  "
+print "-------------------------------------------------------------"
+print "-------------------------------------------------------------"
+input prompt " number -> case 1,2 = ":hk
+if hk=1 then
+  v=3.40
+  h=2.05
+else
+  v=2.50
+  h=1.2
+end if
+declare function dvdt,dhdt
+tprint =20
+print "-------------------------"
+print " initial condition ->    "
+print "-------------------------"
+t0=0
+t=t0
+delta_t = .6  ! timestep
+print "--------------------------------------"
+print " domain: t0.........tf                "
+print "--------------------------------------"
+tf=200
+print "simulation time = ";tf; " s"
+print
+print
+print " time          v       h        "
+print "--------------------------------"
+print
+nu=0
+print "distance between output = ";delta_t*tprint
+print
+print t,v,h, "initial condition "
+do while (t <= tf)
+nu=nu+1 ! update teller
+v=v+dvdt(v,h)*delta_t
+h=h+dhdt(v,h)*delta_t
+if int(nu/(tprint))=nu/(tprint) then
+   print t,v,h
+end if
+t=t+delta_t
+loop
+get key done
+end
+! function
+
+function dvdt(v,h)
+dvdt=0.0107*h-0.00205*v*v 
+end function
+
+function dhdt(v,h)
+dhdt=0.311   -0.0624*v
+end function
+
+

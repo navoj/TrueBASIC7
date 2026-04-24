@@ -1,0 +1,178 @@
+option nolet
+!***********************************************************
+!***********************************************************
+! file : decimaltofracstudiesumfinalfinalversion1bfinal.tru
+!***********************************************************
+!***********************************************************
+print "********************************************************"
+print "* decimal to fraction (sum)     version 1.0b           *"
+print "* peter.vlasschaert@gmail.com,11/03/2106               *"
+print "********************************************************"
+print "* computation : sum of fractions                       *"
+print "********************************************************"
+!************************************************
+!* future : sub dec_frac,other sub ,see below   *
+!************************************************
+dim a(4)
+epsilon = 1e-4 ! both the same
+nn = size(a,1)
+for i=1 to  nn
+  read a(i)
+next i
+! test nn=4
+! data 2.5458,4.5456,6.2358,2.369
+!******************************************
+! how to solve:
+! test nn=4    => already ready ? Problem
+ data 1.2500,.6000,0.6666,.4000
+! solve : every number + (less than epsilon)
+!data 1.25001,.60001,0.66661,.40001
+!*****************************************
+! test nn=10
+!data 2.5689,36.2569,258.1235,89.4523,2568.4256
+!data 1.3594,23.5612,2356.7812,5.3645,5.8942
+!************************************************
+!************************************************
+! solve => problem
+!************************************************
+for i=1 to nn
+ ! use epsilon or less smaller value than epsilon
+  a(i)=a(i)+ epsilon
+next i
+!************************************************
+!************************************************
+s=0
+for i=1 to nn
+ s=s+a(i)
+next i
+nu=s  ! sum of real numbers
+print "real: summation = ";s
+call dec_frac(nu,tel,noem,remain,epsilon,error)
+print "***************"
+print " real :sum  => "
+print "***************"
+print
+print " epsilon     = ";epsilon
+print " error       = ";error
+print " remainder   = ";remain
+print " fraction    = ";tel;"/";noem
+print " real(value) = ";tel/noem
+print
+print "***************"
+print " frac :sum  => "
+print "***************"
+print
+print " number of values (first column) :nn = ";nn
+dim frac(1,6)
+mat redim frac(nn,6)
+for i=1 to nn
+  frac(i,1) = a(i)
+next i
+for i=1 to nn
+ call dec_frac(a(i),frac(i,2),frac(i,3),frac(i,4),epsilon,frac(i,5))
+next i
+mat print frac
+dim z(1,2)
+mat redim z(nn,2)
+for i=1 to nn
+  z(i,1) = frac(i,2)
+  z(i,2) = frac(i,3)
+next i
+!denominator : make product thridth column => prod
+! product = prod(frac(i,3),i=1..nn)
+call denominator(nn,z(,),prod)
+!nominator   : 
+! sum ( (frac(i,2)*prod(frac(j,3),j=1..nn;j<>i)),i=1..nn))
+call nominator(nn,z(,),ss)
+print " nominator    = ";ss
+print " denominator  = ";prod
+print " test = ";ss;"/";prod;" = ";ss/prod
+print "************"
+print "* result = *"
+print "************"
+print
+for i=1 to nn
+    frac(i,6) = frac(i,2)/frac(i,3)
+next i
+mat print frac
+end
+
+sub denominator(nn,z(,),prod)
+! product = prod(frac(i,3),i=1..nn)
+!  frac(i,3) = z(i,2)
+  prod = 1
+  for i=1 to nn
+    prod=prod*z(i,2)
+  next i
+end sub
+
+
+
+sub nominator(nn,z(,),ss)
+ss=0
+for i=1 to nn
+    prod1=z(i,1)
+  for j=1 to nn
+    if j <>  i then
+      prod1=prod1*z(j,2)
+    end if
+  next j
+  ss=ss+prod1
+next i
+end sub
+
+
+
+
+sub dec_frac(nu,tel,noem,remain,epsilon,error)
+dim a(0 to 1000),y(0 to 1000),r(0 to 1000)
+dim p(-1 to 1000),q(-1 to 1000)
+n=1000
+do
+  k=0
+    a(k)=int(nu)
+    r(k)= nu - a(k)
+    if r(k) <> 0 then y(k)=1/r(k)
+    !********************************************
+    !********************************************
+    ! p(k),q(k) second order difference equations
+    ! p(k),q(k) two initial conditions for each
+    !********************************************
+    p(k) = a(k)
+    p(-1) = 1
+    q(k) = 1
+    q(-1) = 0
+    ratio = p(0)/q(0)
+    !********************************************
+    error = abs(nu-ratio)
+    before_ratio = ratio
+  k=1
+    a(k)=int(y(0))
+    r(k)= y(0) - a(k)
+    if r(k) <> 0 then y(k)=1/r(k)
+    p(k) = a(k)*p(0)+p(-1)
+    q(k) = a(k)*q(0)+q(-1)
+    ratio = p(k)/q(k)
+    error = abs(ratio-before_ratio)
+    if error < epsilon then exit do 
+    before_ratio = ratio
+  for k=2 to n
+      a(k)=int(y(k-1))
+      r(k)=y(k-1)-a(k)
+      if r(k)<> 0 then y(k)=1/r(k)
+      p(k) = a(k)*p(k-1)+p(k-2)
+      q(k) = a(k)*q(k-1)+q(k-2)
+      ratio = p(k)/q(k)
+      error = abs(ratio-before_ratio)
+      if error < epsilon then exit do       
+      before_ratio = ratio
+  next k
+loop 
+remain=r(k-1)
+tel = p(k-1)
+noem = q(k-1)
+end sub
+
+
+
+

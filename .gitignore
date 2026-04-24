@@ -1,0 +1,5 @@
+.precomp/
+lib/.precomp/
+*.svg
+*.html
+*.png

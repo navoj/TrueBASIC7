@@ -1,0 +1,332 @@
+option nolet
+!**************************
+! load file : femflow2d.dat 
+!**************************
+!********************************************************
+! solve : complex geometry domain (finite element method)
+!********************************************************
+! info : The finite element method in engineering (5ed)
+!        author : singiresu s.rao
+!        company :Butterworth-Heinemann (Elsevier)
+!        pg :580 (Fluid Mechanics Problems)
+!********************************************************
+!filename :formatdataflow2dfinal3version1.tru
+print "*************************************************"
+print " put in path :                   femflow2d.dat   "
+print " example: C:\Prog\femflow2d.dat                  "
+print "*************************************************"
+print
+print "*************************************************"
+print "* data matrix (version 1.0) 'from file'         *"
+print "* peter.vlasschaert@gmail,11/06/2016            *"
+print "*************************************************"
+!*************************************
+! delimiter = "," : see : tab$(2)=","
+!*************************************
+declare function max_el
+print
+print " use : for finite elements (data-file)    => "
+filename$ = "C:\Prog\femflow2d.dat"
+! input prompt "name of file for data : ":filename$
+print " show data-file = 1 ,show matrix out = 2 "
+input prompt " choose the value ( 1 or 2 ) = ":ch
+dim a$(1),b$(1)
+call read_file(filename$,a$())
+call write_file(filename$,a$())
+print
+dim tab$(3)
+tab$(1)="."
+tab$(2)=","
+tab$(3)="!"
+if ch = 1 then
+print "*********************"
+print " content of the file "
+print "*********************"
+print
+print " filename = ";filename$
+print 
+for i=1 to size(a$)
+print i;" line row = ";a$(i)
+next i
+else
+!**************************
+! get data from : data-file
+!**************************
+!
+! how to find nu = (first value from data-file = 13.0)
+! understand : '!' comment (info)
+!              real data : seventh line (7)
+p_0 = 7
+call val_num(p_0,a$(),tab$(),pf,nu)
+print
+print " nu = ";nu
+!
+! find global coordinates , put matrix 'mat_xy(nu,2)'
+!  x_node = mat_xy(nu,1)  , y_node = mat_xy(nu,2)
+!
+dim mat_xy(1,2)
+mat redim mat_xy(nu,2)
+!*****************************************
+call next_comment(p_0+2,p_2,a$(),tab$())
+! why : next comment we start with comment
+!*****************************************
+n_1 = p_2-(p_0+2)
+!print " number of data lines = "; n_1
+!------------------------------------
+! analysis :string 1: p_0+2
+!          :string 2: p_0+3 
+!------------------------------------
+!          :string i: p_0+(i+1)
+!------------------------------------
+dim pc(1) ,n_d(1),value(1)
+mat redim n_d(n_1)
+ ! number of delimiter on every row
+for i=1 to n_1
+call find_all_pos_delimiter(2,a$(p_0+(i+1)),tab$(),pc())
+     ! mat print pc ( position,delimiter )
+n_d(i) = size(pc,1)+1 ! number values one more than delimiter     
+     mat redim value(n_d(i)) ! 
+     call value_all(n_d(i)-1,a$(p_0+(i+1)),pc(),value())
+! mat print n_d
+next i
+!**********************************************
+! number of values = +1 more than the delimiter
+!**********************************************
+!****************************************
+! repeat some parts : Maximun Dimension ?
+!****************************************
+max_del = max_el(n_d)
+dim row_v(1,1)
+mat redim row_v(n_1,max_del)
+! put all values matrix row by row
+for i=1 to n_1
+ call find_all_pos_delimiter(2,a$(p_0+(i+1)),tab$(),pc())
+ mat redim value(n_d(i)) 
+ call value_all(n_d(i)-1,a$(p_0+(i+1)),pc(),value())
+ ! fill in each row (in row_v)
+ for j= 1 to n_d(i)
+     row_v(i,j) = value(j)
+ next j
+next i
+dim v_dum(1)
+mat redim v_dum(2*nu)
+!***************************
+! info :
+!i=1
+!for j=1 to n_d(1)
+!   v_dum(j)=row_v(i,j)
+!next j
+!i=2
+!for j=n_d(1)+1 to n_d(1)+n_d(2)
+!   v_dum(j)=row_v(i,j-n_d(1))
+!next j
+!***************************
+! all rows of global data
+!***************************
+for i=1 to n_1
+!***************
+! summation part
+!***************
+ s_k = 0
+  for kk1 = 1 to i
+      s_k = s_k + n_d(kk1)
+  next kk1
+! s_k1 = n_d(1)+n_d(2)
+s_k1 = 0
+  for kk2 = 1 to i-1
+      s_k1 = s_k1 + n_d(kk2)
+  next kk2
+!*******************************
+! other part ' 2d to 1d matrix '
+!*******************************
+  for j=s_k1+1 to s_k
+      v_dum(j)=row_v(i,j-(s_k1))
+  next j
+next i
+!mat print v_dum
+!*****************************************
+! 1d to 2d : mat_xy(nu,2) from v_dum(2*nu)
+!*****************************************
+for i=1 to nu
+  mat_xy(i,1)=v_dum(2*i-1)
+  mat_xy(i,2)=v_dum(2*i)
+next i
+! global data : recovery data from file
+ mat print mat_xy
+! find nt = number of triangles
+call val_num(p_0+n_1+3,a$(),tab$(),pf,nt)
+print " number of triangles (nt) = ";nt
+call val_num(p_0+n_1+5,a$(),tab$(),pf,vertices)
+print " points ( example 'triangle:3) ) = ";vertices
+dim mat_ijk(1,1)
+mat redim mat_ijk(nt,vertices)
+!************************************************
+! position to start : p_0+n_1+5+2  = 7+3+7 =17
+! position to end   : p_0+n_1+7+12 = 29 =17+nt-1
+!************************************************
+dim pc_v(1) ,n_dv(1),value_v(1)
+mat redim n_dv(nt)
+dim ppc_v(1,1)
+mat redim ppc_v(nt,vertices-1),value_v(nt)
+ ! put all values matrix row by row
+ ! i=3
+ ! call find_all_pos_delimiter(2,a$(p_0+n_1+6+i),tab$(),pc_v())
+ ! build matrix position delimiter
+ for i=1 to nt
+  call find_all_pos_delimiter(2,a$(p_0+n_1+6+i),tab$(),pc_v())
+  for j=1 to 2
+   ppc_v(i,j) = pc_v(j)
+  next j
+ next i
+dim ccc$(1)
+mat redim ccc$(nt)
+for i = 1 to nt
+     ccc$(i)= a$(p_0+n_1+6+i)
+next i
+for i=1 to nt
+  call find_all_pos_delimiter(2,ccc$(i),tab$(),pc_v())
+  for j=1 to 2
+      ppc_v(i,j) = pc_v(j)
+  next j
+next i
+!mat print ppc_v
+for i=1 to nt
+mat_ijk(i,1)= val(ccc$(i)[1:ppc_v(i,vertices-2)-1])
+mat_ijk(i,2)= val(ccc$(i)[1+ppc_v(i,vertices-2):ppc_v(i,vertices-1)-1])
+mat_ijk(i,3)= val(ccc$(i)[1+ppc_v(i,vertices-1):len(ccc$(i))])
+next i
+mat print mat_ijk 
+! find value nc
+nc_val = p_0+n_1+6+nt+2
+call val_num(nc_val,a$(),tab$(),pf,nc)
+print "  nc = ";nc
+phi_sol = p_0+n_1+6+nt+2+2
+!*************************************************
+! last 2 value can be changed more then 'one line'
+! otherwise use : next_comment (sub)
+!*************************************************
+! find delimiter of string: a$(p_0+n_1+6+nt+2+2)
+dim pc_nc(1)
+mat redim pc_nc(nc-1)
+call find_all_pos_delimiter(2,a$(phi_sol),tab$(),pc_nc())
+!mat print pc_nc
+dim nc_node(1)
+print " nodes with constraint ( number) = "
+mat redim nc_node(nc)
+call value_all(nc-1,a$(phi_sol),pc_nc(),nc_node())
+mat print nc_node
+phi_sol_val = phi_sol+2
+!*************************************************
+! last 2 value can be changed more then 'one line'
+! otherwise use : next_comment (sub)
+!*************************************************
+! find delimiter of string: a$(phi_sol_val)
+dim pc_nc_val(1)
+mat redim pc_nc_val(nc-1)
+call find_all_pos_delimiter(2,a$(phi_sol_val),tab$(),pc_nc_val())
+!mat print pc_nc_val
+dim nc_node_val(1)
+mat redim nc_node_val(nc)
+call value_all(nc-1,a$(phi_sol_val),pc_nc(),nc_node_val())
+print " nodes with constraint ( values ) = "
+mat print nc_node_val
+end if
+end
+
+
+!*************
+!*read-write *
+!*************
+
+def max_el(bb())
+! truebasic manual (example)
+    largest = bb(lbound(bb))
+    for i=lbound(bb)+1 to Ubound(bb)
+  if bb(i) > largest then largest = bb(i)
+    next i
+    max_el = largest
+end def
+
+sub read_file(filename$,array$())
+open #4 :name filename$,create newold,org text,access outin
+i=0
+do while more #4
+  i=i+1
+  mat redim array$(i)
+  line input #4:array$(i)
+loop
+close #4
+end sub
+
+sub write_file(filename$,array$())
+open #4 :name filename$,create newold,org text,access outin
+erase #4
+set #4:margin maxnum
+total = Ubound(array$)
+for i=1 to total
+    print #4:array$(i)
+next i
+close #4
+end sub
+!********
+!* parse*
+!********
+
+! 1e) general sub ::lib:string : 'one string'
+
+sub value_all(nuu,aa$,pcc(),values())
+! first value 
+values(1) = val(aa$[1:pcc(1)-1])
+! between values
+for i=1 to nuu-1
+ values(i+1) = val( aa$[pcc(i)+1:pcc(i+1)-1])
+next i
+! last value
+ values(nuu+1) = val( aa$[pcc(nuu)+1:len(aa$)])
+end sub
+
+sub find_delimiter(p11,tab$(),aa$,paa)
+for j=1 to size(tab$)
+ p11=pos(aa$,tab$(j))
+ if p11 <> 0 then
+   paa = j
+ end if
+next j
+end sub
+
+sub find_all_pos_delimiter(paa,aa$,tab$(),pc())
+ ii = 0
+for i=1 to len(aa$)
+  if aa$[i:i]=tab$(paa) then
+    ii = ii+1
+    mat redim pc(ii)
+    pc(ii) = i   
+   ! exit for  
+  end if
+next i
+end sub
+
+!2e) inside sub : find data inside the file
+! why : ( put : data -> matrix )
+
+sub next_comment(pf1,pf2,a$(),tab$())
+for i=pf1 to size(a$)
+   pf2 = pos(a$(i),tab$(3))
+  if pf2 <> 0 then 
+   pf2 = i 
+   exit for
+  end if
+next i
+end sub
+
+
+sub val_num(gt,a$(),tab$(),pf,nuf)
+pf = pos(a$(gt),tab$(1))
+!  print " pf = ";pf
+nuf = val(a$(gt)[1:pf-1])
+end sub
+
+
+
+
+

@@ -1,0 +1,69 @@
+option nolet
+print "-------------------------------"
+print " dewpoint version 1.0       "
+print " peter.vlasschaert@gmail.com   "
+print " date : 29/05/2015             "
+print "-------------------------------"
+print
+print "------------------------------------"
+print "=  dewpoint calculation =           "
+print " liquid phase compositio ==>        "
+print " f = 1/p-y1*1/p1_sat-y2*1/p2_sat    "
+print "------------------------------------"
+print "Antoine eq: ln(p_sat)=A-B/(T+C)     "
+print "------------------------------------"
+Print " parameter : A,B,C                  "
+print "------------------------------------"
+print " solve: newton raphson method       "
+print " T=T-f/df,df=d(f) differential      "
+print "------------------------------------"
+print " vapor phase eq: y=x*p_sat/p        "
+print "------------------------------------"
+! === input ====>
+! first component ( Tables ) :acetone
+A1=14.39155
+B1=2795.317
+C1=230.002
+! sec   component ( Tables  ):water
+A2=16.26205
+B2=3799.887
+C2=226.346
+! parameter p = total pressure (input) => pascal
+P = 101325/1e3
+! parameter ( input mole fraction (first component))
+y1 = 0.5
+y2 = 1- y1
+! ==============
+! How to find initial value (T) t_new (log=ln : math)
+!*************************
+t1_sat = B1/(A1-log(p))-C1
+t2_sat = B2/(A2-log(p))-C2
+!*******************************
+! bubblepoint against dewpoint *
+! difference: x->y             *
+!*******************************
+t_new=y1*t1_sat+y2*t2_sat
+!*************************
+do
+!************************
+! difference x->y,p->1/p*
+!************************
+! from :bubblepoint     *
+!************************
+   t_old = t_new
+
+   p1_sat=exp(A1-B1/(t_old+C1))
+   p2_sat=exp(A2-B2/(t_old+C1))
+          f=1/p-y1/p1_sat-y2/p2_sat
+   ! => differentation (cas:symbolic)
+   !********************************
+      q1=y1*B1/((t_old+C1)^2*p1_sat)
+      q2=y2*B2/((t_old+C2)^2*p2_sat)
+          df=q1+q2
+   !********************************
+          t_new=t_old-f/df
+   dv=abs(t_new-t_old)
+loop while ( dv < 1e-7)
+print
+print "dew point temperature = ";t_new; " °C"
+end

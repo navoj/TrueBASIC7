@@ -1,0 +1,38 @@
+! Simulation of radioactive decay
+! Program to accompany "Computational Physics" by N. Giordano and H. Nakanishi and H. Nakanishi
+! Copyright Prentice Hall 1997, 2006, 2006
+program decay
+   option nolet                 ! can omit the let keyword
+   library "sgfunc.trc"
+   library "sglib.trc"  ! the graphics routines are found here
+   dim n_uranium(100), t(100)   ! declare the arrays we will need
+   call initialize(n_uranium,t,tau,dt)   ! use subroutines to do the work
+   call calculate(n_uranium,t,tau,dt)
+   call display(n_uranium,t,tau,dt)
+   get key z
+end
+! initialize variables
+sub initialize(nuclei(),t(),time_constant,dt)
+   input prompt "initial number of nuclei -> ": nuclei(1)
+   t(1) = 0
+   input prompt "time constant -> ": time_constant
+   input prompt "time step -> ": dt
+end sub
+sub calculate(n_uranium(),t(),tau,dt)
+   for i = 1 to size(t)-1             ! now use the Euler method
+      n_uranium(i+1) = n_uranium(i) - (n_uranium(i) / tau) * dt
+      t(i+1) = t(i) + dt
+   next i
+end sub
+sub display(n_uranium(),t(),tau,dt)
+              ! first set up title and label axes for graph
+   call settitle("Radioactive Decay    Number of nuclei versus time")
+   call sethlabel("Time(s)")
+   call setvlabel("Number of Nuclei")
+   call datagraph(t,n_uranium,4,0,"black")  ! the graph is produced here
+   set cursor 5,30                          ! reposition cursor
+   print "time constant = ";tau
+   set cursor 6,30
+   print "time step = ";dt
+end sub
+

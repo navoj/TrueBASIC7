@@ -1,0 +1,227 @@
+option nolet
+open #1:screen 0,0.5,0,1
+open #2:screen .5,1,.5,1
+window #1
+!title :kfcc =>(c)onditional (f)ormation(k)onstant
+! Zn(NH3)4(n+) -> n=2,numner ligands = 4
+!serie :analytical chemistry
+!filename :kfccfinalversion1.tru
+! serie:analytical chemistry
+print
+print "*********************************************"
+print "*  kfcc                    'version 1.0'    *"
+print "*  use: to find conditional equilibrium     *"
+print "*  formation constant = kfcc                *"
+print "*  kfcc = alpha4*betaL*kf ,EDTA = H(4)Y     *"
+print "*********************************************"
+print "*********************************************"
+print "* peter.vlasschaert@gmail.com,29/10/2016    *"
+print "*********************************************"
+!rem: H(4)Y,H3Y(-),H2Y(2-),HY(3-),Y(4-)
+!*****************************************
+!     H(4)Y  ->  H3Y(-) +H(+)  ,ka_edta(1)
+!     H3Y(-) ->  H2Y(2-)+H(+)  ,ka_edta(2)
+!     H2Y(2-)->  HY(3-)+H(+)   ,ka_edta(3)
+!     HY(3-) ->  Y(4-) +H(+)   ,ka_edta(4)
+!*****************************************
+print
+m=4   ! H(m)Y
+m1 = 4   ! number of ligand
+l  = 0.1 ! concentration of ligand
+print "************"
+print "* given =  *"
+print "************"
+print " number of ligands         = ";m1
+print " concentration of ligand L = ";l;" M"
+kf = 3.2*10^16       ! kf =[MY(2-)]/([M(2+)]*[Y(4-)])
+!kd = dissociation constant ? we use kf
+dim ka_edta(1)
+mat redim ka_edta(m)
+for i=1 to m
+  read ka_edta(i)
+next i
+data 1.02E-2,2.14E-3,6.92E-7,5.50E-11
+print " equilibrium formation constant (kf) = ";kf
+for i= 1 to m
+print " ka_edta(";i;") = ";ka_edta(i);
+next i
+dim kfL(1)
+mat redim kfl(m1)
+for i=1 to m1
+ read kfL(i) 
+next i
+print
+print " constants for ligand formation => "
+for i= 1 to m
+print " kfL(";i;") = ";kfL(i);
+next i
+print
+print
+print "************"
+print "* result = *"
+print "************"
+print "*********************************"
+print " M(n+)+Y(4-) <-> MY(n-4),M=metal "
+print " kf = [MY(n-4)]/([M(n+)]*[Y(4-))]"
+print "*********************************"
+print "******************************************"
+print "*kfc = kf*alpha4=MY(n-4)/([M(n+)]*[EDTA])*"
+print "******************************************"
+print "******************************************"
+print "*kfcc = kf*alpha4*BetaL                  *"
+print "*kfcc = MY(n-4)/(C_m*C_EDTA)             *"
+print "******************************************"
+print " C_M    = unreacted M(n+)                 "
+print " C_EDTA =[EDTA]                           "
+print "******************************************"
+call beta_ligand(m1,kfL(),L,betaL)
+print " BetaL (Beta_ligand) = ";betaL
+print "******************************************"
+print
+print " pH"," alpha4 "," kfc","kfcc"
+print
+for i1=0 to 14 step 1
+ x=10^(-i1)
+ call alpha_4(ka_edta(),x,som)
+print i1,som,kf*som,kf*som*betaL
+next i1
+!*******************************************
+window #2 ! draw graph right part of screen
+!*******************************************
+! windows 2 ,subs ,for :before,by,after 'EP'
+!*******************************************
+dim xp(2),yp(2)
+ntx = 15! tick marks x-axis
+nty = 10! tick marks y-axis
+xp(1)=0   ! xmin
+xp(2)=14  ! xmax
+yp(1)=0   ! ymin
+yp(2)=1   ! ymax
+ask pixels px,py
+asp_r = 1! px/py  !aspect ratio correction(rectangular window)
+set window xp(1)*asp_r,xp(2)*asp_r,yp(1),yp(2)
+call draw_axes(xp(1)*asp_r,xp(2)*asp_r,yp(1),yp(2),ntx,nty)
+set color "black"
+!*********************************************************
+! info : graph,title,numbering,label axes
+!*********************************************************
+title$ = "graph : pH versus - alpha4 "
+x_txt$ = "pH"
+y_txt$ = "alpha4"
+txt = 10  !  distance from right part of the window
+!**********************************************************
+call num_txt_axes(title$,x_txt$,y_txt$,xp(),yp(),txt)
+!**********************************************************
+! draw graph in the window x-axes ,y-axes(right part)
+!**********************************************************
+set color "red" ! color of the graph
+for i1=0 to 14 step .0001
+ x=10^(-i1)
+ call alpha_4(ka_edta(),x,som)
+ plot points: i1,som
+next i1
+!***********************************************
+! statement : read -> data,formation constant
+!***********************************************
+! Zn(NH3)4(2+): data kfl(1),kfl(2),kfl(3),kfl(4)
+!***********************************************
+! M+L   = ML  -> kf1(1)
+! ML+L  = ML2 -> kf1(2)
+! ML2+L = ML3 -> kfl(3)
+! ML3+L = ML4 -> kfl(4)
+!***********************************************
+!***********************************************
+data 190,221.05263,247.61905,109.61538
+end
+
+sub beta_ligand(m,kfL(),L,betaL)
+!*************************************************
+!L = [NH3],M = [Zn(2+)],Zn(2+) + NH3 = Zn(NH3)(2+)
+!*************************************************
+som = 1
+for j = 1 to m
+prod =1
+for i=1 to j 
+   prod = prod*kfL(i)  
+next i
+  som = som + (l)^(j)*prod 
+next j
+betaL = 1/som
+end sub
+
+sub alpha_4(k_edta(),h,alpha4)
+!********************************
+! numerator
+!********************************
+tel = 1
+for i=1 to 4
+tel = K_edta(i)*tel
+next i
+!print "tel = ";tel
+! denominator
+som = h^4
+for j = 1 to 4
+  prod = 1
+  for i=1 to j
+    prod = prod*k_edta(i)
+  next i
+!print " prod = ";prod
+som = som + prod*(h)^(4-j)
+next j
+noem = som
+!********************************
+! alpha4 =  numerator/denominator
+!********************************
+alpha4 = tel/noem
+end sub
+
+
+sub num_txt_axes(title$,x_txt$,y_txt$,xp(),yp(),txt)
+plot text,at 2,yp(2)-.1:title$
+!*****************************************
+!**** range x axis  0 to xmax      *******
+!*****************************************
+for i=0 to xp(2)
+ plot text,at i,0.01:str$(i)
+next i !,
+plot text,at xp(2)-2,0.1:x_txt$
+!*****************************************
+!**** range y axis  0 to ymax ************
+!*****************************************
+for i=0 to yp(2)*10
+ plot text,at 0.1,i/10:str$(i/10)
+next i
+plot text,at .5,yp(2)-0.05:y_txt$
+end sub
+
+SUB draw_axes(xmin,xmax,ymin,ymax,ntx,nty)
+! axis :for distribution function
+! see extra,website
+    ! distance between tick marks on x-axis
+    LET dx = (xmax - xmin)/ntx
+    ! distance between tick marks on y-axis
+    LET dy = (ymax - ymin)/nty
+    SET WINDOW xmin ,xmax ,ymin ,ymax
+    LET x0 = max(0,xmin)
+    LET y0 = max(0,ymin)
+    IF ymin*ymax < 0 then
+       LET y0 = 0
+    ELSE
+       LET y0 = ymin
+    END IF
+    PLOT LINES: xmin,y0;xmax,y0   ! horizontal axis
+    PLOT LINES: x0,ymin;x0,ymax   ! vertical axis
+    LET tx = 0.1*dy               ! size of tick mark
+    LET ty = 0.1*dx
+    FOR itick = 0 to ntx
+        LET x = xmin + itick*dx
+        PLOT LINES: x,y0 - tx; x,y0 + tx    ! draw ticks on x axis
+    next itick
+    FOR itick = 0 to nty
+        LET y = ymin + itick*dy
+        PLOT LINES: x0 - ty,y; x0 + ty,y    ! draw ticks on y axis
+    NEXT itick
+END SUB
+
+
+

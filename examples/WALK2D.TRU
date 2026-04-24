@@ -1,0 +1,98 @@
+! Random walk in 2 dimensions
+! Program to accompany "Computational Physics" by N. Giordano and H. Nakanishi
+! Copyright Prentice Hall 1997, 2006
+
+program walk_2d
+   option nolet
+   library "sgfunc.trc"
+   library "sglib.trc"
+   randomize
+   dim x2ave(1000)    ! keep r^2 averages here
+   call initialize(x2ave,n_walks,n_steps)
+   ymax = sqr(n_steps)
+   open #1: screen 0,1,0,0.93
+   set window -2*ymax,2*ymax,-2*ymax,2*ymax
+   set background color "white"
+   clear
+   set color "black"
+   plot area: -0.1,-0.1;-0.1,0.1;0.1,0.1;0.1,-0.1;-0.1,-0.1
+   plot 0,0;
+   call calculate(x2ave,n_walks,n_steps)
+   call display(x2ave)
+   close #1
+end
+
+! initialize variables
+! n_walks = number of walkers   n_steps = number of steps taken by each walker
+sub initialize(x2ave(),n_walks,n_steps)
+   input prompt "number of steps per walk => ": n_steps
+   input prompt "number of walks => ": n_walks
+   print "Hit p to pause, anything else to stop plotting."
+   mat redim x2ave(n_steps)
+end sub
+
+! do the calculation here
+! x2ave(n) contains the average of r^2 at step n
+! n_walks = total number of walkers   
+! n_steps = number of steps taken by each walker
+sub calculate(x2ave(),n_walks,n_steps)
+   randomize
+   cross_flag = 1
+   plot_flag = 1
+   for i = 1 to n_walks
+      x = 0                 ! current location of the walker
+      y = 0
+      for j = 1 to n_steps
+         r = rnd
+         if r <= 0.25 then
+            x = x + 1
+         else if r <= 0.5 then
+            x = x - 1
+         else if r <= 0.75 then
+            y = y + 1
+         else
+            y = y - 1
+         end if
+         if plot_flag = 1 and j<n_steps then
+            plot x,y;     ! plot each walk until a keystroke is hit
+         else if plot_flag = 1 then
+            plot x,y
+         end if
+         if cross_flag=1 and key input then
+            get key z
+            c$ = chr$(z)
+            if c$="s" or c$="p" then
+               get key z
+            else
+               cross_flag=0
+               plot_flag=0   
+            end if
+         end if
+         x2ave(j) = x2ave(j) + x^2 + y^2
+      next j
+      clear
+   next i
+   for i = 1 to n_steps               ! normalize x2ave when finished
+      x2ave(i) = log(x2ave(i) / n_walks)
+   next i
+end sub
+! display results now
+sub display(x2ave())
+   dim t(0)  ! dummy array for plotting
+   call setcanvas("white")
+   set color "black"
+   n = size(x2ave)
+   mat redim t(n)
+   for i = 1 to n
+      t(i) = log(i)
+   next i
+   call settitle("Random Walks")
+   call sethlabel("ln N")
+   call setvlabel("ln <R^2>")
+   call datagraph(t,x2ave,1,0,"black")
+   call addlsgraph(t,x2ave,1,"red")   ! compute and plot least squares fit
+   call fitline(t,x2ave,m,b)
+   set cursor 4,20
+   print "slope = ";m;", steps =";n
+   get key z
+end sub

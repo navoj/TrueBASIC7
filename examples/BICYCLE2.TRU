@@ -1,0 +1,63 @@
+! Simulation of velocity vs. time for a bicyclist
+! assume air resistance
+! Program to accompany "Computational Physics" by N. Giordano and H. Nakanishi
+! Copyright Prentice Hall 1997, 2006
+! Modified by H. Nakanishi for additional effects
+
+!program bike
+   option nolet
+   !library "sgfunc.trc"  ! the graph
+   !library "sglib.trc"  ! the graphics routines a
+   dim t(5000),velocity(5000)
+   call initialize(t,velocity,dt,power,mass,nmax,c,area,density,eta,h)
+   call calculate(t,velocity,dt,power,mass,nmax,c,area,density,eta,h)
+   call display(t,velocity,c,area,density,power,dt,eta,h)
+   end
+
+! t() = time    v() = velocity
+! dt = time step    power = rider power
+! mass = mass of rider + bicycle    
+sub initialize(t(),v(),dt,power,mass,nmax,c,area,density,eta,h)
+   t(1) = 0
+   print "If viscosity present, dv/dy is approximated as v/h."
+   !power = 400 watts
+   input prompt "(constant) propulsion power (w) -> ": power
+   !mass = 70 kg
+   input prompt "mass of rider plus bicycle (kg) -> ": mass
+   c = 0.5
+   ! typical frontal area = 0.33
+   input prompt "cross sectional area (m^2) - > ": area
+   input prompt "height (m) -> ": h
+   ! density of air = 1.29
+   input prompt "density of fluid (kg/m^3) -> ": density
+   input prompt "viscosity (Pa s) -> ": eta
+   input prompt "dt (s) -> ": dt
+   input prompt "total time steps (< 5000) -> ": nmax
+   input prompt "initial velocity (m/s) -> ": v(1)
+end sub
+
+sub calculate(t(),v(),dt,pmax,mass,nmax,c,area,density,eta,h)
+   for i = 2 to nmax
+      t(i) = t(i-1) + dt
+      v(i) = v(i-1)+dt/mass*(pmax/v(i-1)-c*density*area*v(i-1)^2-eta*area*v(i-1)/h) ! Euler method
+   next i
+   mat redim t(nmax),v(nmax)    ! trim arrays to the size actually used
+end sub
+
+sub display(t(),v(),c,area,density,power,dt,eta,h)
+   set background color "white"
+   clear
+   open #1: screen 0.1,0.9,0.1,0.9
+   call setcanvas("white")
+   call settitle("Bicycle velocity vs. time")
+   call sethlabel("time (s)")
+   call setvlabel("Velocity (m/s)")
+   call datagraph(t,v,1,1,"black")
+   set cursor 3,20
+   print "density (kg/m^3) =";density;", eta (Pa s) ="; eta
+   set cursor 4,20
+   print "power (w) =";power,", v0 (m/s) =";v(1),", time step (s) = "; dt
+   close #1
+end sub
+
+

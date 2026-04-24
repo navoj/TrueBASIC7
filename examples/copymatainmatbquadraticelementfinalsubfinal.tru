@@ -1,0 +1,80 @@
+option nolet
+print
+print "***************************************"
+print " one dimensional:  'finite elements'   "
+print " build : stiffness matrix 'B' from 'A' "
+print " peter.vlasschaert@gmail.com,26/07/2016"
+print "***************************************"
+print " m = 3 ,for quadratic elements         "
+print "***************************************"
+!filename:copymatainmatbquadraticelementfinalsubfinal.tru
+print
+dim a(1,1)
+m=3   ! block dimension
+n=3   ! number of blocks
+print " block dimension  'm'  = ";m
+print " number of blocks 'n'  = ";n
+print
+mat redim a(n*m,m)
+! read mat a:  read - data stament
+for  i=1 to m*n
+  for j=1 to m
+      read a(i,j)
+  next j
+next i
+print " matrix 'A' "
+print
+mat print a
+dim B(1,1)
+call build_stiffness(n,m,a(,),b(,))
+print
+print "build: stiffness matrix 'B'"
+print
+mat print b
+print " number of connection :'+' operator = ";n-1
+print
+print "***********************************************"
+print " see : matrix 'A',three blocks m by m          "
+print " 9+ 10=19 ! connection first block  with second"
+print " 18+19=37 ! connection second block with thirth"
+print "***********************************************"
+! data for 'A'matrix
+data 1,2,3
+data 4,5,6
+data 7,8,9
+data 10,11,12
+data 13,14,15
+data 16,17,18
+data 19,20,21
+data 22,23,24
+data 25,26,27
+end
+
+sub build_stiffness(n,m,a(,),b(,))
+tt=m-1
+mat redim B(tt*n+1,tt*n+1)
+mat b = 0
+! connect matrix in one dimension (stiffness matrix)
+! finite element calculation
+for i=1 to n
+    k = tt*i-1
+    ! copy block (m,m) in to the B matrix
+    for i1=1 to m  
+      for j1=1 to m
+      !*****************************
+      ! connection here : 9 +10=19 *
+      !                   18+19=37 *
+      !*****************************
+   B(k+i1-1,k+j1-1) = B(k+i1-1,k+j1-1)+A(m*i+i1-m,j1)
+      next j1
+    next i1
+next i
+end sub
+
+
+
+
+
+
+
+

@@ -1,0 +1,142 @@
+option nolet
+! isothermalflashnewtonfinal.tru
+print "--------------------------------------------------"
+print " isothermal flash (Newton Raphson) version 1.0    "
+print " ff = sum(y(i))-sum(x(i)) i=1...nc                "
+print " ff = sum ( (k(i)-1)*z(i)/(1+vfrac(k(i)-1))) )    "
+print " ff'= - sum( (k(i)-1)^2*z(i)/(1+vfrac(k(i)-1))^2) "
+print " vfrac = vfrac - ff/ff'       k(i)=y(i)/x(i)      "
+print "--------------------------------------------------"
+print " peter.vlasschaert@gmail,12/09/2015               "
+print "--------------------------------------------------"
+! given vapor pressure , by given temperature ( antoine eq.)
+print
+nc =3  !number of products
+f = 1  ! feed rate
+dim a$(1)
+mat redim a$(nc)
+for i=1 to nc
+ read  a$(i)
+next i
+mat print a$
+print "feed composition     => "
+dim z(1)         ! feed
+mat redim z(nc)
+z(1)=.3
+z(2)=.3
+z(3)= 1 - z(1)-z(2)
+mat print z
+print "vapor pressure (cte temperature) : 'KPa' => "
+dim ps(1)         ! feed
+mat redim ps(nc)
+ps(1)=195.75
+ps(2)=97.84
+ps(3)=50.32
+mat print ps
+call p_bub(nc,z(),ps(),pbub)
+print "pbub :Bubble point pressure of the mixture = ";pbub
+call p_dew(nc,z(),ps(),pdew)
+print "pdew :Dew    point pressure of the mixture = ";pdew
+print
+print " input : pressure => pdew < p ? < pbub "
+input prompt " pressure 'KPa' between pdew and pbub = ":p
+data acetone,acetonitrile,nitromethaan
+dim k(1)
+mat redim k(nc)
+call k_ideal(nc,ps(),p,k())
+print
+print " k values (for the mixture )   => "
+mat print k
+print " input : V/F = vfrac => "
+input prompt " guess vfrac : 0 < vfrac < 1  => ":vfrac
+! init
+ff  = 0
+dff = 0
+do
+ vfrac_i = vfrac
+for i=1 to nc
+! function = ff
+ ff=ff+ (z(i)*(k(i)-1))/(1+vfrac_i*(k(i)-1))
+! derivative = dff
+ dff = dff -(z(i)*(k(i)-1)*(k(i)-1))/(1+vfrac_i*(k(i)-1))^2
+next i
+! newton raphson
+ vfrac = vfrac_i - ff/dff
+loop until ( abs(vfrac-vfrac_i) > 1e-6)
+print
+print " calculation vfrac => "
+print " vfrac = ";vfrac
+print
+dim x(1),y(1)
+mat redim x(nc),y(nc)
+for i=1 to nc
+! liquid phase fraction
+  x(i) = z(i)/(1+vfrac*(k(i)-1))
+! vapour phase fraction
+  y(i) = k(i)*x(i)
+next i
+print "***** solution problem => ***** "
+print "Mole fraction of products in the liquid phase => "
+mat print x
+call xsum(nc,x(),s)
+print
+print " check => sum liquid phase = ";s
+print
+print "Mole fraction of products in the vapour phase => "
+mat print y
+call xsum(nc,y(),s) 
+print
+print " check => sum vapour phase = ";s
+end
+
+sub k_ideal(nc,ps(),p,kk())
+for i=1 to nc
+ kk(i)=ps(i)/p
+next i
+end sub
+
+
+
+sub output(vfrac,t,f,l,v,x(),y())
+v=vfrac*f
+l=f-v
+print t,l,v,x(1),x(2),x(3),y(1),y(2),y(3)
+end sub
+
+
+sub p_bub(nc,z(),ps(),pbub)
+pbub = 0
+for j=1 to nc
+  pbub = pbub + z(j)*ps(j)
+next j
+end sub
+
+sub p_dew(nc,z(),ps(),pdew)
+pdew = 0
+for j=1 to nc
+  pdew = pdew + z(j)/ps(j)
+next j
+pdew = 1/pdew
+end sub
+
+sub xcomp_j(nc,z(),vfrac,p,ps(),x())
+for j=1 to nc
+ q = ps(j)/p
+ x(j)=z(j)/(1+vfrac*(q-1))
+next j
+end sub
+
+sub xsum(nc,r(),s)
+s=0
+for j=1 to nc
+  s=s+r(j)
+next j
+end sub
+
+
+sub ycomp_j(nc,x(),ps(),p,y())
+for j=1 to nc
+   y(j)= x(j)*ps(j)/p
+next j
+end sub
+

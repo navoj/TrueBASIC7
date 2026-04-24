@@ -1,0 +1,307 @@
+option nolet
+!*****************************************************
+! build the element matrix:'quadratic elements'
+!*****************************************************
+declare function k_fu_quadr
+!*****************************************************
+dpdx  = -2*1e-5! pressure gradient in the 'x range'
+nu    = 3      ! quadratic element (nu=3)
+nu_el = 4      ! number of elements
+!*****************************************************
+! a1,a2,a3 from interpolation of data
+! mu(y)=a1*y^2+a2*y+a3
+!*****************************************************
+a1=-0.00005
+a2=-0.000015
+a3=0.000016
+print "******show:velocityprofile u(y)**no graphics********"
+print " viscous fluid flow between two parallel plates     "
+print " pde:d/dy(mu(y)*du/dy)-d(p)/dx=0,0<y<h,u(0)=0,u(h)=0"
+print " peter.vlasschaert@gmail.com ,05/08/2016            "
+print " ***************************************************"
+print
+print " d(p)/dx 'pressure gradient'     = ";dpdx
+print " type : quadratic element (nu=3) = ";nu
+print " number of elements              = ";nu_el
+print " mu(y) 'viscosity' = ";a1;"*y^2+";a2;"*y+";a3
+!*****************************************************
+!interval: for two elements
+!first  element {0,0.075,.15}    => length element = h
+!second element {0.15,.0.225,0.3}=> length element = h
+!*****************************************************
+len=.3      ! length of the domain
+h=len/nu_el ! length of the element
+print " length of domain        (len)   = ";len
+print " lenght of element       (h  )   = ";h
+print
+!*****************************************************
+!see:Maxima 'maximaquadraticelementsoutput.png'
+!*****************************************************
+! y3=a1*y^2+a2*y+a3 'mu(y)'{a1,a2,a3}
+! y1=a4*y+a5 {N1_D,N2_D,N3_D}
+! y2=a6*y+a7 {N1_D,N2_D,N3_D}
+! Ni_D => (i)
+! Nj_D => (j)
+!*****************************************************
+dim N_der(1,2)
+mat redim N_der(nu,2)
+!*****************************************************
+! derivatives of the shape functions
+!*****************************************************
+call shape_derivatives(h,N_der(,))
+!*****************************************************
+dim k_el(1,1)
+mat redim k_el(nu,nu)
+!*****************************************************
+! quadratic element matrix,integration in the interval
+!*****************************************************
+dim dum(1,1)
+mat redim dum(nu_el*nu,nu)
+for k=1 to nu_el
+y_e =h !local integration (y_b = 0 to y_e = h)
+y_b =0 ! (for a element)
+call el_mat(k,nu,a1,a2,a3,y_e,y_b,N_der(,),k_el(,))
+print
+mat print k_el
+!*********************************************
+! collect all element matrix in a big matrix
+! k=1..nu_el, big matrix = 'dum'
+!*********************************************
+    call dum_mat(k,nu,k_el(,),dum(,))
+next k
+!print " big matrix => "
+!print
+!mat print dum
+main_el = nu_el*(nu-1)+1
+dim k_stiff(1,1)
+mat redim k_stiff(main_el,main_el)
+print
+!print " stifness matrix 'without constraint' => "
+print
+call build_stiffness_mat(nu_el,nu,dum(,),k_stiff(,))
+!mat print k_stiff
+print " stifness matrix 'with    constraint' => "
+! implementation of the (B)oundary (C)ondition (BC)
+!***********
+! two steps* 
+!***********
+c11=size(k_stiff,1)-1
+c21=size(k_stiff,2)-1
+!******************************************
+!step 1: delete: first row and first column
+!******************************************
+dim k_stiff_bc1(1,1)
+mat redim k_stiff_bc1(c11,c21)
+for i=1 to c11
+   for j=1 to c21
+     k_stiff_bc1(i,j)=k_stiff(i+1,j+1)
+   next j
+next i
+! mat print k_stiff_bc1
+!****************************************
+!step 2: delete: last row and last column
+!****************************************
+dim k_stiff_bc2(1,1)
+mat redim k_stiff_bc2(c11-1,c21-1)
+! make dummy (zero matrix)
+mat k_stiff_bc2 = 0
+for i=1 to c11-1
+  for j=1 to c21-1
+      k_stiff_bc2(i,j)= k_stiff_bc1(i,j)
+  next j
+next i
+mat print  k_stiff_bc2 
+!****************************************
+! now we have Ax=b =>  'A' = k_stiff_bc2 
+!****************************************
+!****************************************
+! next thing to find out => 'b' = bb 
+!****************************************
+dim N_i(1,1),b_el(1,1)
+mat redim N_i(nu,nu),b_el(nu,1)
+call shape(h,N_i(,))
+!mat print N_i
+dim dum_b(1,1)
+mat redim dum_b(nu_el*nu,1)
+for kk=1 to nu_el
+    y_b=0 ! local integration (y_b = 0 to y_e = h)
+    y_e=h ! (for a element)
+  for ii=1 to nu
+    call el_b(ii,y_b,y_e,N_i(,),b_el(,),dpdx)
+    dum_b((kk-1)*nu+ii,1)=b_el(ii,1)
+  next ii
+next kk
+! mat print dum_b
+!*********************************************
+! 1e) b_stiff 'without constraint'
+!*********************************************
+dim b_stiff(1,1)
+mat redim b_stiff(main_el,1)
+call build_stiffness_vec(nu_el,nu,dum_b(,),b_stiff(,))
+!mat print b_stiff
+!*********************************************
+! 2e) bb    'constraint' 
+! : delete 'first element' and 'last element'
+!*********************************************
+m_el = main_el-2
+dim bb(1,1)
+mat redim bb(m_el,1)
+mat bb = 0
+for ii=1 to m_el
+  bb(ii,1) = b_stiff(ii+1,1)
+next ii
+!print
+!mat print bb
+!********************************************
+! solve xx : k_stiff_bc2*xx = bb
+!********************************************
+dim xx(1,1),k_inv(1,1)
+mat redim xx(m_el,1),k_inv(m_el,m_el)
+mat k_inv = inv(k_stiff_bc2)
+mat xx = k_inv*bb
+!mat print xx
+!***********************************************
+!data_xy : x = u-value ,y = distance two plates
+!***********************************************
+dim data_xy(1,1)
+mat redim data_xy(main_el,2)
+for j=1 to m_el
+  data_xy(j+1,1)=xx(j,1)
+next j
+data_xy(1,2)=0
+!***** h = len/nu_el **************************
+for j=2 to main_el
+  data_xy(j,2)=h*(j-1)/(nu-1)
+next j
+print " u = velocity ";", y = distance "
+print
+mat print data_xy
+end
+
+sub shape(h,N_i(,))
+! " shape functions  => "
+! see Maxima 'maximaquadraticelementsoutput.png'
+! N1: =>
+N_i(1,1)=2/h^2  ! x^2 coef(1)
+N_i(1,2)=-3/h   ! x coef(1)
+N_i(1,3)=1      ! cte coef(1)
+! N2: =>
+N_i(2,1)=-4/h^2 ! x^2 coef(2)
+N_i(2,2)=-1/h   ! x coef(2)
+N_i(2,3)=0      ! cte coef(2)
+! N3: =>
+N_i(3,1)=2/h^2  ! x^2 coef(3)
+N_i(3,2)=-1/h   ! x coef(3)
+N_i(3,3)=0      ! cte coef(3)
+end sub
+
+function b_fu_quadr(ii,N_i(,),y)
+!***************************
+! function before integration
+! ff_i = N_i(ii,1)*y^2+N_i(ii,2)*y+N_i(ii,1)
+!*******************************************
+! function after integration
+!*******************************************
+w3=N_i(ii,1)*y^3/3
+w2=N_i(ii,2)*y^2/2
+w1=N_i(ii,3)*y
+b_fu_quadr = w3+w2+w1
+end function
+
+sub el_b(ii,y_b,y_e,N_i(,),b_el(,),dpdx)
+declare function b_fu_quadr 
+wt2=b_fu_quadr(ii,N_i(,),y_e)
+wt1=b_fu_quadr(ii,N_i(,),y_b)
+b_el(ii,1)=dpdx*(wt2-wt1)
+end sub
+
+sub shape_derivatives(h,N_der(,))
+! see Maxima 'maximaquadraticelementsoutput.png'
+N_der(1,1)=4/h^2  ! x coef(1)
+N_der(1,2)=-3/h   ! cte coef(1)
+N_der(2,1)=-8/h^2 ! x coef(2)
+N_der(2,2)=4/h    ! cte coef(2)
+N_der(3,1)=4/h^2  ! x coef(3)
+N_der(3,2)=-1/h   ! cte coef(3)
+end sub
+
+sub dum_mat(k,nu,k_el(,),dum(,))
+! big matrix = 'dum'
+for i=1 to nu
+    for j=1 to nu
+        dum(i+nu*(k-1),j)=k_el(i,j)
+    next j
+next i
+end sub
+
+sub el_mat(k,nu,a1,a2,a3,y_e,y_b,N_der(,),k_el(,))
+declare function k_fu_quadr 
+for i=1 to nu
+  for j=1 to nu
+a4=N_der(i,1)
+a5=N_der(i,2)
+a6=N_der(j,1)
+a7=N_der(j,2)
+vt2=k_fu_quadr(a1,a2,a3,a4,a5,a6,a7,y_e)
+vt1=k_fu_quadr(a1,a2,a3,a4,a5,a6,a7,y_b)
+! integration between y_b < y < y_e
+k_el(i,j)=vt2-vt1
+  next j
+next i
+print k;" the element "
+end sub
+
+function k_fu_quadr(a1,a2,a3,a4,a5,a6,a7,y)
+! function after integration
+v5=(a1*a4*a6)*y^5/5
+v4=(((a1*a4*a7)+(a1*a5+a2*a4)*a6))*y^4/4
+v3=((a1*a5+a2*a4)*a7+(a2*a5+a3*a4)*a6)*y^3/3
+v2=((a2*a5+a3*a4)*a7+a3*a5*a6)*y^2/2
+v1=a3*a5*a7*y
+k_fu_quadr = v1+v2+v3+v4+v5
+end function
+
+sub build_stiffness_vec(n,m,a(,),b(,))
+!**************************************
+! vector : matrix with one column (*,1)
+! * = number of elements 
+!**************************************
+tt=m-1
+mat redim B(tt*n+1,1)
+mat b = 0
+! connect vectors in one dimension (stiffness vector)
+! finite element calculation
+for i=1 to n
+    k = tt*i-1
+    ! copy block (m,1) in to the vector B
+  for i1=1 to m       
+      !*****************************
+      ! connection here : 3+4  =7  *
+      !                   6+7  =13 *
+      !*****************************
+   B(k+i1-1,1) = B(k+i1-1,1)+A(m*i+i1-m,1)      
+  next i1
+next i
+end sub
+
+sub build_stiffness_mat(n,m,a(,),b(,))
+tt=m-1
+mat redim B(tt*n+1,tt*n+1)
+mat b = 0
+! connect matrix in one dimension (stiffness matrix)
+! finite element calculation
+for i=1 to n
+    k = tt*i-1
+    ! copy block (m,m) in to the B matrix
+    for i1=1 to m  
+      for j1=1 to m
+      !*****************************
+      ! connection here : 9 +10=19 *
+      !                   18+19=37 *
+      !*****************************
+   B(k+i1-1,k+j1-1) = B(k+i1-1,k+j1-1)+A(m*i+i1-m,j1)
+      next j1
+    next i1
+next i
+end sub
+

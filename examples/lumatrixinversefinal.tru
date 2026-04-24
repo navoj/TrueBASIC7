@@ -1,0 +1,185 @@
+option nolet
+! LUmatrixinversefinal.tru
+print "----------------------------------------"
+print "LU decomposition : inverse from A = A^-1"
+print "--------------------------------------------"
+print " find = L,U from A=a(nu,nu)                 "
+print " algo : Crout method (version 1.0)          "
+print " peter.vlasschaert@gmail.com ,12/08/2015    "
+print "--------------------------------------------"
+print
+!*****************************************************************
+! info : Analytical,numerical,and computational methods
+!        for science and engineering
+!        GENE H.HOSTETTER,..................
+!        PRENTICE HALL
+! algo : pg 281 to 283
+!*****************************************************************
+!*****************************************************************
+! correction : pg 283
+! *i=1,2..n-1 => to   i=n-1,n-2....1
+!*****************************************************************
+! reason : upper triangle ( other direction) below => to above
+!*****************************************************************
+!
+!*****************************************************************
+! rem : when zero on diagonal L (division by zero)
+!*****************************************************************
+!
+!*****************************************************************
+! L,U  => Crout's method 'LU decomposition use for solve lin.syst.
+!*****************************************************************
+!    |l(1,1)               |     |1 u(1,2) u(1,3)|
+! L= |l(2,1) l(2,2)        |   U=|0    1   u(2,3)|
+!    |l(3,1) l(3,2) l(3,3) |     |0    0     1   |
+!*****************************************************************
+nu = 4
+! a*x=b
+! input
+dim l(1,1),u(1,1)
+mat redim l(nu,nu),u(nu,nu)
+! output
+dim z1(1,1),z2(1,1)
+mat redim z1(nu,nu),z2(nu,nu)
+! L = matrix (example)
+l(1,1)= -1
+l(2,1)=2
+l(2,2)=3
+l(3,1)=1
+l(3,2)=2
+l(3,3)=1
+l(4,1)=4
+l(4,2)=2
+l(4,3)=-3
+l(4,4)=4
+print " L matrix = "
+print
+mat print l
+for i=1 to nu
+ u(i,i)=1
+next i
+u(1,2)=2
+u(1,3)=4
+u(1,4)=-1
+u(2,3)=2
+u(2,4)=2
+u(3,4)=3
+print " U matrix = "
+print
+mat print u
+!****************************************
+! find L*Z1= I ( I = unity) => z1=L^(-1)
+! algo : z1
+!****************************************
+! step 1 : z1(i,i)
+for i=1 to nu
+z1(i,i) =1/l(i,i)
+next i
+! step 2:  z1(i,j)
+dim c1(1,1)
+mat redim c1(nu,nu)
+for j = 1 to nu-1
+  for i = j+1 to nu
+call somprod(i,j,l(,),z1(,),c1(,),j,i-1)
+if l(i,i) = 0 then
+! division by zero check
+print "----------------------------------------------------------------"
+print " no inverse of L =  L^(-1) doesn't exit ,L*L^(-1)= I ( = unity) "
+print " result = A^(-1) can't be find.                                 "
+print "----------------------------------------------------------------"
+pause 1
+stop
+   else
+   z1(i,j)= -c1(i,j)/l(i,i)
+end if
+  next i
+next j
+! step 3: z1(i,j) = 0 if (i<j)
+for i=1 to nu
+ for j=1 to nu
+  if i<j then 
+!   z1(i,j)=0
+  end if
+ next j
+next i
+print " matrix inverse(L) = L^(-1) "
+print
+mat print z1
+!****************************************
+! find U*Z2= I ( I = unity) => z2=U^(-1)
+! algo : z2
+!****************************************
+dim c2(1,1)
+mat redim c2(nu,nu)
+! step 1 : z2(i,i)
+for i=1 to nu
+z2(i,i) = 1
+next i
+! step 2:  z2(i,j)
+ for i = nu-1 to 1 step -1 ! *corrected page 283
+    for j = i+1 to nu
+call somprod(i,j,u(,),z2(,),c2(,),i+1,j)
+   z2(i,j)= -c2(i,j)
+  next j
+next i
+! step 3: z2(i,j) = 0 if (i>j)
+for i=1 to nu
+ for j=1 to nu
+  if i>j then 
+   z2(i,j)=0
+  end if
+ next j
+next i
+print " matrix inverse(U) = U^(-1) "
+print
+mat print z2
+dim ainv(1,1)
+mat redim ainv(nu,nu)
+mat ainv = z2*z1
+print " A^(-1) matrix = U^(-1)*L^(-1)"
+print
+mat print ainv
+!*******
+! check 
+!*******
+dim a(1,1)
+mat redim a(nu,nu)
+a(1,1)=-1
+a(1,2)=-2
+a(1,3)=-4
+a(1,4)=1
+a(2,1)=2 
+a(2,2)=7
+a(2,3)=14
+a(2,4)=4
+a(3,1)=1
+a(3,2)=4
+a(3,3)=9
+a(3,4)=6
+a(4,1)=4
+a(4,2)=10
+a(4,3)=17
+a(4,4)=-5
+dim q(1,1)
+mat redim q(nu,nu)
+mat q= a*ainv
+print " proof =  A*A^(-1)  = I :error "
+print
+mat print q
+end
+
+sub somprod(i,j,m(,),n(,),c(,),bg,be)
+ som=0
+ for k=bg to be
+  som = som + m(i,k)*n(k,j)
+ next k
+  c(i,j) = som
+end sub
+
+sub somprodvec(i,m(,),z(),cc(),bg,be)
+  som=0
+ for k=bg to be
+  som = som + m(i,k)*z(k)
+ next k
+ cc(i) = som
+end sub

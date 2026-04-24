@@ -1,0 +1,122 @@
+option nolet
+! DETERMINANTparabolafinal.tru
+print "-----------------------------------------"
+print " find :determinant                       "
+print " y=a+b*x+c*x^2 => (version 1.0)          "
+print " p1(1,1),p2(2,-1),p3(3,1)                "
+print " solve with : LU factorization           "
+print " peter.vlasschaert@gmail.com,11/08/15    "
+print "-----------------------------------------"
+print " principal Ax=LUx=b                      "
+print " ----------------------------------------"
+print " aa(n,n) => square matrix => determinant "
+print "-----------------------------------------"
+print " det = use cramer solve (linear systems) "
+print " when matrix aa = nonsingular =>  det<>0 "
+print "-----------------------------------------"
+print " rem : determinant = det                 "
+print "-----------------------------------------"
+nu = 3 ! number of points
+print " number of points 'nu' = ";nu
+! input 
+dim pt(1,2)
+mat redim pt(nu,2) ! pt(1,1) =first point :x position
+                   ! pt(1,2) =first point :y position
+pt(1,1)=1
+pt(1,2)=1
+pt(2,1)=2
+pt(2,2)=-1 
+pt(3,1)=3
+pt(3,2)=1
+print "--------"
+print "input = "
+print "--------"
+print
+print " three points = "
+print " x "," y "
+print
+mat print pt
+! put inside matrix => a(1..N,1..N+1),' N+1 => d ( A*x=d ) '
+dim a(1,1)
+v=nu+1   ! v= number of columns nu= number of rows
+mat redim a(nu,v)
+for i=1 to nu
+a(i,1)=1
+a(i,2)=pt(i,1)
+a(i,3)=(pt(i,1))^2
+next i
+for i=1 to nu
+a(i,v)=pt(i,2)
+next i
+print "------------------"
+print " augmented matrix "
+print "------------------"
+print " a = "
+print " 1 "," x "," x^2 "," y "
+print
+mat print a
+dim aa(1,1)
+mat redim aa(nu,nu)
+d = 1.0  !determinant product
+for i=1 to nu
+  for j=1 to nu
+aa(i,j) = a(i,j)
+  next j
+next i
+print "---------------"
+print " square matrix "
+print "---------------"
+print " aa = "
+mat print aa
+!*************************************************
+! Define a pointer vector to swap rows in aa(i,j)*
+!*************************************************
+dim row(1)
+mat redim row(nu)
+for i=1  to nu
+    row(i)=i
+next i
+! ****start Lu factorization *************
+for p=1 to nu-1 
+    for k=p+1 to nu
+      if abs(aa(row(k),p)) > abs(aa(row(p),p)) then
+       call swap(k,p,row(),temp,d)
+      end if
+    next k
+    call singular(p,row(),aa(,))
+    d = d * aa(row(p),p)  ! Multiply diagonal
+    for k=p+1 to nu  ! rows
+        aa(row(k),p) = aa(row(k),p)/aa(row(p),p) ! correction " gaussian elimination "      
+        v=nu
+       for cc=p+1 to v ! v=nu                    ! correction " gaussian elimination "
+        aa(row(k),cc)=aa(row(k),cc)- aa(row(k),p)*aa(row(p),cc)     
+       next cc
+    next k
+next p
+d = d * aa(row(nu),nu) ! multiply diagonal
+print "---------"
+print "output = "
+print "---------"
+print "determinant 'aa' = ";d
+
+ 
+end
+
+sub swap(k,p,row(),temp,det)
+temp = row(p)
+row(p)= row(k)
+row(k)= temp
+det=-det ! when swap rows determinant changes in sign
+end sub
+
+sub singular(l,row(),aa(,))
+if aa(row(l),l)=0 then
+ print " The matrix is singular "
+ stop
+end if
+end sub
+
+
+
+
+

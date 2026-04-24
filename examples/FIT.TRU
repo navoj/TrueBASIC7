@@ -1,0 +1,65 @@
+! Perform a linear least squares fit
+! Program to accompany "Computational Physics" by N. Giordano and Nakanishi
+! Copyright Prentice Hall 1997, 2006
+! slightly modified to read input file name from keyboard by H. Nakanishi
+program fit
+   option nolet
+   library "sgfunc.trc"
+   library "sglib.trc"
+   dim x(1000),y(1000)
+   call initialize(x,y)
+   call calculate(x,y,slope,intercept)
+   call display(x,y,slope,intercept)
+end
+! read in the data from the file "fit.dat"
+! put the points in arrays x() and y() 
+! the values of the dependent variable go into y()
+sub initialize(x(),y())
+   input prompt "input data file -> ": data$
+   open #1: name data$, access input, create old, organization text
+   i = 1
+   do
+      input #1: x(i),y(i)
+      ask #1: pointer place$
+      if place$ = "END" then exit do  ! read up to the end of the file
+      i = i + 1
+   loop
+   close #1
+   mat redim x(i),y(i)  ! redimension the arrays to make them just the 
+end sub                 ! right length
+! perform linear least squares fit - return results in the
+! variables "slope" and "intercept"
+sub calculate(x(),y(),slope,intercept)
+   sum_x = 0     ! sum of all the x values
+   sum_y = 0     ! sum of all the y values
+   sum_xy = 0    ! sum of xy
+   sum_x2 = 0    ! sum of x^2
+   n = size(x)   ! total number of points
+   for i = 1 to n
+      sum_x = sum_x + x(i)
+      sum_y = sum_y + y(i)
+      sum_xy = sum_xy + x(i)*y(i)
+      sum_x2 = sum_x2 + x(i)^2
+   next i
+   slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x)
+   intercept = (sum_y * sum_x2 - sum_x * sum_xy) / (n * sum_x2 - sum_x * sum_x)
+end sub
+! display the results - the data plus the fitted line
+sub display(x(),y(),slope,intercept)
+   set background color "white"
+   call setcanvas("white")
+   set color "black"
+   call settitle("Linear least squares fit")
+   call sethlabel("x")
+   call setvlabel("y")
+   call datagraph(x,y,4,0,"black")  ! plot the data first
+   y(1) = intercept + slope * x(1)  ! calculate the end points of the fitted
+   x(2) = x(size(x))                ! line - assume the data are in order
+   y(2) = intercept + slope * x(2)
+   mat redim x(2),y(2)
+   call adddatagraph(x,y,0,1,"red") ! add the least squares line to the graph
+   set cursor 5,12                  ! also print the fitting parameters on the graph 
+   print "slope = ";slope;"    intercept = ";intercept
+   get key z
+end sub
+

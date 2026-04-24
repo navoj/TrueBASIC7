@@ -1,0 +1,97 @@
+option nolet
+dim a(1,1),b(1)
+!*******************************************
+! =>    Ax = b (system of equations)
+!*******************************************
+! filename :matrixvectorwritedatafinal.tru
+print "************************************"
+print " write data : vector = b,matrix = A "
+print "************************************"
+print " Use : export to other software :   "
+print "  Tecplot ,Matlab,Scilab,Maxima ... "
+print "************************************"
+print " Use : Ax=b  ,concept               "
+print "************************************"
+print
+print "*************************************"
+print " peter.vlasschaert@gmail.com,11/06/16"
+print "*************************************"
+print
+mat redim a(5,5),b(5)
+! read matrix A( read - data) 
+for i=1 to size(a,1)
+  for j=1 to size(a,2)
+ read a(i,j)
+  next j
+next i
+print " Show matrix A = "
+print
+mat print A
+print
+print "****************************************"
+print " write to :                             "
+print "****************************************"
+print
+print " ***************************************"
+print "* C:\Prog\TrueBASIC GOLD v6\mat_a.dat  *"
+print "****************************************"
+print
+filename_mat$ = "C:\Prog\TrueBASIC GOLD v6\mat_a.dat"
+call write_matrix(filename_mat$,a(,))
+! read vector b (read - data)
+print " Show vector b = "
+print
+for i=1 to Ubound(b)
+  read b(i)
+next i
+mat print b
+print
+print "****************************************"
+print " write to :                             "
+print "****************************************"
+print
+print " ***************************************"
+print "* C:\Prog\TrueBASIC GOLD v6\vec_b.dat  *"
+print "****************************************"
+print
+filename_vec$ = "C:\Prog\TrueBASIC GOLD v6\vec_b.dat"
+call write_vector(filename_vec$,b())
+! data Matrix A (read-data)
+data 5,2,-4,3,2
+data 8,-6,5,1,6
+data 4,3,-9,12.5,6
+data 8,6,-5,2,8
+data 2,3,4,-5,2
+! data Vector b (read-data)
+data -2,4,3,1,7
+end
+
+! lib write data to file(test windows 10)
+
+Sub write_vector(filename$,data())
+open #1: name filename$,create newold,org text,access outin
+erase #1
+set #1:Margin maxnum
+mat print #1:data
+close #1
+end sub
+
+Sub write_matrix(filename$,data(,))
+! write matrix to file
+open #1: name filename$,create newold,org text,access outin
+erase #1
+set #1:Margin maxnum
+Mat data = TRN(data)
+Mat print #1:data
+close #1
+end sub
+
+
+
+
+
+
+
+
+
+

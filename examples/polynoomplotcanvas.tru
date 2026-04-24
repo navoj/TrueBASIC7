@@ -1,0 +1,79 @@
+option nolet
+! polynoomplotcanvas.tru
+! graph easy a function (cubic equation)
+print "f(t)=a*t^3+b*t^2+c*t+d"
+print "---------------------------------------"
+print " polynoom (declare def f)              "
+print "---------------------------------------"
+print " peter.vlasschaert@gmail.com           "
+print "---------------------------------------"
+print
+input prompt " select (1)= default,(2) = input : ":test
+if test=1 then
+  A=2
+  B=5
+  C=-2
+  d=-3
+else
+input prompt " A=  ":A
+input prompt " B=  ":B
+input prompt " C=  ":C
+end if
+declare def f
+! T max 
+input prompt " T_min          = ":T_min
+input prompt " T_max          = ":T_max
+input prompt " step value(dt) = ":dt
+! print graph some region on the screen
+open #1: screen 0.5,1,0.5,1
+window #1
+set color "black"
+xmin=t_min
+xmax=t_max
+ymin=-100
+ymax=+100
+call canvas(xmin,xmax,ymin,ymax)
+set color "red"
+for t=t_min to t_max step dt
+plot t,f(t,a,b,c,d)
+next t
+plot text,at 0,0 :"origin"
+! study  of aspect ratio in window
+ask pixels px,py
+print px,py
+asp=px/py
+q=5 ! radius
+for theta= 0 to 6.28 step dt
+! show circle not ellips
+plot q*cos(theta)*1/asp,q*sin(theta)*asp
+next theta
+end
+
+Def f(T,A,B,C,D)
+  f = a*t^3+b*t^2+c*t+d
+End Def
+
+Sub canvas(xmin,xmax,ymin,ymax)
+  ! margin
+  marg_x=0.01*(xmax-xmin)
+  marg_y=0.01*(ymax-ymin)
+ xl=xmin-marg_x ! l =left,r=right
+ xr=xmax+marg_x
+ yl=ymin-marg_y
+ yr=ymax+marg_y
+set window xl,xr,yl,yr
+! show canvas lines below on the left
+plot xmin,ymin;xmax,ymin
+plot xmin,ymin;xmin,ymax
+! axess
+ymid=( ymax+ymin)/2
+xmid=( xmax+xmin)/2
+plot lines : xmin,ymid;xmax,ymid
+plot lines : xmid,ymin;xmid,ymax
+! frame
+ymid=( ymax-ymin)/2
+xmid=( xmax-xmin)/2
+plot lines : xmin,ymid;xmax,ymid
+plot lines : xmid,ymin;xmid,ymax
+end sub
+ 

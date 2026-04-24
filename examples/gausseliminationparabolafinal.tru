@@ -1,0 +1,118 @@
+option nolet
+! gausseliminationparabolafinal.tru
+print "--------------------------------------"
+print " find parabola trough three points    "
+print " y=a+b*x+c*x^2 => (version 1.0)       "
+print " p1(1,1),p2(2,-1),p3(3,1)             "
+print " solve with : gauss elimination       "
+print " peter.vlasschaert@gmail.com,11/08/15 "
+print "--------------------------------------"
+print
+declare function yp
+nu = 3 ! number of points
+! input 
+dim pt(1,2)
+mat redim pt(nu,2) ! pt(1,1) =first point :x position
+                   ! pt(1,2) =first point :y position
+pt(1,1)=1
+pt(1,2)=1
+pt(2,1)=2
+pt(2,2)=-1 
+pt(3,1)=3
+pt(3,2)=1
+print "--------"
+print "input = "
+print "--------"
+print
+print " three points = "
+mat print pt
+! put inside matrix => a(1..N,1..N+1),' N+1 => d ( A*x=d ) '
+dim a(1,1)
+v=nu+1   ! v= number of columns nu= number of rows
+mat redim a(nu,v)
+for i=1 to nu
+a(i,1)=1
+a(i,2)=pt(i,1)
+a(i,3)=(pt(i,1))^2
+next i
+for i=1 to nu
+a(i,v)=pt(i,2)
+next i
+! system to solve (for fitting to find a,b,c)
+print " Linear systems = "
+mat print a
+!************************************************
+! Define a pointer vector to swap rows in a(i,j)*
+!************************************************
+dim row(1)
+mat redim row(nu)
+for i=1  to nu
+    row(i)=i
+next i
+! ****start upper-triangularization *************
+for p=1 to nu-1 
+    for k=p+1 to nu
+      if abs(a(row(k),p)) > abs(a(row(p),p)) then
+       call swap(k,p,row(),temp) 
+      end if
+    next k
+    call singular(p,row(),a(,))
+    for k=p+1 to nu  ! rows
+        m = a(row(k),p)/a(row(p),p)
+       for cc=p+1 to v ! v=nu+1
+        a(row(k),cc)=a(row(k),cc)-m*a(row(p),cc)
+       next cc
+    next k
+next p
+call singular(nu,row(),a(,))
+!************ back substitution *****************
+dim x(1)
+mat redim x(nu)
+x(nu) = a(row(nu),v)/a(row(nu),nu)
+for k=nu-1 to 1 step -1
+  som = 0
+   for cc=k+1 to nu
+       som = som + a(row(k),cc)*x(cc)
+   next cc
+   x(k)=(a(row(k),v)-som)/a(row(k),k)
+next k
+mat print x
+print "---------"
+print "output = "
+print "---------"
+print
+print " a = ";x(1)
+print " b = ";x(2)
+print " c = ";x(3)
+print "---------"
+print "check =  "
+print "---------"
+print
+xi=2
+print " input value = ";xi
+print " y = ";x(1);" + ";x(2);" * x + ";x(3);" * x^2 "
+print "y(";xi;")= ";yp(xi,x())
+
+
+ 
+end
+
+sub swap(k,p,row(),temp)
+temp = row(p)
+row(p)= row(k)
+row(k)= temp
+end sub
+
+sub singular(l,row(),a(,))
+if a(row(l),l)=0 then
+ print " The matrix is singular "
+ stop
+end if
+end sub
+
+def yp(xi,x())
+yp=x(1)+xi*x(2)+xi*xi*x(3)
+end function
+
+
+

@@ -1,0 +1,46 @@
+option nolet
+print"**************************************************************"
+print" example | ( n=3 )     input: A0=1;A1=2;A2=3;A3=4             "
+print"---------                                                     "
+print"   called : Thiele-Geddes sumproducts                         "
+print"**************************************************************"
+print" sum = A0*A1*A2*A3+A1*A2*A3+A2*A3+A3+1=65                     "
+print"**************************************************************"
+print
+print
+dim a(0 to 1)
+dim b(0 to 1)
+n=3 ! to change n you can make any computation (with this values above)
+mat redim a(0 to n)
+mat redim b(0 to n)
+!**************************
+! input values A0,A1,A2,A3*
+!**************************
+for i=0 to n
+  a(i)=i+1
+next i
+!-----------------------
+! products:A0*A1*....*Ai
+!-----------------------
+prod=1   !init
+for i=0 to n
+    prod=1
+  for j=i to n
+    prod=prod*a(j)
+  next j
+    b(i)=prod
+next i
+print "******************"
+print "matrix of products"
+print "******************"
+mat print b
+print
+print"!---------------------"
+print"! (sum of products) +1"
+print"!---------------------"
+som=1    !init
+for i=0 to n
+  som=som+b(i)
+next i
+print "sum = ";som
+end

@@ -1,0 +1,57 @@
+option nolet
+print "-------------------------------"
+print " bubblepoint version 1.0       "
+print " peter.vlasschaert@gmail.com   "
+print " date : 29/05/2015             "
+print "-------------------------------"
+print
+print "-------------------------------"
+print "=  bubblepoint calculation =   "
+print " liquid phase compositio ==>   "
+print "  f = p-x1*p1_sat+x2*p2_sat    "
+print "-------------------------------"
+print "Antoine eq: ln(p_sat)=A-B/(T+C)"
+print "-------------------------------"
+Print " parameter : A,B,C             "
+print "-------------------------------"
+print " solve: newton raphson method  "
+print " T=T-f/df,df=d(f) differential "
+print "-------------------------------"
+print " vapor phase eq: y=x*p_sat/p   "
+print "-------------------------------"
+! === input ====>
+! first component ( Tables ) :acetone
+A1=14.39155
+B1=2795.317
+C1=230.002
+! sec   component ( Tables  ):water
+A2=16.26205
+B2=3799.887
+C2=226.346
+! parameter p = total pressure (input) => pascal
+P = 101325/1e3
+! parameter ( input mole fraction (first component))
+x1 = 0.5
+x2 = 1- x1
+! ==============
+! How to find initial value (T) t_new (log=ln : math)
+!*************************
+t1_sat = B1/(A1-log(p))-C1
+t2_sat = B2/(A2-log(p))-C2
+t_new=x1*t1_sat+x2*t2_sat
+!*************************
+do
+   t_old = t_new
+   p1_sat=exp(A1-B1/(t_old+C1))
+   p2_sat=exp(A2-B2/(t_old+C1))
+          f=p-x1*p1_sat-x2*p2_sat
+   ! => differentation (cas:symbolic)
+   q1=-x1*B1/(t_old+C1)^2*p1_sat
+   q2=-x2*B2/(t_old+C2)^2*p2_sat
+          df=q1+q2
+          t_new=t_old-f/df
+   dv=abs(t_new-t_old)
+loop while (dv < 1e-7)
+print
+print "bubble point temperature = ";t_new; " °C"
+end

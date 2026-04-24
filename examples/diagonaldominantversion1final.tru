@@ -1,0 +1,113 @@
+option nolet
+!******************************************************************
+!******************************************************************
+! diagonaldominantversion1final.tru
+!******************************************************************
+!******************************************************************
+print
+print "***********************************************************"
+print " check for diagonal dominant for a 'Matrix A' (version 1.0)"
+print "***********************************************************"
+print
+print "***********************************************************"
+print " (Math) => needed for solving Ax=b with 'Iterative Method' "
+print "  matrix = a(i,j) , i=1..n                                 "
+print "                  , j=1..n                                 "
+print "  abs(a(i,i)) > sum(abs(a(i,j)),j=1..n,j<>i)               "
+print "***********************************************************"
+print "***********************************************************"
+print " Ax=b =>  a(i,j)*x(j) = b(i) (i=1..n,j=1..n)               "
+print "***********************************************************"
+print
+print "***********************************************************"
+print " peter.vlasschaert@gmail.com,04/02/2016                    "
+print "***********************************************************"
+print
+!******************************************************************
+! read  in matrix form data statement ( example n=3) => 9 elements)
+!******************************************************************
+dim a(1,1),b(1),dd(1)
+n = 3  ! Dimension of matrix A and Vector b
+mat redim a(n,n),b(n),dd(n)
+for i=1 to n
+   for j=1 to n
+       read a(i,j)
+   next j
+next i
+!******************************************************************
+! read in vector b elements
+!******************************************************************
+for i=1 to n
+   read b(i)
+next i
+! data for matrix A
+data 8,1,1
+data 1,5,-1
+data 1,-1,5
+! data for vector b
+data 26,7,7
+print "-------------------"
+print " Ax=b linear system"
+print "-------------------"
+print
+print "-------------------"
+print " MATRIX A = a(i,j) "
+print "-------------------"
+mat  print a
+print "-------------------"
+print " VECTOR b = b(i)   "
+print "-------------------"
+mat  print b
+!************************
+! check diagonal dominant
+!************************
+call diagonal_dominant(n,a(,),dd(),ss)
+print "-------------------"
+print " Result            "
+print "-------------------"
+print
+print "******************************************************"
+print " sum of absolute values for off diagonal for each row "
+print "******************************************************"
+mat print dd
+print
+if ss = n then
+   print " matrix A is diagonal dominant "
+else
+   print " matrix A is 'not' diagonal dominant "
+end if
+end
+
+sub diagonal_dominant(n,a(,),dd(),ss)
+!***************************
+! ss = dummy variable
+!***************************
+! Sum off diagonals : a(i,j)
+!***************************
+for i= 1 to n
+    ss = 0
+  for j = 1 to n
+    if j<>i then
+      ss = ss + abs(a(i,j))
+    end if
+  next j
+   dd(i) = ss
+next i
+!**************************
+! sum each row dd(i),i=1..n
+!**************************
+!*************************
+! check each row : a(i,j)
+!*************************
+ss=0
+! i = row
+! j = column
+for i=1 to n
+   if abs(a(i,i))> dd(i) then 
+     ss=ss+1
+   end if
+next i
+!*******************************
+! if ss=n then diagonal dominant
+!*******************************
+end sub

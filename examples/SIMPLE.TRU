@@ -1,0 +1,208 @@
+program cluster
+!
+! ***********************************************************************
+!     Program to generate percolation clusters by breadth first search
+! ***********************************************************************
+!
+option nolet
+dim list(0,0),iflag(2)
+maxsize=50000
+maxz=4
+maxperim=100000
+mat redim list(2,0 to maxsize)
+input prompt "SQ Cluster without hash coding:  p, n, ntri => ": p,n,ntri
+line input prompt "file name to record cluster sites => ": out$
+randomize
+for itri=1 to ntri
+      t0=time
+      call bmake2(p,n,m2,iflag(),isuc,list(,),maxsize,maxz,maxperim)
+      t1=time
+      cpu=round(t1-t0,2)
+      if isuc=1 then
+         set background color "white"
+         clear
+         set cursor 1,1
+         print "p="; p; ", n="; m2,", CPU=",cpu;
+         print ", flag=",iflag(1),iflag(2)
+         if out$ <> "" then
+            open #1: name out$, organization text, create newold
+	    erase #1
+            for i=1 to m2
+               print #1: list(1,i),list(2,i)
+            next i
+            close #1
+         end if
+         xmin=list(1,1)
+         xmax=list(1,1)
+         ymin=list(2,1)
+         ymax=list(2,1)
+         for i=2 to m2
+             if list(1,i)<xmin then xmin=list(1,i)
+             if list(1,i)>xmax then xmax=list(1,i)
+             if list(2,i)<ymin then ymin=list(2,i)
+             if list(2,i)>ymax then ymax=list(2,i)
+	 next i
+         call display(list(,),p,m2,xmin,xmax,ymin,ymax)
+         stop
+      else
+  	 print "trial#",itri,", size=",m2,", flag=",iflag(1),iflag(2)
+      end if
+next itri
+end
+!
+! <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+!     "bmake2" to make a percolation cluster by breadth first
+! >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+!
+sub bmake2(p,n,m2,iflag(),isuc,list(,),maxsize,maxz,maxperim)
+dim r1(2),r(2),dr(0,0),perim(0,0)
+mat redim dr(2,maxz),perim(2,maxperim)
+!
+!-----------------------------------------------------------------------
+!    The following block specifies lattice geometry for SQ.
+!-----------------------------------------------------------------------
+!
+data 0,0,1,-1,1,-1,0,0 
+mat read dr
+!
+!-----------------------------------------------------------------------
+!                   Initialize exit conditions
+!-----------------------------------------------------------------------
+!
+lim=maxsize
+if n<0 then lim=min(-n,maxsize)
+nok=min(abs(n),lim)
+!
+!-----------------------------------------------------------------------
+!             Put origin on stack
+!-----------------------------------------------------------------------
+!
+list(1,1)=0
+list(2,1)=0
+!
+!-----------------------------------------------------------------------
+!     m1 is the lower pointer where link check is being done and
+!     m2 is the upper pointer where the cluster has grown up to.
+!     m3 is the upper index for perim and
+!-----------------------------------------------------------------------
+!
+m1=1
+m2=1
+m3=0
+!
+!-----------------------------------------------------------------------
+!          No neighbor yet for the origin.  Set flags to OK for now.
+!-----------------------------------------------------------------------
+!
+iflag(1)=0
+iflag(2)=0
+!
+!======================================================================
+!               START GENERATION OF CLUSTER
+!======================================================================
+!
+do
+   r(1)=list(1,m1)
+   r(2)=list(2,m1)
+!
+!
+!
+   for icord=1 to maxz
+      r1(1)=r(1)+dr(1,icord)
+      r1(2)=r(2)+dr(2,icord)
+!
+!-----------------------------------------------------------------------
+!     Check if this neighbor is already on the stack
+!-----------------------------------------------------------------------
+!
+      match=0
+      for i=1 to m2
+         if r1(1)=list(1,i) and r1(2)=list(2,i) then 
+            match=1
+	    exit for
+         end if
+      next i
+      if match<>1 then
+!
+!----------------------------------------------------------------------
+!     If any of the limits has been reached, then no more addition of
+!     sites is done.
+!----------------------------------------------------------------------
+!
+         if (iflag(1)+iflag(2))>0 then exit do
+!
+!------------------------------------------------------------------------
+!     Check if this site has already been decided to be a perimeter site.
+!------------------------------------------------------------------------
+!
+         match2=0
+         for i=1 to m3
+            if r1(1)=perim(1,i) and r1(2)=perim(2,i) then
+               match2=1
+               exit for
+            end if
+         next i
+         if match2<>1 then
+!
+!-----------------------------------------------------------------------
+!     Generate new site with probability p.
+!-----------------------------------------------------------------------
+!
+            if rnd>p then
+               m3=m3+1
+               perim(1,m3)=r1(1)
+               perim(2,m3)=r1(2)
+               if m3=maxperim then iflag(2)=1
+            else
+!
+!------------------------------------------------------------------------
+!     Add the new site on 'list'
+!------------------------------------------------------------------------
+!
+               m2=m2+1
+               list(1,m2)=r1(1)
+               list(2,m2)=r1(2)
+               if m2=lim then iflag(1)=1
+            end if
+         end if
+      end if
+!
+!-----------------------------------------------------------------------
+!     Advance the lower pointer m1 to check the next site on 'list'.
+!-----------------------------------------------------------------------
+!
+   next icord
+   m1 = m1+1
+loop while m1 <= m2
+!
+!=======================================================================
+!                    GENERATION ATTEMPT IS FINISHED
+!=======================================================================
+!
+      if m2>=nok then
+         isuc=1
+      else
+         isuc=0
+      end if
+!
+!
+!
+end sub
+
+! Display results
+sub display(list(,),p,n,xmin,xmax,ymin,ymax)
+   open #1: screen 0,1,0,0.98
+   set window xmin-1,xmax+1,ymin-1,ymax+3
+   set color "black"
+   plot xmin-0.5,ymin-0.5;
+   plot xmin-0.5,ymax+0.5;
+   plot xmax+0.5,ymax+0.5;
+   plot xmax+0.5,ymin-0.5;
+   plot xmin-0.5,ymin-0.5
+   set color "red"
+   for i=1 to n
+      plot area: list(1,i)-0.25,list(2,i)-0.25;list(1,i)-0.25,list(2,i)+0.25;list(1,i)+0.25,list(2,i)+0.25;list(1,i)+0.25,list(2,i)-0.25;list(1,i)-0.25,list(2,i)-0.25
+   next i
+   close #1
+   get key z
+end sub

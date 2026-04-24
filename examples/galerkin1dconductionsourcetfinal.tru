@@ -1,0 +1,217 @@
+option nolet
+print "------------------------------------------"
+print " galerkin 'finite element method,S<>0'    "     
+print " weight function '= shape function=linear'"
+print " 1D k*dT/dx(dT/dx)+S = 0      version 1.0 "
+print " x=+/-L  ( only x=0 to L (TL=Twall )      "
+print " peter.vlasschaert@gmail.com , 29/07/2015 "
+print " S= internal heat source                  "
+print "------------------------------------------"
+!***************************************
+! input
+!***************************************
+n_div = 4            ! 'integer' number of finite elements
+TL = 40              ! '°C     ' temperarature at x=L
+! thermal conductivity
+kk=21                ! 'W/(m*°C)'
+print "thermal conductivity  ( W/m*°C)  = ";kk
+ss = 0.3e6           ! 'W/m^3' heat source 's=ss'
+print "internal heat source  ( W/m^3 )  = ";ss
+! info : plane slab
+L = n_div*0.0075     ! 'm'
+dx = L/n_div         ! 'm'
+! stifness coef:for each each element  (e)='NiNj'
+AA= 1 ! 1D A=1
+coef_st =kk*AA/dx
+print
+print "stiffness coef. = ";coef_st
+! load     coef:for each each element  (e)='NiNj'
+coef_load =ss*AA*dx/2
+print "load coef.      = ";coef_load
+print
+!***********************************************
+! build : load vector      {f(e)},linear element
+! A*x = b    b={f(e)}
+!***********************************************
+dim fe(2)
+fe(1) = 1 * coef_load
+fe(2) = 1 * coef_load
+!****************************************
+! load vector : result of internal source
+!****************************************
+print " load vector = "
+mat print fe
+!***********************************************
+! build : stiffness matrix [k(e)],linear element
+!***********************************************
+dim ke(2,2)
+ke(1,1)=1
+ke(1,2)=-1
+ke(2,1)=-1
+ke(2,2)=1
+!*************************************
+! build element ' matrix ' :sum [k(e)]
+!*************************************
+nt = n_div * 2
+dim kh(2,2)
+mat redim kh(nt,2)
+call n_model_stif (nt,coef_st,kh(,),ke(,))
+!******************************************************************
+! global stiffness matrix :found by summing up these equations [ks]
+!******************************************************************
+no=n_div+1
+dim ks(1,1)
+mat redim ks(no,no)
+call  ks_matrix_sum(no,ks(,),kh(,))
+print " global stiffness matix = "
+mat print ks
+!******************************************************************
+! global load vector     :found by summing up these equations{f(e)}
+! (rem: d() fom TDMA)
+!******************************************************************
+dim d(1)
+mat redim d(no)
+d(1)=fe(1)
+for i=2 to no-1
+  d(i) = fe(1)+fe(2)
+next i
+d(no)=fe(2)
+print " global load vector    = "
+mat print d
+!*******************************************************
+! Next step is to incorporate BC in the stiffness matrix
+!*******************************************************
+dim kf(1,1)
+!nu =number of equations
+nu=n_div
+mat redim kf(no,no)
+mat kf = 0
+print " TDMA system "
+for i=1 to nu
+   for j=1 to nu
+  kf(i,j)=ks(i,j)
+   next j
+next i
+!********************************************************
+! Next step is to incorporate BC in the load vector
+!********************************************************
+! T5 =40 last line kf
+d(no)=40
+! T4,T5 correction ,line before last
+d(4) = d(4)+2800*TL
+print " d(4) = ";2250+40*2800
+!********************************************************
+print "global load vector after incorporate bc      ="
+mat print d
+dim a(1),b(1),c(1)
+mat redim a(no),b(no),c(no)
+print
+print "global stiffness matrix after incorporate bc ="
+mat print kf
+call tdma_coef (nu,TL,a(),b(),c(),kf(,))
+dim beta(1),gamma(1)
+mat redim beta(nu),gamma(nu)
+call beta_gamma(nu,a(),b(),c(),d(),beta(),gamma())
+!********************************************
+! no = number of equations to solve with tdma
+!********************************************
+dim x(1)
+mat redim x(nu)
+call back_solve (nu,beta(),gamma(),c(),x())
+!*****************************************
+! output 
+!*****************************************
+print "temperature distribution inside the plane slab ( °C)  = "
+mat print x
+print " total temperature distribution ( °C) = "
+print
+dim g(1)
+mat redim g(no)
+call total_temperature_distr(no,TL,g(),x())
+print
+print
+end
+
+
+sub beta_gamma(no,a(),b(),c(),d(),beta(),gamma())
+beta(1) = b(1)
+gamma(1)= d(1)/beta(1)
+for j=2 to no
+ beta (j)=b(j)-a(j)*c(j-1)/beta(j-1)
+ gamma(j)=(d(j)-a(j)*gamma(j-1))/beta(j)
+next j
+end sub
+
+sub back_solve (no,beta(),gamma(),c(),x())
+x(no)=gamma(no)
+! back substitution : solve n->n-1->....1
+for k=no-1 to 1 step -1
+  x(k)=gamma(k)-c(k)*x(k+1)/beta(k)
+next k
+end sub
+
+sub n_model_stif(nt,coef_st,kh(,),ke(,))
+for i=1 to nt step 2
+ kh(i,1)=coef_st*ke(1,1)
+ kh(i,2)=coef_st*ke(1,2)
+ kh(i+1,1)=coef_st*ke(2,1)
+ kh(i+1,2)=coef_st*ke(2,2)
+next i
+end sub
+
+sub  ks_matrix_sum(no,ks(,),kh(,))
+! no = number of elements +1
+for k=1 to no-1
+ for i=k to k+1
+     for j=k to k+1
+ ks(i,j)=kh(i+k-1,j-(k-1))
+     next j
+ next i
+next k
+! diagonal : global matrix correction
+ks(2,2) = kh(2,2)+kh(3,1)
+! **************************************
+!ks(3,3) = kh(4,2)+kh(5,1) ! 3 -> 4 -> 5
+!ks(4,4) = kh(6,2)+kh(7,1) ! 4 -> 6 -> 7
+!ks(5,5) = kh(8,2)+kh(9,1) ! 5 -> 8 -> 8
+!***************************************
+! see : sub below to do this
+!***************************************
+k=0
+for i=3 to no-1
+  k=k+1
+  ks(i,i)=kh(i+k,2)+kh(i+k+1,1)
+next i
+end sub
+
+sub tdma_coef (nu,TL,a(),b(),c(),kf(,))
+! nu = number of equations to solve
+! T0 = begin temperature
+! Tl = end temperature
+a(1)=0
+b(1)=kf(1,1)
+c(1)=kf(1,2)
+for i=2 to nu-1
+  a(i) = kf(2,1)
+  b(i) = kf(2,2)
+  c(i) = kf(2,1)
+next i
+a(nu)=kf(2,1)
+b(nu)=kf(2,2)
+end sub
+
+
+sub total_temperature_distr(no,TL,g(),x())
+for i=1 to no-1
+  g(i) = x( i )
+next i
+g(no) = TL
+for i=1 to no
+  print g(i);" °C",
+next i
+end sub
+
+
+
+
+

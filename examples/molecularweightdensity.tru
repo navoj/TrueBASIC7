@@ -1,0 +1,39 @@
+option nolet
+print "********************************************"
+print " Molecularweight and density of tray liquid "
+print "  version 1.0   (binairy                    "
+print "--------------------------------------------"
+print "  peter.vlasschaert@gmail.com, 04/06/2015   "
+print "********************************************"
+print
+dim MW(2),dens(2)
+print "********************************************"
+print " 1 g/cm^3 = 62.42587 lb/ft^3 =>             "
+print "********************************************"
+print
+print "************************************************************"
+print "component(1),molecular weight=46.0634,density=0.789,ethanol "
+print "component(2),molecular weight=18.0152,density=1    ,water   "
+print "************************************************************"
+input prompt " mole fraction (first component) = ":x1
+print
+for i=1 to 2
+ print "component(";i;") = "
+ input prompt " molecular weight = ":mw(i)
+ input prompt " density          = ":dens(i)
+ dens(i)=dens(i)*62.4257
+next i
+print
+call densA(mw(),dens(),x1,mwa,densa)
+print " MWA    = ";MWA
+print " densA  = ";densA 
+end
+
+sub densA(mw(),dens(),x1,mwa,densa)
+x2=1-x1
+MWA=x1*MW(1)+x2*MW(2)
+densA=x1*dens(1)+x2*dens(2)
+end sub
+
+
+

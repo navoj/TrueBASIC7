@@ -1,0 +1,227 @@
+
+! Program originally written by M. Haugan, using algorithm by P. Visscher.
+! Modified by H. Nakanishi for cleaning up input/output, units, etc. 
+
+program scat
+   option nolet
+   dim r(1), i(1), iold(1), prob(1), phase(1), v(1)
+   call initialize(v_0,a,x_0,k_0,s_0,dx, jmin, jmax, dt, intval, clear)
+   mat redim r(jmin to jmax), i(jmin to jmax), iold(jmin to jmax)
+   mat redim prob(jmin to jmax), phase(jmin to jmax), v(jmin to jmax)
+   for j = jmin to jmax
+     v(j) = 0.0
+   next j
+   l = int(a / dx)
+   for j = -l to l
+     v(j) = v_0
+   next j
+   call initwfunc(dt, dx, v, r, i, iold, prob, jmin ,jmax, x_0, s_0, k_0)
+   open #1: screen 0.,1.,0.1,0.8
+   open #2: screen 0.,1.,0.,0.1
+   window #2
+   set background color "white"
+   clear 
+   set color "black"
+   window #1
+   set window -1.05,1.05,-10.5, 20.5
+   set background color "white"
+   set color mix(45) 2/3, 2/3, 2/3
+   clear
+   n = 0
+   call gridplot(dx, jmin, jmax)
+   call potplot(dx, jmin, jmax, v_0, l, k_0)
+   set color "red"
+   call myplot(dx, prob, jmin, jmax, p, xbar, dx2bar)
+   window #2
+   set color "black"
+   set cursor 1,1
+   print "n = ";n;", norm^2 = ";p
+   set cursor 2,1
+   print "<x> = ";xbar;", SD^2 = ";dx2bar
+   do
+      call timestep(dt, dx, v, r, i, iold, jmin, jmax)
+      n = n + 1
+      if mod(n,abs(intval)) = 0 then
+         window #1
+         if clear = 1 then
+           clear
+         else
+           set color 45
+           call myplot(dx, prob, jmin, jmax, p, xbar, dx2bar)
+         end if
+         call calcprob(r, i, iold, prob, jmin, jmax)
+!        call calcphase(r, i, iold, phase, jmin, jmax)
+         call gridplot(dx, jmin, jmax)
+         call potplot(dx, jmin, jmax, v_0, l, k_0)
+         set color "red"
+         call myplot(dx, prob, jmin, jmax, p, xbar, dx2bar)
+         window #2
+         set color "black"
+         set cursor 1,1
+         print "n = ";n;", norm^2 = ";p
+         set cursor 2,1
+         print "<x> = ";xbar;", SD^2 = ";dx2bar
+      end if
+      if key input then
+         get key z
+         c$ = chr$(z)
+         if c$ = "q" then
+            exit do
+         else if c$ = "p" then
+            get key z
+         else if c$ = "c" then
+            window #1
+            clear
+         end if
+      end if
+   loop
+   close #1
+   close #2
+end
+
+sub initialize(v_0,a,x_0,k_0,s_0,dx,jmin,jmax,dt,intval,clear)
+  print "1D scattering in (-L,L) ..."
+  input prompt "square well/barrier at (-aL,aL): a => ": a
+  input prompt "V_0 (in units of hbar^2/2mL^2) => ": v_0
+  input prompt "incident energy (in units of hbar^2/2mL^2) => ": d
+  input prompt "initial wave packet location (in units of +-L) => ": x_0
+  input prompt "incident Gaussian half width (in units of L) => ": s_0
+  input prompt "split (-L,L) into 2*lx intervals; lx => ": lx
+  input prompt "dt (in units of 2mL^2/hbar) => ": dt
+  input prompt "plot at interval of this many time steps  => ": intval
+  input prompt "clear after each interval? [1=yes, 2=no] => ": clear
+  print "Type q (quit), p (pause), or c (clear). Hit any key to begin ..."
+  get key z
+  k_0 = sqr(d)
+  dx = 1/lx
+  jmin = - lx
+  jmax = lx
+end sub
+
+sub initwfunc(dt,dx,v(),r(),i(),iold(),prob(),jmin,jmax,x_0,s_0,k_0)
+  !  r() and iold() are assigned the real and imaginary parts 
+  !  of a gaussian wavefunction at the initial time.  i() is
+  !  assigned the imaginary part of the wavefunction a halfstep 
+  !  in time later.
+  !  
+  !  prob() and phase() are assigned values for the initial time.
+  !
+  !  The initial position, sigma and central wavenumber for the 
+  !  gaussian at t = 0.
+  !
+  sum = 0
+  for j = jmin + 1 to jmax - 1
+    x = j * dx
+    r(j) = cos(k_0 * x) * exp(-(x - x_0)^2 / (4 * s_0 * s_0))
+    iold(j) = sin(k_0 * x) * exp(-(x - x_0)^2 / (4 * s_0 * s_0))
+    sum = sum + r(j)^2 + iold(j)^2
+  next j
+  sum = sqr(sum*dx)
+  for j = jmin + 1 to jmax - 1
+    r(j) = r(j) / sum
+    iold(j) = iold(j) / sum
+  next j
+  r(jmin) = 0.0
+  r(jmax) = 0.0
+  iold(jmin) = 0.0
+  iold(jmax) = 0.0
+  !
+  for j = jmin to jmax
+    prob(j) = r(j) * r(j) + iold(j) * iold(j)
+  next j
+  !
+  !  Initial halfstep for I
+  !
+  s = dt / ( 2* dx * dx)
+  for j = jmin + 1 to jmax - 1
+    i(j) =  iold(j) + s * (r(j+1) - 2*r(j) + r(j-1)) - 0.5 * v(j) * r(j) * dt
+  next j
+  i(jmin) = 0.0
+  i(jmax) = 0.0
+end sub
+
+sub timestep(dt, dx, v(), r(), i(), iold(), jmin, jmax)
+  !  Assumes box quantization.  r() and i() are fixed at the walls.   
+  !  iold() holds the imaginary part of the wavefunction at the 
+  !  previous timestep.  It is needed to compute the prob() and 
+  !  phase() distributions.  
+  s = dt / ( dx * dx)
+  for j = jmin + 1 to jmax - 1
+    r(j) = r(j) - s * (i(j+1) - 2*i(j) + i(j-1)) + v(j) * i(j) * dt
+    iold(j) = i(j)
+  next j
+  for j = jmin + 1 to jmax - 1
+    i(j) = i(j) + s * (r(j+1) - 2*r(j) + r(j-1)) - v(j) * r(j) * dt
+  next j
+end sub
+
+sub calcprob(r(), i(), iold(), prob(), jmin, jmax)
+  for j = jmin to jmax
+    prob(j) = r(j) * r(j) + i(j) * iold(j)
+  next j
+end sub
+
+sub calcphase(r(), i(), iold(), phase(), jmin, jmax)
+  for j = jmin to jmax
+    if r(j) > 0 then
+      phase(j) = atn((i(j) + iold(j)) / (2 * r(j)))
+    else if r(j) < 0 then
+      phase(j) = atn((i(j) + iold(j)) / (2 * r(j))) - pi
+    else if i(j)+iold(j) >= 0 then
+      phase(j) = 0.5 * pi
+    else
+      phase(j) = -0.5 * pi
+    end if
+  next j
+end sub
+
+sub gridplot(dx, jmin, jmax)
+  !  The following draws an axis and tick marks.
+  set color "black"
+  xmin = jmin * dx
+  xmax = jmax * dx
+  plot lines: xmin,0;xmax,0
+  for j = jmin to jmax step (jmax - jmin) / 20
+    x = j * dx
+    plot lines: x,-0.25;x,0.25
+  next j
+end sub
+
+sub potplot(dx, jmin, jmax, v_0, l, k_0)
+  !  plot the potential.
+  x1 = -l * dx
+  x2 =  l * dx
+  y = v_0 * 5 / (k_0 * k_0)
+  set color "blue"
+  plot lines: 0,0;x1,0
+  plot lines: x1,0;x1,y
+  plot lines: x1,y;x2,y
+  plot lines: x2,y;x2,0
+  plot lines: x2,0;1,0
+  set color "black"
+end sub
+
+sub myplot(dx, prob(), jmin, jmax, p, xbar, dx2bar)
+  ! This could plot R and I at integer time using the average 
+  !  of i() and iold() to estimate I at such times.  
+  ! This routine assumes a window is already setup.
+  for j = jmin to jmax
+    x = j * dx
+    plot x, prob(j);
+  next j
+  plot
+  !  The following computes and prints the normalization integral and 
+  !  the expectation values for position and the mean-square deviation.  
+  p = 0.0
+  xbar = 0.0
+  for j = jmin to jmax
+    x = j * dx
+    p = p + prob(j)*dx
+    xbar = xbar + x*prob(j)*dx
+  next j
+  dx2bar = 0.0
+  for j = jmin to jmax
+    x = j * dx
+    dx2bar = dx2bar + (x - xbar)^2 * prob(j)*dx
+  next j
+end sub

@@ -1,0 +1,112 @@
+option nolet
+! recastexample521
+print "----------------------------------------------------------------"
+print " recast :example 5.2.1*                                         "
+print " peter.vlasschaert@gmail.com ,07/08/2015                        "
+print "----------------------------------------------------------------"
+print "------------------------------------------------------------------"
+print " calculation      eq=(5.16)  pg130-131   'book'                   "
+print "------------------------------------------------------------------"
+print "Fundamentals of the Finite Element Method for Heat and Fluid Flow "
+print "Roland Lewis (Wiley) *                                            "
+print "------------------------------------------------------------------"
+print "----------------------------------------------------------------------------------"
+print " square ( z=1m) , 4 smaller squares ,every square divided in two                  "
+print " triangles . Numbering from the bottom to top and from left to right              "
+print " circulation is found d(i) i=1,2,3                                                "
+print " T5 ? every other value is known from edges of the square  => see output view     "
+print " 8T5 = 2*T2+2*T4+2*T6+2*T8                                                        "
+print "----------------------------------------------------------------------------------"
+! n > m 
+!  put in a matrix b (3*3)
+m=3
+print "even number triangles"
+dim be(3,3)
+! how to find be,bo ( see equation 5.14,5.15 *)
+be(1,1)=1
+be(1,2)=-1.0
+be(1,3)=0
+be(2,1)=-1
+be(2,2)=2
+be(2,3)=-1.0
+be(3,1)=0
+be(3,2)=-1.0
+be(3,3)=1
+mat print be
+!********************************
+dim bo(3,3)
+bo(1,1)=2
+bo(1,2)=-1.0
+bo(1,3)=-1
+bo(2,1)=-1
+bo(2,2)=1
+bo(2,3)=0
+bo(3,1)=-1
+bo(3,2)=0
+bo(3,3)=1
+print "odd number triangles"
+mat print bo
+!******************************
+dim a1(9,9),a3(9,9),a5(9,9),a7(9,9)
+dim a2(9,9),a4(9,9),a6(9,9),a8(9,9)
+dim d(3)
+!numbering always in ccw = counter clockwise
+! odd value matrix
+d(1)=1
+d(2)=2
+d(3)=4
+call cast(m,a1(,),d(),bo(,))
+d(1)=2
+d(2)=3
+d(3)=5
+call cast(m,a3(,),d(),bo(,))
+d(1)=4
+d(2)=5
+d(3)=7
+call cast(m,a5(,),d(),bo(,))
+d(1)=5
+d(2)=6
+d(3)=8
+call cast(m,a7(,),d(),bo(,))
+! even value matrix
+d(1)=2
+d(2)=5
+d(3)=4
+call cast(m,a2(,),d(),be(,))
+d(1)=3
+d(2)=6
+d(3)=5
+call cast(m,a4(,),d(),be(,))
+d(1)=5
+d(2)=8
+d(3)=7
+call cast(m,a6(,),d(),be(,))
+d(1)=6
+d(2)=9
+d(3)=8
+call cast(m,a8(,),d(),be(,))
+dim ao(9,9),ae(9,9)
+mat ao = a1+a3
+mat ao = ao+a5
+mat ao = ao+a7
+mat ae = a2+a4
+mat ae = ae+a6
+mat ae = ae+a8
+dim at(9,9)
+mat at = ae+ao
+mat print at
+end
+
+sub cast(m,a(,),d(),b(,))
+for i=1 to m
+  for j=1 to m
+      a(d(i),d(j))=b(i,j)
+  next j
+next i
+end sub
+
+
+
+
+
+

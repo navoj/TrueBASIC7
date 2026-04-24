@@ -1,0 +1,320 @@
+option nolet
+open #1:screen 0,0.5,0,1
+open #2:screen .5,1,.5,1
+window #1
+! serie :analytical chemistry
+! filename :findanglebetweentwolinesversion1final
+print "*********************************************"
+print "*  'version 1.0a',find angle between two    *"
+print "* lines (y1,y2) and (y2,y3).                *"
+print "*********************************************"
+print "* peter.vlasschaert@gmail.com,28/10/2016    *"
+print "*********************************************"
+print
+print "************"
+print "* given =  *"
+print "************"
+!**********************************
+! info to display data on the graph
+!**********************************
+dim xp(2),yp(2)
+tb_x = 0    ! xmin
+te_x = 20   ! xmax
+nt_x = 10   ! tick marks x-axis
+tb_y = 1    ! ymin
+te_y = 10   ! ymax
+nt_y = 12   ! tick marks y-axis
+!*********************************************************
+! info : graph,title,numbering,label axes
+!*********************************************************
+title$ = "graph:'x data versus y data'"
+x_txt$ = "x-data"
+y_txt$ = "y-data"
+txt = 2  !  distance from right part of the window
+!read data statement, x data, y data
+dim xy(2,1)
+!read x data
+n=16 !  number x data = number y data
+mat redim xy(2,n)
+! x  data
+for i=1 to n
+  read xy(1,i)
+next i
+print " number of data = ";n
+print
+! y  data
+for i=1 to n
+  read xy(2,i)
+next i
+print " x-data =  '=> "
+print
+for i=1 to n
+  print xy(1,i);
+next i
+print
+print " y-data = ' => "
+print
+for i=1 to n
+  print xy(2,i);
+next i
+print
+print
+print "*******************************"
+print " data range: x,y;tick x,y     *"
+print "*******************************"
+print "xmin = ";tb_x,"xmax = ";te_x," number of tick mark,x = ";nt_x
+print "ymin = ";tb_y,"ymax = ";te_y," number of tick mark,y = ";nt_y
+! from trimodal fit data,optimize,standard
+aa1=-.4015916
+bb1=6.8687665
+aa2=.26216624
+bb2=-1.870456
+aa3=1.3553571
+bb3=-21.264536
+print
+print "regression line,green => y1 = ";aa1;" * x(+)";bb1
+print "regression line,red   => y2 = ";aa2;" * x(+)";bb2
+print "regression line,blue  => y3 = ";aa3;" * x(+)";bb3
+print
+!******************************************
+! find from  y1=y2    x=xx_1
+!           aa1*x+bb1 = aa2*x+bb2 =>(x1,y1)
+!******************************************
+xx_1 = (bb1-bb2)/(aa2-aa1)
+person1 = xx_1 
+tsolve1 = aa1*person1+bb1
+nsf1 = abs(aa1-aa2)/(1+aa1*aa2)
+option angle degrees
+print "**************************"
+print "*inter section (y1,y2) =>*"
+print "**************************"
+print " x1-intersect  = ";person1
+print " y1-intersect  = ";tsolve1
+print " angle = atn(abs(aa2-aa1)/(1+aa1*aa2)) = "
+print " angle  between(y1,y2) = ";atn(nsf1);" °"
+!******************************************
+! find from  y2=y3    x=xx_2
+!           aa2*x+bb2 = aa3*x+bb3 =>(x2,y2)
+!******************************************
+xx_2 = (bb2-bb3)/(aa3-aa2)
+person2 = xx_2 
+tsolve2 = aa2*person2+bb2
+nsf2 = abs(aa3-aa2)/(1+aa3*aa2)
+print "**************************"
+print "*inter section (y2,y3) =>*"
+print "**************************"
+print " x2-intersect  = ";person2
+print " y2-intersect  = ";tsolve2
+print " angle = atn(abs(aa3-aa2)/(1+aa2*aa3)) = "
+print " angle  between(y2,y3) = ";atn(nsf2);" °"
+!*******************************************
+window #2 ! draw graph right part of screen
+!*******************************************
+ntx = nt_x ! tick marks x-axis
+nty = nt_y ! tick marks y-axis
+xp(1)=tb_x   ! xmin,cm
+xp(2)=te_x   ! xmax,cm 
+yp(1)=tb_y   ! ymin,kg
+yp(2)=te_y   ! ymax,kg
+ask pixels px,py
+asp_r = px/py !1  !aspect ratio correction(rectangular window)
+set window xp(1)*asp_r,xp(2)*asp_r,yp(1),yp(2)
+call draw_axes(xp(1)*asp_r,xp(2)*asp_r,yp(1),yp(2),ntx,nty)
+set color "black"
+!**********************************************************
+call num_txt_axes(title$,x_txt$,y_txt$,xp(),yp(),txt,ntx,nty)
+!**********************************************************
+! draw graph in the window x-axes ,y-axes(right part)
+!**********************************************************
+z3$ = "red"     ! color 'circle'
+set color z3$   ! color of the graph
+!*************************************************
+! data x,y,draw circles
+!*************************************************
+s1=0.15       ! radius
+! you can change this to get circles 
+asp = py/px ! to draw circle in the graph for data xy
+! draw n circles for data xy
+for i=1 to n
+call smallcir_dr(s1,xy(1,i),xy(2,i),scale,asp,z3$)
+flood xy(1,i),xy(2,i)  ! fill circle with color 'red'
+!*****************************
+! put a number for every point
+!*****************************
+plot text,at xy(1,i)+s1+s1/2,xy(2,i)+s1+s1/2:str$(i)
+next i
+!*************************************************
+! axes ,transformation x=X-avgx,y=Y-avgy
+!*************************************************
+set color "green"
+plot lines :avgx,yp(1);avgx,yp(2)
+plot lines :xp(1),avgy;xp(2),avgy
+plot text,at avgx,avgy:"(mean(x),mean(y))"
+!*************************************************
+! draw regression line : y = aa*x+bb,2 points
+!*************************************************
+set color "blue"
+! first point   xx1,yy1
+xx1 = tb_x
+yy1 = aa*xx1+bb
+! second point  xx2,yy2 
+xx2 = te_x
+yy2 = aa*xx2+bb
+plot lines :xx1,yy1;xx2,yy2
+!*************************************************
+! to find : intersection y1,y2,y3,trimodal fit
+!*************************************************
+! draw regression line : y1 = aa1*x+bb1,2 points
+!*************************************************
+set color "green"
+! first point   xx1,yy1
+xx1 = tb_x
+yy1 = aa1*xx1+bb1
+! second point  xx2,yy2 
+xx2 = te_x
+yy2 = aa1*xx2+bb1
+plot lines :xx1,yy1;xx2,yy2
+!*************************************************
+! draw regression line : y2 = aa2*x+bb2,2 points
+!*************************************************
+set color "red"
+! first point   xx1,yy1
+xx1 = tb_x
+yy1 = aa2*xx1+bb2
+! second point  xx2,yy2 
+xx2 = te_x
+yy2 = aa2*xx2+bb2
+plot lines :xx1,yy1;xx2,yy2
+!*************************************************
+! draw regression line : y3 = aa3*x+bb3,2 points
+!*************************************************
+set color "blue"
+! first point   xx1,yy1
+xx1 = tb_x
+yy1 = aa3*xx1+bb3
+! second point  xx2,yy2 
+xx2 = te_x
+yy2 = aa3*xx2+bb3
+plot lines :xx1,yy1;xx2,yy2
+!*************************************************
+! 1e)intersection (y1,y2),2e)intersection (y2,y3)
+!*************************************************
+set color "magenta"
+plot lines :person1,yp(1);person1,tsolve1
+plot lines :xp(1),tsolve1;person1,tsolve1
+cord1$ = "(" & str$(person1) & "," & str$(tsolve1)&")"
+plot text,at person1,tsolve1:cord1$
+set color "magenta"
+plot lines :person2,yp(1);person2,tsolve2
+plot lines :xp(1),tsolve2;person2,tsolve2
+cord2$ = "(" & str$(person2) & "," & str$(tsolve2)&")"
+plot text,at person2,tsolve2:cord2$
+!*********************************************************
+! data : x,y
+!*********************************************************
+!*********************************************************
+! data statement, x values
+!*********************************************************
+data 1.2,2.8,5.2,7.4,10,11.6,12.6,14,15.4,16.2,17,18.6,19.1
+data 19.3,19.5,20.3
+!*********************************************************
+! data statement, y values 
+!*********************************************************
+!**********************************************
+!**** trimodal fit***************************** 
+!**********************************************
+data 6.523,5.683,4.722,3.841,2.759,2.201,1.943,1.864,2.155
+data 2.336,2.493,2.822,3.351,4.821,5.256,6.231,7.235,7.961
+!*********************************************************
+window #1
+option angle degrees
+print "How to find angle between two lines y1,y2 "
+print
+print " find intersection between two lines = ";"(";person1;",";tsolve1;")"
+print " second point on each line  y1,y2    = "
+y11  = aa1*(person1+1)+bb1
+y22a = aa2*(person1+1)+bb2
+print " 'x intersction + 1' second point put in y1,y2   = ";person1 +1
+print " 'y values         ' secondpoint from y1,y2      = ";y11,y22a
+call angle_cos(tsolve1,y11,y22a,ms1)
+print " angle(y1,y2),from scalair  product 'see sub' = ";acos(ms1);" °"
+print
+print "How to find angle between two lines y2,y3 "
+print
+print " find intersection between two lines = ";"(";person1;",";tsolve2;")"
+print " second point on each line  y2,y3    = "
+y22b = aa2*(person2+1)+bb2
+y33  = aa3*(person2+1)+bb3
+print " 'x intersction + 1' second point put in y2,y3   = ";person2 +1
+print " 'y values         ' secondpoint from y2,y3      = ";y22b,y33
+call angle_cos(tsolve2,y22b,y33,ms2)
+print " angle(y2,y3),from scalair  product 'see sub'  = ";acos(ms2);" °"
+end
+
+sub angle_cos(tsolve1,yaa,ybb,ms1)
+tel = 1.0^2+(yaa-tsolve1)*(ybb-tsolve1)
+c1 = sqr(1^2+(yaa-tsolve1)^2)
+c2 = sqr(1^2+(ybb-tsolve1)^2)
+ms1 = tel/(c1*c2)
+end sub
+
+
+sub smallcir_dr(s1,xf,yf,scale,asp,z3$)
+set color z3$
+for theta=0 to 2*3.14 step 0.0001    
+    plot points:s1*cos(theta)+xf,s1*sin(theta)*asp+yf   
+next theta
+end sub
+
+sub num_txt_axes(title$,x_txt$,y_txt$,xp(),yp(),txt,ntx,nty)
+ mx = xp(2)-xp(1)
+ my = yp(2)-yp(1)
+plot text,at xp(1)+mx/txt,yp(2)-my/(txt*txt):title$
+!*****************************************
+!**** range x axis  0 to xmax      *******
+!*****************************************
+for i=2 to ntx
+ m1 = xp(1)+mx/ntx*(i-1)
+ plot text,at m1,yp(1):str$(m1)
+next i
+plot text,at xp(2)-txt,yp(1)+txt/4:x_txt$
+!*****************************************
+!**** range y axis  0 to ymax ************
+!*****************************************
+for i=2 to nty
+ m2 = yp(1)+my/nty*(i-1)
+ plot text,at xp(1),m2:str$(m2)
+next i
+plot text,at xp(1)+txt,yp(2)-txt/4:y_txt$
+end sub
+
+SUB draw_axes(xmin,xmax,ymin,ymax,ntx,nty)
+! axis :for distribution function
+! see extra,website
+    ! distance between tick marks on x-axis
+    LET dx = (xmax - xmin)/ntx
+    ! distance between tick marks on y-axis
+    LET dy = (ymax - ymin)/nty
+    SET WINDOW xmin ,xmax ,ymin ,ymax
+    LET x0 = max(0,xmin)
+    LET y0 = max(0,ymin)
+    IF ymin*ymax < 0 then
+       LET y0 = 0
+    ELSE
+       LET y0 = ymin
+    END IF
+    PLOT LINES: xmin,y0;xmax,y0   ! horizontal axis
+    PLOT LINES: x0,ymin;x0,ymax   ! vertical axis
+    LET tx = 0.1*dy               ! size of tick mark
+    LET ty = 0.1*dx
+    FOR itick = 0 to ntx
+        LET x = xmin + itick*dx
+        PLOT LINES: x,y0 - tx; x,y0 + tx    ! draw ticks on x axis
+    next itick
+    FOR itick = 0 to nty
+        LET y = ymin + itick*dy
+        PLOT LINES: x0 - ty,y; x0 + ty,y    ! draw ticks on y axis
+    NEXT itick
+END SUB
+
+

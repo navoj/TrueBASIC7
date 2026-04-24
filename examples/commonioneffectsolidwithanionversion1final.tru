@@ -1,0 +1,78 @@
+option nolet
+! serie : analytical chemistry
+! principle of approximations 'solubility'
+print "*************************************************"
+print " Solubility M(p)A(q) common ion effect         '*"
+print "*************************************************"
+print "*calculation : given M(p)A(q)'solid' solved in  *"
+print "*anion of the precipitat through MM(n)A(m).     *"
+print "*solid : M(p)A(q),          'general n=1'       *"
+print "*solved: MM(n)A(m),BaSO4 in Na2SO4 (version 1.0)*"
+print "*************************************************"
+print "use     with:common anion (salt of anion )      "
+print "not use with:complex formation,anion of weak acid"
+print "-------------------------------------------------"
+print " peter.vlaschaert@gmail.com,        15/09/2016   "
+print "-------------------------------------------------"
+!file:commonioneffectsolidwithanionversion1final
+!*******************************************************
+! M(p)A(q)  =>   (salt) anion MM(m)A(n) ,'general n=1'
+!*******************************************************
+! examples :    ' precipitate '
+!*******************************************************
+! 1e) BaSO4  ( anion salt ' Na(2)SO4)
+!     p=1,q=1,m=2,n=1 
+!*******************************************************
+!*******************************************************
+! conclusion : take n=1 :   'version 1.0' p,q,m only
+!!******************************************************
+!*******************************************************
+print "************************************************"
+print " given : concentration 'salt anion'  = C        "
+print "************************************************"
+print " Solubility 'S' M(p)A(q)'Ksp' in anion salt     "
+print "ksp =(p*S)^p*(q*s + n*c)^q                      "
+print "S=( ksp/(p^p*(n*C)^q*(1+((q*s)/(n*C)))^q))^(1/p)"
+print "************************************************"
+!file:commonioneffectsolidwithanionversion1final.tru
+!*******************************************************
+print
+print "*********"
+print " given = "
+print "*********"
+print
+print " M(p)A(q) 'solid' : BaSO4,p=1,q=1 "
+p=1
+q=1
+print " M(p)A(q)              p  = ";p;", q = ";q
+print
+print " MM(m)A(n): salt Na(2)S04,m=2,n=1 "
+m=2
+n=1
+print " MM(m)A(n)             m  = ";m;", n = ";n
+ksp = 1.08E-10         ! ksp 'solid' M(p)A(q) ,BaSO4
+print
+print "Solubility product   (ksp) = ";ksp
+C =0.001
+print
+print "concentration  MM(m)A(n) C = ";C;" M"
+print
+print "***********"
+print "  result = "
+print "***********"
+print
+! first approximation S1
+S1 = (ksp/(p^p*(n*C)^q))^(1/p)
+print " first approximation  ' S1 ' = ";S1
+! second approximation S2
+call solubility(ksp,p,q,m,n,c,s1,s2)
+print " second approximation ' S2 ' = ";S2    
+! third approximation S3
+call solubility(ksp,p,q,m,n,c,s2,s3)
+print "  third approximation ' S3 ' = ";S3  
+end
+
+sub solubility(ksp,p,q,m,n,c,ss,s )
+S=( ksp/(p^p*(n*C)^q*(1+((q*ss)/(n*C)))^q))^(1/p)  
+end sub
+

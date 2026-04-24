@@ -1,0 +1,150 @@
+option nolet
+print
+print "****************************************************"
+print "* chemical reaction (display) 'version 1.0', sub   *"
+print "* peter.vlasschaert@gmail.com,    27/02/2017       *"
+print "****************************************************"
+print
+!////////////////////////////////////////////////////////////!
+!/principles : to format reaction                            !
+!/filename : HOWDISPLAYCHEMICALreactionFINALVERSION1SUB.tru  !
+!////////////////////////////////////////////////////////////!
+print
+print "************************************"
+print "*reaction chemical equation      =>*"
+print "************************************"
+print
+print "*****************************************************"
+print " display the reaction :forming water(=H2O) with 02,H2"
+print "*****************************************************"
+print
+print "**********"
+print "before => "
+print "**********"
+print
+nu_prod  = 2
+print " number of products  = ";nu_prod
+dim prod$(1),prod_out$(1)
+mat redim prod$(nu_prod),prod_out$(nu_prod)
+prod$(1) = "H2"
+prod$(2) = "02"
+nu_react = 1
+print " number of reactants = ";nu_react
+dim react$(1),react_out$(1)
+mat redim react$(nu_react),react_out$(nu_react)
+react$(1) = "H2O1"
+print
+print prod$(1),prod$(2),react$(1)
+print
+print "**********"
+print "after =>  "
+print "**********"
+print
+!*******************************************
+!< products >
+!*******************************************
+for i=1 to nu_prod
+call display_product(prod$(i),prod_out$(i))
+next i
+print " products => "
+print
+mat print prod_out$
+print
+call product_str(nu_prod,prod_out$(),prod_tot$)
+!*******************************************
+!< reactants >
+!*******************************************
+for i=1 to nu_react
+call display_product(react$(i),react_out$(i))
+next i
+print "reactants => "
+print
+mat print react_out$
+print
+call react_str(nu_react,react_out$(),react_tot$)
+print
+print "*************************"
+print "*display the reaction =>*"
+print "*************************"
+print
+print "  " & prod_tot$ & " -> " & react_tot$
+end
+
+sub product_str(nu_prod,prod_out$(),prod_tot$)
+prod_tot$ = ""
+for i=1 to nu_prod 
+  prod_tot$ = prod_tot$ & prod_out$(i)& "+"  
+next i
+! remove last "+"
+length_prod = len(prod_tot$)
+prod_tot$ = prod_tot$[1:length_prod-1]
+end sub
+
+sub react_str(nu_react,react_out$(),react_tot$)
+react_tot$ = ""
+for i=1 to nu_react
+  react_tot$ = react_tot$ & react_out$(i)& "+"
+next i
+! remove last "+"
+length_react = len(react_tot$)
+react_tot$ = react_tot$[1:length_react-1]
+end sub
+
+
+sub display_product(product$,temp$)
+dim index(1,2),elements$(1)
+length = len(product$) !number of symboles in the string
+i=0   
+for n=1 to length
+  symbol = ORD(product$[n:n]) 
+  if symbol > 48 and symbol <= 56 then
+        i=i+1
+    mat redim index(i,2)
+    index (i,1) = symbol-48 ! number
+    index (i,2) = n         ! position string
+  end if
+next n
+tel = i     ! number of elements and number of indexes
+mat redim elements$(tel)
+if tel <> 1 then
+elements$(1) = product$[1:index(1,2)-1]
+for j=1 to tel-2
+    elements$(j+1) = product$[index(j,2)+1:index(j+1,2)-1]
+next j
+elements$(tel) = product$[index(tel-1,2)+1:length-1]
+     else ! only one element H2
+          elements$(1) = product$[1:index(1,2)-1]
+end if
+dim element_index(1)
+mat redim element_index(tel)
+for i=1 to tel
+    element_index(i) = index(i,1)
+next i
+dim  part$(1)
+mat redim part$(tel)
+if element_index(1) <> 1  then
+part$(1)= elements$(1)& str$(element_index(1))
+    else 
+!<< remove ones from the input of the product>>
+part$(1)= elements$(1)
+end if
+for j=2 to tel-1
+if element_index(j) <> 1  then
+part$(j) = elements$(j)& str$(element_index(j))
+else
+!<< remove ones from the input of the product>>
+part$(j) = elements$(j)
+end if
+next j
+if element_index(tel) <> 1  then
+part$(tel)= elements$(tel)& str$(element_index(tel))
+else
+!<< remove ones from the input of the product>>
+part$(tel)= elements$(tel)
+end if
+! display products
+temp$ = ""
+for j=1 to tel
+temp$ = temp$ & part$(j)
+next j
+end sub

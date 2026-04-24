@@ -1,0 +1,77 @@
+!
+! Monte Carlo integration
+!
+program monte
+   option nolet
+   library "sgfunc.trc" 
+   library "sglib.trc"
+   dim x(1001), y(1001)
+   call initialize(x1,x2,y1,y2,x,y,n,trial)
+   randomize
+   sum=0
+   sum2=0
+   for i=1 to trial
+      call calculate(x1,x2,y1,y2,n,s)
+      sum=sum+s
+      sum2=sum2+s^2
+   next i
+   mean=sum/trial
+   var=sum2/trial-mean^2
+   sd=sqr(var)
+   call display(x,y,n,trial,mean,sd)
+   get key z
+end
+
+sub f(t,u)
+   u=sqr(4-t^2)
+end sub
+
+! initialize variables
+sub initialize(x1,x2,y1,y2,x(),y(),n,trial)
+   input prompt "lower bound -> ": x1
+   input prompt "upper bound -> ": x2
+   input prompt "number of points per trial -> ": n
+   input prompt "number of trials -> ": trial
+   call f(x1,y1)
+   y2=y1
+   x(1)=x1
+   y(1)=y1
+   dx=(x2-x1)/1000
+   for i=2 to 1001
+     x(i)=x1+(i-1)*dx
+     call f(x(i),y(i))
+     call f(x(i),y(i))
+     if y(i)<y1 then y1=y(i)
+     if y(i)>y2 then y2=y(i)
+   next i
+end sub
+
+sub calculate(x1,x2,y1,y2,n,s)
+   r=0
+   for i=1 to n
+      t=(rnd)*(x2-x1)+x1
+      u=(rnd)*(y2-y1)+y1
+      call f(t,v)
+      if u<=v then r=r+1
+   next i
+   s=(x2-x1)*((y2-y1)*r/n+y1)
+end sub
+
+sub display(x(),y(),n,trial,mean,sd)
+   aspect=1.5
+   set window 0,1,0,1/aspect
+   set background color "white"
+   call setcanvas("white")
+   call settitle("Monte Carlo Integration by fraction of points under curve")
+   call sethlabel("x")
+   call setvlabel("f(x)")
+   call datagraph(x,y,1,1,"black")  ! the graph is produced here
+   set cursor 3,80                          ! reposition cursor
+   print "Number of points/trial = "; n
+   set cursor 4,80
+   print "Number of trials = "; trial
+   set cursor 5,80
+   print "Mean = "; mean; ", SD = "; sd
+   set cursor 6,80
+   print "Expected error = "; sd/sqr(trial)
+end sub

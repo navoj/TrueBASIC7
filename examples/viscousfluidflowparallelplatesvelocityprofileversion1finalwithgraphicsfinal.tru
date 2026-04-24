@@ -1,0 +1,309 @@
+option nolet
+! ***************************
+! graphics (split the screen)
+! open #n:screen xl,xh,yl,yh
+!****************************
+open #1:screen 0,0.5,0,1
+open #2:screen .5,1,.5,1
+!****************************
+window #1 ! open left part of the screen
+declare function integrate_mu_y
+!*******************************************************
+! mu = viscosity
+! mu(T)=mu(a*y+b)=> mu(y)
+!*******************************************************
+! find relation 1e)between : viscosity   and temperature
+!               2e)between : temperature and distance
+!*******************************************************
+!1e)between : viscosity   and temperature
+dim temp(1),visco(1)
+print
+print "*****show:velocityprofile u(y)*Graphics version 1.0**"
+Print "* viscous fluid flow between two parallel plates    *"
+print "*d/dy(mu(y)*du/dy)-dp/dx = 0 ,0<y<h,u(0)=0,u(h)=0   *"
+print "* h=.3,dp/dx = 2e-5                                 *"
+print "* peter.vlasschaert@gmail.com,07/07/2016            *"
+print "*****************************************************"
+!filename:VISCOUSFLUIDFLOWPARALLELPLATESvelocityprofileversion1finalwithgraphicsfinal
+nu=4 ! number of data values
+kw=3 ! kw ,3 values unknown (a,b,c) => a*T^2+b*T+c
+T_bot = 80   ! temperature at bottom
+print " temperature (bottom) = ";T_bot," °F"
+T_top = 200  ! temperature at top
+print " temperature (top   ) = ";T_top," °F"
+h     = .3   ! height between two plates
+print " distance between the two parallel plates = ";h;" ft"
+dpdx = -2.0*1e-5
+print " pressure gradient (dp/dx)                = ";dpdx;" lb/ft^3"
+mat redim temp(nu),visco(nu)
+mat read temp,visco
+!print " given table : 'read-data' "
+print "---------------------------"
+print "temperature","viscosity"
+for i=1 to nu
+    print temp(i),visco(i)
+next i
+print "---------------------------"
+!print
+dim a(1,1)
+mat redim a(nu,kw)
+! b = A*x
+! Make matrix A => mat a
+for i=1 to nu
+ for j=1 to kw
+    a(i,j)= (temp(i))^(j-1)
+ next j
+next i
+dim b(1,1)
+mat redim b(nu,1)
+for i=1 to nu
+   b(i,1)=visco(i)
+next i
+! find x: "leastsquare method"
+!first part: find transpose(a) => mat aa
+dim aa(1,1)
+mat redim aa(kw,nu)
+mat aa = trn(a) ! transpose
+!mat print aa
+!second part: inverse=()^-1
+! bb=inverse(a*aa)
+dim bb(1,1)
+mat redim bb(nu,nu)
+mat bb = a*aa
+mat bb = inv(bb)
+!mat print bb
+! thridth part: cc = aa*bb
+dim cc(1,1)
+mat redim cc(nu,kw)
+mat cc = aa*bb
+!mat print cc
+! fourth part: x=cc*b
+dim x(1,1)
+mat redim x(kw,1)
+mat x = cc * b
+!print " relation between : viscosity = mu and temperature => "
+!print
+!print " mu(T)= (";x(3,1);")*T(y)^2+ (";x(2,1);")*T(y)+(";x(1,1);")"
+print
+! 2e)between : temperature and distance
+! linear T(y) = ax*y+bx
+! y=0 T(bottom) = bx = T_bot
+bx = T_bot
+! y=h T(top   ) = T_top
+ax = (T_top-T_bot)/h
+!print " relation between : temperature = T and distance=y => "
+!print
+!print " T(y) = ";ax;" * y + ";bx
+!print
+dim xx(1,1)
+mat redim xx(kw,1)
+! input from T(y) in mu(T)
+xx(1,1)=x(3,1)*ax*ax 
+xx(2,1)=2*ax*bx*x(3,1)+ax*x(2,1)
+xx(3,1)=x(3,1)*bx*bx+x(2,1)*bx+x(1,1)
+print " relation between : viscosity = mu and distance=y  => "
+print
+print " mu(y)= (";xx(1,1);")*y^2+(";xx(2,1);") * y+ (";xx(3,1);")"
+! temperature values
+data 80,120,160,200
+! => viscosity values
+data 16.0e-6,14.0e-6,11.0e-6,7.0e-6
+! Derivation :Element equation for 'Finite Element Method'
+!fin = .075
+!beg = 0
+!print integrate_mu_y(xx(,),fin,beg)/(beg-fin)^2
+!print xx(2,1)/2
+dim dd(1,1)
+mat redim dd(kw-1,kw-1)
+y1=0
+y2=.075
+print " solve : 'finite element method' "
+nu_el = 4 !number of elements for distance h
+print
+print "number of elements (0 to ";h;") = ";nu_el
+dim y_value(1)
+mat redim y_value(nu_el+1)
+for i=1 to nu_el+1
+  y_value(i)=(i-1)*(h/nu_el)
+next i
+print
+print "number of distance 'y values'   = "
+mat print y_value
+print
+dim hh(1,1)
+! linear interpolation (simple)
+mat redim hh(2*nu_el,2)
+for i=0 to nu_el-1
+call el_equation(xx(,),dd(,),y_value(i+1),y_value(i+2))
+!print i+1;" e)  element : matrix (from stiffness matrix) "
+hh(2*i+1,1)=dd(1,1)
+hh(2*i+1,2)=dd(1,2)
+hh(2*i+2,1)=dd(2,1)
+hh(2*i+2,2)=dd(2,2)
+next i
+! mat print hh
+!*******************
+! read main diagonal
+!*******************
+dim k_st(1,1)
+mat redim k_st(nu_el+1,nu_el+1)
+k_st(1,1)=hh(1,1)
+for i=2 to nu_el
+   k_st(i,i)=(hh(2*(i-1),2)+hh(2*(i-1)+1,1))
+next i
+k_st(nu_el+1,nu_el+1)=hh(2*nu_el,2)
+!********************
+! read below diagonal
+!********************
+!k_st(2,1)=hh(2,1)
+!k_st(3,2)=hh(4,1)
+!k_st(4,3)=hh(6,1)
+for i=1 to (nu_el+1)-2
+  k_st(i+1,i)=hh(2*i,1)
+next i
+!********************
+! read above diagonal
+!********************
+!k_st(2,3)=hh(3,2)
+!k_st(3,4)=hh(5,2)
+!k_st(4,5)=hh(7,2)
+for i=1 to (nu_el+1)-2
+  k_st(i+1,i+2)=hh(2*i+1,2)
+next i
+!**********************************************
+! 'stiffness matrix'
+!**********************************************
+print "*******************************"
+print " stiffness matrix = 'mat k_st' "
+print "*******************************"
+mat print k_st
+!**********************************************
+! implementation of the boundary condition (BC)
+! u1=0 delete first row and first column
+! u5=0 delete last  row and last  column
+!**********************************************
+! constraint 'stiffness matrix' = mat k_st_bc
+!**********************************************
+dim k_st_bc(1,1)
+ii=nu_el-1
+jj=nu_el-1
+mat redim k_st_bc(nu_el-1,nu_el-1)
+for i=1 to ii
+  for j=1 to jj
+      k_st_bc(i,j)=k_st(i+1,j+1)
+  next j
+next i
+print "**************************************************"
+print " stiffness matrix with constraint = 'mat k_st_bc' "
+print "**************************************************"
+print " u1(0)=0 '(y=0)' ,u2,u3,u4, u5(h)=0 '(y=h)':u=u(y)"
+print "**************************************************"
+print " mat k_st_bc * vec(u)=vec(l)                      "
+print "**************************************************"
+! first part :equation ( mat k_st_bc)
+mat print k_st_bc
+dim ff(1,1)
+mat redim ff(2,1)
+ff(1,1) = 0.5*dpdx*(0-h/nu_el)
+ff(2,1) = 0.5*dpdx*(0-h/nu_el)
+! second part :equation (vec(l))
+pp = ff(1,1)+ff(2,1)
+dim l(1,1)
+mat redim l(ii,1)
+for i=1 to ii
+  l(i,1)=pp
+next i
+!*******************
+! solve for : vec(u)
+!*******************
+dim u(1)
+mat redim u(nu_el+1)
+! boundary condition solution
+u(1)=0
+u(nu_el+1)=0
+dim h_v(1,1)
+mat redim h_v(ii,1)
+dim a_inv(1,1)
+mat redim a_inv(ii,jj)
+mat a_inv = inv(k_st_bc)
+mat h_v = a_inv*l
+u(1)=0
+for i=1 to nu_el-1
+u(i+1)=h_v(i,1)
+next i
+u(nu_el+1)=0
+print "*************************"
+print " Finite Element Method : "
+print "*************************"
+print " u(y) : Velocity profile "
+print "*************************"
+print "*********************************"
+print " at boundary : no slip condition "
+print "*********************************"
+mat print u
+window #2 !open right part to draw the profile
+ask pixels px,py
+!****************************************
+!draw graphics on the right of the screen
+! problem : aspect_ratio
+!  px>py => (px/py>1)
+!****************************************
+asp_r=px/py
+print " 'y values' (bottom-top) of the plate"
+! ** draw x-range ** 'u values'
+x_low  =0
+x_high =2*u(4)
+! ** draw y-range ** 'y values'
+y_low  =0
+y_high =0.3+0.1
+set window x_low*asp_r,x_high*asp_r,y_low,y_high
+!*****************************
+! draw axes ( y,u(y) ) system*
+!*****************************
+plot lines: x_low*asp_r,0;x_high*asp_r,0
+plot lines: 0,y_low;0,y_high
+plot text,at 0+.0005,0+.005:"("& str$(0)&"," & str$(0) & ")"
+plot text,at u(4),0.01:"u values"
+! make array to draw the lines
+dim y_u(1,1)
+mat redim y_u(nu_el+1,2)
+for i=1 to size(y_u,1)
+   y_u(i,1)=u(i)       !x-val
+   y_u(i,2)=y_value(i) !y-val
+next i
+!draw the profile of velocity u(y) => we draw y(u) 'betterview'
+for i=1 to size(y_u,1)-1
+ plot lines:   y_u(i,1)*asp_r , y_u(i,2);y_u(i+1,1)*asp_r,  y_u(i+1,2)
+next i
+!draw points on the graphs
+for i=1 to size(y_u,1)
+plot text, at y_u(i,1)*asp_r ,y_u(i,2):str$(i)
+next i
+set zonewidth 20
+! write coordinates to screen
+print "","number","u-val","y-val"
+for i=1 to size(y_u,1)
+  print "", i, y_u(i,1),y_u(i,2)
+next i
+end
+
+
+sub el_equation(xx(,),dd(,),y1,y2)
+declare FUNCTION integrate_mu_y
+vm1 = (y1-y2)^2
+dd(1,1)= integrate_mu_y(xx(,),y2,y1)/vm1
+vm2 =(y1-y2)*(y2-y1)
+dd(1,2)= integrate_mu_y(xx(,),y2,y1)/vm2
+vm3 = (y1-y2)*(y2-y1)
+dd(2,1)= integrate_mu_y(xx(,),y2,y1)/vm3
+vm4 = (y1-y2)^2
+dd(2,2)= integrate_mu_y(xx(,),y2,y1)/vm4
+end sub
+
+FUNCTION integrate_mu_y(xx(,),fin,beg)
+s1=xx(1,1)/3*(fin)^3+xx(2,1)/2*(fin)^2+xx(3,1)*fin
+s2=xx(1,1)/3*(beg)^3+xx(2,1)/2*(beg)^2+xx(3,1)*beg
+integrate_mu_y = s1-s2
+end function
+
+

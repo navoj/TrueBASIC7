@@ -1,0 +1,134 @@
+option nolet
+!globalstiffnessgalerkinlaplaceoneelement.tru
+print "*******************************************"
+print " global : stifness matrix,laplace equation "
+print " method :galerkin(one element) 'version 1.0"
+print " peter.vlasschaert@gmail.com,04/08/2015    "
+print "*******************************************"
+print " global nodes 1,3,4,local nodes 1,2,3 "
+!**************************************************
+! info :Hartley grandin ,jR.
+!       Fundamentals of the finite element method
+!       Macmillan Publishing company
+!       pg :333-350
+!**************************************************
+! input triangle (x1,y1),(x2,y2),(x3,y3)
+declare function J_C,dist_p1_p2
+!***************input ***********************************
+! input triangle
+!********************************************************
+! Ta = T ambient fluid =air
+Ta = 50 ! °C
+print " temperature ambient fluid (example air) = ";Ta
+x1=0
+y1=0
+x2=2.5
+y2=2
+x3=0
+y3=4
+b1=y2-y3
+b2=y3-y1
+b3=y1-y2
+c1=x3-x2
+c2=x1-x3
+c3=x2-x1
+!**************************************************
+! physics
+k=25
+print " thermal conductivity 'W/length*°C' = ";k
+h=5
+print " convection heat transfer coefficient 'W/length^2*°C' = ";h
+!**************************************************
+!****************** calculation *************************
+dim cdx(1,1),cdy(1,1)
+mat redim cdx(3,3),cdy(3,3)
+!cdx conduction
+cdx(1,1) =b1*b1
+cdx(1,2) =b1*b2
+cdx(1,3) =b1*b3
+cdx(2,1) =b2*b1
+cdx(2,2) =b2*b2
+cdx(2,3) =b2*b3
+cdx(3,1) =b3*b1
+cdx(3,2) =b3*b2
+cdx(3,3) =b3*b3
+! cdy conduction
+cdy(1,1) =c1*c1
+cdy(1,2) =c1*c2
+cdy(1,3) =c1*c3
+cdy(2,1) =c2*c1
+cdy(2,2) =c2*c2
+cdy(2,3) =c2*c3
+cdy(3,1) =c3*c1
+cdy(3,2) =c3*c2
+cdy(3,3) =c3*c3
+print " jacobi = ";J_C(x1,x2,x3,y1,y2,y3)
+print " area of the triangle element = ";J_C(x1,x2,x3,y1,y2,y3)/2
+coef_c = k/(2*J_C(x1,x2,x3,y1,y2,y3))
+print " coef for conduction = ";coef_c
+print
+print " heat conduction matrix cd_x = "
+mat cdx = coef_c*cdx
+mat print cdx
+print " heat conduction matrix cd_y = "
+mat cdy = coef_c*cdy
+mat print cdy
+! against point 1 side (pt 2 and pt3),need T surrounding=Tinfinity=Ta=Tambient
+! distance side 1 =distance between pt2 and pt3
+! side 2, side 3 no convection ( can be isolated or inside side = not at boundary)
+dim kcv1(1,1)
+mat redim kcv1(3,3)
+! why kc2=kc3=0 ? see above 
+s1=dist_p1_p2(x2,y2,x3,y3) !°
+print " distance side (1) ";s1
+!*****************************************************************************
+! The element trial function for the galerkin is the interpolation
+! formula "Three node triangle " 
+! natural coordinates T=L1*T1+L2*T2+L3*T3=[N]{qi} , property = L1+L2+L3 = 1
+! global coordinates : x = L1*x1+L2*x2+L3*x3=[N]{xi}
+!                      y= [N]{yi}
+!D =differentation : Dx[N]= 1/J_C*[b1 b2 b3] for x
+!                    Dy[N]= 1/J_C*[c1 c2 c3] for y
+! convert : steay state laplace equation to this kind form
+! weigt function = interpolation function = shape function
+! ' use Gauss'theorem '
+!*****************************************************************************
+! result : for this example L1=0 all entries below matrix Li*Lj need to be integrated
+! 1D : length :integrate domain ( Li^alpha*Lj^beta)= alpha!*beta!/(1+alpha+beta)! * S1°
+!*****************************************************************************
+! example : Li,Lj i=1 or j=1 or both i=j=1 no contribution in the above integration
+!*****************************************************************************
+! contribution L2*L2 ,L3*L3 -> 2/6
+! contribution L2*L3 ,L3*L2 ->1/6
+coef_v=s1*h/6
+print " coef for convection = ";coef_v
+kcv1(2,2)=2
+kcv1(2,3)=1
+kcv1(3,2)=1
+kcv1(3,3)=2
+mat print kcv1
+print "heat convection matrix = "
+mat kcv1=coef_v*kcv1
+mat print kcv1
+print "global stiffness matrix = conduction(cdx,cdy) + convection "
+! hulp matrix co
+dim co(1,1)
+mat redim co(3,3)
+print
+print " conduction (cdx,cdy)              = "
+mat co = cdx+cdy
+mat print co
+print " conduction (cdx,cdy) + convection = "
+mat co = co+kcv1
+print " global stifness matrix  [ke(element )]=k[e]   = "
+mat print co
+end
+
+function J_C(x1,x2,x3,y1,y2,y3)
+J_C=(x1-x3)*(y2-y3)-(x2-x3)*(y1-y3)
+end function
+
+function dist_p1_p2(xp,yp,xq,yq)
+dist_p1_p2=sqr((xp-xq)^2+(yp-yq)^2)
+end function
+

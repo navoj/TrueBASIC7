@@ -1,0 +1,168 @@
+option nolet
+print "-------------------------------------------------"
+print " Determination of heat flux (version 1.0)        "
+print " peter.vlasschaert@gmail.com ,datum : 28/07/2015 "
+print "-------------------------------------------------"
+print
+!**********************************
+! use "case 'stament'" =>    see : 
+! sub local_cor(q,lx,ly,xo,yo,xi,yi)
+!**********************************
+print "----------------------------------------"
+print " how to find temperature in square when "
+print " when temperature is known at corn      "
+print " origin = T1 , value x  corner : T2     " 
+print "               value xy corner : T3     "
+print "               value y  corner : T4     "
+print "----------------------------------------"
+print "----------------------------------------------------"
+print " find : temperature at (xo,yo) inside               "
+print "      : heat flux:qx=kx*dT/dx;qy=ky*dT/dy at (xo,yo)"
+print "----------------------------------------------------"
+print " shape function : T=a1+a2*x+a3*y+a4*x*y             "
+print "----------------------------------------------------"
+print " T=T1*N1+T2*N2+T3*N3+T4*N4                          "
+print "----------------------------------------------------"
+T1= 100 ! °C
+T2= 150 ! °C
+T3= 200 ! °C
+T4= 50  ! °C
+! origanal coordinates
+print " orginal dimension of the plate = "
+a=5.0
+b=5.0
+print " x direction :a = ";a
+print " y direction :b = ";b
+xo =2
+yo =1
+print " global coordinates = "
+print " xo = ";xo
+print " yo = ";yo
+! convert to local coordinates
+lx=a/2
+ly=b/2
+print "lx = ";lx
+print "ly = ";ly
+!**************************************
+! number quadrant in counter clockwise
+! q=1 : (lx,0),(0,ly)
+! q=2 : (-lx,0),(0,ly)
+! q=3 : (-lx,0),(0,-ly)
+! q=4 : (lx,0),(0,-ly)
+! local axes x: (-lx,lx)
+!       axes y: (-ly,ly)
+!**************************************
+call quadrant(xo,yo,lx,ly,q,a,b,mm)
+call local_cor(q,lx,ly,xo,yo,xi,yi)
+print " local coordinates = "
+print " xi = ";xi
+print " yi = ";yi
+! shape function
+declare function N1,N2,N3,N4
+dim p(4)
+p(1) = N1(xi,yi,lx,ly)
+p(2) = N2(xi,yi,lx,ly)
+p(3) = N3(xi,yi,lx,ly)
+p(4) = N4(xi,yi,lx,ly)
+print " shape function at point (xi,yi) = "
+print " N1 = ";p(1)
+print " N2 = ";p(2)
+print " N3 = ";p(3)
+print " N4 = ";p(4)
+
+s=0
+for i=1 to Ubound(p)
+ s=s+p(i)
+next i
+print " N1+N2+N3+N4=1 property of a shape function "
+print " check this =>   "
+print " N1+N2+N3+N4 = ";s
+T=p(1)*T1+p(2)*T2+p(3)*T3+p(4)*T4
+print
+print " find = Temperature at (xi,yi) => ";T
+declare function dTdx,dTdy
+print " heat conduction coef. = "
+kx=2
+ky=2
+print " kx = ";kx
+print " ky = ";ky
+heatflux_x =-kx*dTdx(lx,ly,T1,T2,T3,T4,xi,yi)
+heatflux_y =-ky*dTdy(lx,ly,T1,T2,T3,T4,xi,yi)
+print "*** heat fluxes at (xi,yi) ***"
+print " qx = - kx*dT/dx => ";heatflux_x
+print " qy = - ky*dT/dy => ";heatflux_y
+end
+
+FUNCTiON N1(x,y,Lx,ly)
+m=1/(4*lx*ly)
+N1= m*(lx-x)*(ly-y)
+END FUNCTION
+
+FUNCTiON N2(x,y,Lx,ly)
+m=1/(4*lx*ly)
+N2= m*(lx+x)*(ly-y)
+END FUNCTION
+
+FUNCTiON N3(x,y,Lx,ly)
+m=1/(4*lx*ly)
+N3= m*(lx+x)*(ly+y)
+END FUNCTION
+
+FUNCTiON N4(x,y,Lx,ly)
+m=1/(4*lx*ly)
+N4= m*(lx-x)*(ly+y)
+END FUNCTION
+
+sub quadrant(xo,yo,lx,ly,q,a,b,mm)
+! check for local coordinates
+if xo >= lx and  xo <= a then 
+   mm =1
+ else
+   mm =2
+end if
+
+if mm=1 then
+ if yo >= ly and yo <= b then
+  q=1
+ else 
+  q=4
+ end if
+end if
+
+if mm=2 then
+  if yo >= ly and yo <= b then
+     q=2
+  else 
+     q=3
+  end if
+end if
+end sub
+
+sub local_cor(q,lx,ly,xo,yo,xi,yi)
+select case q
+ case 1
+  xi= xo-lx
+  yi= yo-ly
+ case 2
+  xi= -(lx-xo)
+  yi= yo-ly
+ case 3
+  xi= - (lx-xo)
+  yi= - (ly-yo)
+ case 4
+  xi= xo-lx
+  yi= -(ly-yo)
+end select
+end sub
+
+FUNCTION dTdx(lx,ly,T1,T2,T3,T4,xi,yi)
+m=1/(4*lx*ly)
+dTdx = m*(-(ly-yi)*T1+(ly-yi)*T2+(ly+yi)*T3-(ly+yi)*T4)
+END FUNCTION
+
+FUNCTION dTdy(lx,ly,T1,T2,T3,T4,xi,yi)
+m=1/(4*lx*ly)
+dTdy = m*(-(lx-xi)*T1-(lx+xi)*T2+(lx+xi)*T3+(lx-xi)*T4)
+END FUNCTION
+
+

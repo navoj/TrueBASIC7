@@ -1,0 +1,102 @@
+option nolet
+print "*********************************************************"
+print " peter.vlasschaert@gmail.com                             "
+print " date: 03/06/2015 (public)                               "
+print "*********************************************************"
+print " Antoine equation (pvap=bar,temp=K=°C+273.15)            "
+print " model:       ln(p_vap)=AVP-BVP/(T+CVP)                  "
+print "*********************************************************"
+print " 1e) calculation vapor pressure..(temperature     =given)"
+print " 2e) calculation temperature.....(vapor pressure  =given)"
+print "*********************************************************"
+!           component (vapour pressure data)
+!*****************************************************
+! data :the thermodynamics of phase reactio equilibria
+! (ismail tosun ,elsevier isbn:978-0-444-59497-6,2012
+!*****************************************************
+print
+print "***************************************************************"
+print "1:n-butane ,2:isopentane:2-methylbutane,3:n-pentane,4:n-hexane*"
+print "***************************************************************"
+! number,AVP,BVP,CVP
+!**************************************************************
+dim p_vap(1),prodv$(1)
+dim AVP(1),BVP(1),CVP(1)
+dim vp_matrix(1,4)
+numcomp=4
+mat redim p_vap(numcomp)
+mat redim AVP(numcomp),BVP(numcomp),CVP(numcomp)
+mat redim vp_matrix(numcomp,4)
+mat redim prodv$(numcomp)
+!read data:name components
+for i=1 to numcomp
+  read prodv$(i)
+next i
+!data name comp
+data n-butane,isopentane,n-pentane,n-hexane
+!*********************************************
+!read data:vp_matrix
+for i=1 to numcomp
+   for j=1 to 4
+ read  vp_matrix(i,j)
+   next j
+next i
+print
+mat print vp_matrix
+for i=1 to numcomp
+  AVP(i)=vp_matrix(i,2)
+  BVP(i)=vp_matrix(i,3)
+  CVP(i)=vp_matrix(i,4)
+next i
+print
+!mat print cvp
+input prompt" selection ( 1 of 2) = ": sl
+if sl=1 then
+input prompt" temperature (°c) = ":lo
+print
+tempv = lo+273.15
+!******************************
+for cf=1 to numcomp
+call antoine_eq_pvap(cf,tempv,AVP(),BVP(),CVP(),p_vap())
+next cf
+!!!*********************!!!
+print
+print "output ->      "
+print 
+for i=1 to numcomp
+  print "vapor pressure = ";p_vap(i);"Bar", prodv$(i)
+next i
+else
+input prompt" vapor pressure (Bar) = ":lop
+dim tpv(1)
+mat redim tpv(numcomp)
+for cf=1 to numcomp
+call antoine_eq_temp(cf,lop,AVP(),BVP(),CVP(),tpv())
+next cf
+!!!*********************!!!
+print
+print "output ->      "
+print 
+for i=1 to numcomp
+  print "temperature = ";tpv(i)-273.15;"°C", prodv$(i)
+next i
+end if
+!data :antoine eq
+data 1,9.0580,2154.90,-34.42
+data 2,9.0136,2348.67,-40.05
+data 3,9.2131,2477.07,-39.94
+data 4,9.2164,2697.55,-48.78
+get key done
+end
+
+sub antoine_eq_pvap(cf,tempv,AVP(),BVP(),CVP(),p_vap())
+testz=AVP(cf)-BVP(cf)/(tempv+CVP(cf))
+p_vap(cf)=exp(testz)
+end sub
+
+sub antoine_eq_temp(cf,lop,AVP(),BVP(),CVP(),tpv())
+! log=ln (in truebasic)
+testz1=BVP(cf)/(AVP(cf)-log(lop))-CVP(cf)
+tpv(cf)=testz1
+end sub
+

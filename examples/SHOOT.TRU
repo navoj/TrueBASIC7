@@ -1,0 +1,149 @@
+! Time independent quantum mechanics - square well with shooting method
+! Program to accompany "Computational Physics" by N. Giordano and H. Nakanishi
+! Copyright Prentice Hall 1997, 2006
+!
+! m=1/2 here to be consistent with other programs here H. Nakanishi
+
+!program shoot
+   option nolet
+   dim psi(-1 to 5000)   ! wave function (only need to worry about real part)
+   call initialize(psi,dx,V,e_guess,de,parity,inter,sde,a,V2,b)
+   call calculate(psi,dx,V,e_guess,de,parity,inter,sde,a,V2,b)
+!end
+
+! initialize variables
+! psi = wave function  dx = spatial step   square well runs from -xmax to xmax
+! V = potential outside well   parity = +1 (even) or -1 (odd)
+! e = energy and de = energy step 
+sub initialize(psi(),dx,V,e,de,parity,inter,sde,a,V2,b)
+   input prompt "Square well [-1,1] with V=0 inside. V outside => ": V
+   input prompt "dx => ": dx
+   input prompt "secondary well/barrier inside? yes [1], no [2] => ": ans
+   if ans=1 then
+      input prompt "secondary well/barrier at [-a,a]. a => ": a
+      input prompt "potential inside => ": V2
+   else
+      a=0
+      V2=0
+   end if
+   input prompt "look for even [1] or odd [-1] parity solution? => ": parity
+   if parity <> 1 then parity = -1
+   input prompt "redefine b as infinity, b => ": b
+   input prompt "initial guess for energy => ": e
+   input prompt "initial energy increment => ": de
+   input prompt "stepping manually? yes [1], no [2] => ": inter
+   if inter <> 1 then
+     input prompt "stop iteration when de = => ": sde
+   end if
+   clear
+   if inter <> 1 then
+      print "p (pause), q (quit), h (half), d (double), n (change dir)"
+   end if
+   c=0.75*b
+   set window -1.5,1.5,-c,c    ! set up for plotting
+   set background color "white"
+   set color mix(45) 2/3, 2/3, 2/3
+   set color "black"
+   plot -1.5,0;1.5,0
+   plot -1,-c;-1,c
+   plot 1,-c;1,c
+   if ans=1 then
+      vv=V2*0.01
+      plot -a,0;-a,vv;a,vv;a,0
+   end if 
+end sub
+
+! psi() = wave function, dx = spatial grid size, Vmax is potential outside box
+! energy is current best guess for E, de is amount E is changed in hunting
+! for a solution
+sub calculate(psi(),dx,Vmax,energy,de,parity,inter,sde,a,V2,b)
+   declare def potential     ! potential energy function
+   if parity = 1 then
+     psi(0) = 1                ! search for an even parity solution
+     psi(-1) = 1
+   else
+     psi(0) = 0
+     psi(-1) = -dx
+   end if
+   last_diverge = 0          ! use to keep track of direction of last divergence
+                             ! loop as we zero in on the proper value of E
+   if inter = 1 then
+     print "Energy (hit any key to go to the next trial energy)"
+   end if
+   n=0
+   do 
+      n=n+1                       
+      set color 45
+      call display(psi,i,dx,parity)
+      for i = 0 to size(psi)-1    ! integrate from x=0 to 1 
+         psi(i+1)=2*psi(i)-psi(i-1)-(energy-potential(i*dx,Vmax,a,V2))*dx^2*psi(i)
+         if abs(psi(i+1)) > b then exit for   ! psi is diverging so stop now
+      next i
+      set color "red"
+      call display(psi,i,dx,parity)           ! display this estimate for psi
+      if inter = 1 then
+        set color "black"
+        print energy
+        get key z                   ! wait for a key stroke before continuing
+        if chr$(z) = "q" then exit do
+      else if abs(de) < sde then
+        set color "black"
+        print "V=";Vmax
+        print "V2=";V2
+        print "dx=";dx
+        print "dE0=";sde
+        print "dE=";de
+        print "iteration=";n
+        print "Energy="
+        print energy
+        exit do
+      else if key input then
+        get key z 
+        c$ = chr$(z)
+        if c$ = "q" then   
+          exit do
+        else if c$ = "p" then
+          get key z
+        else if c$ = "h" then
+          de = 0.5*de
+        else if c$ = "d" then
+          de = 2*de
+        else if c$ = "n" then
+          de = -de
+        end if
+      end if
+      if psi(i+1) > 0 then
+        diverge = +1
+      else
+        diverge = -1
+      end if
+      if c$="h" or c$="d" or c$="n" then
+        c$ = ""
+      else if diverge * last_diverge < 0 then
+        de = -de / 2
+      end if
+      energy = energy + de
+      last_diverge = diverge
+   loop
+end sub
+
+def potential(x,V,a,V2)   ! the potential is 0 inside the box and V outside 
+  if abs(x) <= a then
+      potential = V2
+  elseif abs(x) <= 1 then   ! walls are at x = +1 and -1
+      potential = 0
+  else
+      potential = V
+  end if
+end def
+
+! display the wave function
+sub display(psi(),max,dx,parity)
+   for i = -max to 0
+      plot i*dx,parity*psi(-i);
+   next i
+   for i = 1 to max-1
+      plot i*dx,psi(i);
+   next i
+   plot max*dx,psi(i)
+end sub

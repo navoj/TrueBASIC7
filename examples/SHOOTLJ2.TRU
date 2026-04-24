@@ -1,0 +1,138 @@
+! Time independent quantum mechanics - Lennard-Jones with shooting method
+! Boundary checking by psi = 0, not divergences
+! Program adapted from "Computational Physics" by N. Giordano and H. Nakanishi
+! Copyright Prentice Hall 1997, 2006
+!
+! m=1/2 here to be consistent with other programs here H. Nakanishi
+
+program shootlj
+   option nolet
+   dim psi(-1 to 10000)   ! wave function (only need to worry about real part)
+   call initialize(psi,dx,e_guess,de,inter,sde,sigma,epsilon,b)
+   call calculate(psi,dx,e_guess,de,inter,sde,sigma,epsilon,b)
+end
+
+! initialize variables
+! psi = wave function  dx = spatial step
+! e = energy and de = energy step 
+sub initialize(psi(),dx,e,de,inter,sde,sigma,epsilon,b)
+   input prompt "Lennard-Jones energy scale (in hbar^2/2mL^2) => ": epsilon
+   input prompt "Lennard-Jones length scale (in units of L) => ": sigma
+   input prompt "System is (0,5*sigma) (in units of L). dx => ": dx
+   input prompt "display scale ymax => ": b
+   input prompt "initial guess for energy => ": e
+   input prompt "initial energy increment => ": de
+   input prompt "stepping manually? yes [1], no [2] => ": inter
+   if inter <> 1 then
+      input prompt "stop iteration when de = => ": sde
+   end if
+   clear
+   if inter <> 1 then
+      print "q (quit), p (pause), h (half), d (double), n (change dir)"
+   end if
+   set window -1,5.5*sigma,-b,b    ! set up for plotting
+   set background color "white"
+   set color mix(45) 2/3, 2/3, 2/3
+   set color "black"
+   call axes(sigma,epsilon,b)
+end sub
+
+! Lennard-Jones potential
+def potential(x,sigma,epsilon)
+   r6 = (x/sigma)^(-6)
+   potential = 4 * epsilon * (r6^2 - r6)
+end def
+
+! plot axes and potential
+sub axes(sigma,epsilon,b)
+   declare def potential
+   min = 0.7*sigma
+   max = 5*sigma
+   set color "black"
+   plot -0.5,0;max,0
+   plot 0,-b;0,b
+   plot lines: 1,-0.1;1,0.1
+   set color "blue"
+   for x = min to max step 0.02*sigma
+      plot x,0.8*b*potential(x,sigma,epsilon)/epsilon;
+   next x
+   plot x,0.8*b*potential(x,sigma,epsilon)/epsilon
+end sub
+
+
+! psi() = wave function, dx = spatial grid size, Vmax is potential outside box
+! energy is current best guess for E, de is amount E is changed in hunting
+! for a solution
+sub calculate(psi(),dx,energy,de,inter,sde,sigma,epsilon,b)
+   declare def potential     ! potential energy function
+   psi(0) = 0                ! search for an even parity solution
+   psi(-1) = -1e-12*dx
+   last_value = 1e5
+   if inter = 1 then
+     set color "black"
+     print "Energy (hit any key to go to the next trial energy)"
+   end if
+   n=0
+   do
+      n=n+1                        
+      set color 45
+      call display(psi,imax,dx,sigma)
+      imax=min(10000,int(4.5*sigma/dx))
+      for i = 0 to imax-1
+         x=i*dx+0.5*sigma
+         psi(i+1)=2*psi(i)-psi(i-1)-(energy-potential(x,sigma,epsilon))*dx^2*psi(i)
+      next i
+      set color "red"
+      call display(psi,imax,dx,sigma)           ! display this estimate for psi
+      if inter = 1 then
+        set color "black"
+        print energy;psi(imax)
+        get key z                   ! wait for a key stroke before continuing
+        if chr$(z) = "q" then exit do
+      else if abs(de) < sde then
+        set color "black"
+        print "sigma=";sigma
+        print "epsilon=";epsilon
+        print "dx=";dx
+        print "dE0=";sde
+        print "dE=";de
+        print "Energy="
+        print energy
+        print "(y scale =>";b;")"
+        print "iterations=";n
+        print "psiR=";psi(imax)
+        exit do
+      else if key input then
+        get key z 
+        c$ = chr$(z)
+        if c$ = "q" then   
+          exit do
+        else if c$ = "p" then
+          get key z
+        else if c$ = "h" then
+          de = 0.5*de
+        else if c$ = "d" then
+          de = 2*de
+        else if c$ = "n" then
+          de = -de
+        end if
+      end if
+      if c$ ="h" or c$="d" or c$="n" then
+        c$ = ""
+      else if psi(imax)*last_value<0 or abs(psi(imax))>abs(last_value) then
+        de=-de/2
+      end if
+      last_value=psi(imax)
+      energy = energy + de
+   loop
+end sub
+
+! display the wave function
+sub display(psi(),max,dx,sigma)
+   i=0
+   do while i*dx+0.5*sigma<5*sigma
+      plot i*dx+0.5*sigma,psi(i);
+      i=i+1
+   loop
+   plot
+end sub

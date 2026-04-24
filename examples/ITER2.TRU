@@ -1,0 +1,136 @@
+!
+! Discrete Maps
+!        - Iteration of discrete map, not ODE integration
+! True Basic version written by H. Nakanishi
+!
+program iteration
+   option nolet
+   library "sgfunc.trc"
+   library "sglib.trc"
+   call initialize(x0,map,a,b,c,iter,n)
+   num=1000
+   open #1: screen 0,1,0,1
+   window #1
+   set window -0.2,1.2,-0.2,1.2
+   set background color "white"
+   clear
+   call makeplot(x0,map,a,b,c,iter,n,c$,num)
+   do while c$ = "s"
+      get point x1,y1
+      get point x2,y2
+      close #1
+      open #1: screen 0,1,0,1
+      window #1
+      set window x1,x2,y1,y2
+      clear
+      print "lower left: (";x1;",";y1;"), upper right: (";x2;",";y2;")"
+      num=int(1000/(x2-x1))
+      call makeplot(x0,map,a,b,c,iter,n,c$,num)
+   loop
+   close #1
+end
+
+sub makeplot(x0,map,a,b,c,iter,n,c$,num)
+   declare def f,g,h
+   set color "black"
+   call axes(x0,map,a,b,c,iter,n,num)
+   plot
+   set color "red"
+   x=x0
+   plot x0,0;
+   do
+      select case map
+      case 1
+        for i=1 to n
+	  y=f(x,b,iter)
+	  plot x,y;
+	  plot y,y;
+	  x=y
+        next i
+      case 2
+        for i=1 to n
+          y=g(x,a,iter)
+          plot x,y;
+	  plot y,y;
+          x=y
+        next i
+      case else
+        for i=1 to n
+          y=h(x,c,iter)
+          plot x,y;
+	  plot y,y;
+          x=y
+        next i
+      end select
+      get key z
+      c$ = chr$(z)
+   loop until c$ = "s" or c$ = "q"
+end sub
+
+sub initialize(x0,map,a,b,c,iter,n)
+   input prompt "which map? logistic (1), cusp (2), 4th order (3)? => ": map
+   select case map
+	case 1
+	   input prompt "b in f(x)=4bx(1-x) ? => ": b
+	case 2
+	   input prompt "a in g(x)=a(1-2|x-1/2|) ? => ": a
+	case else
+	   input prompt "c in h(x)=c[1-(2x-1)**4] ? => ": c
+   end select
+   input prompt "iterate at each step ? => ": iter
+   input prompt "how many steps before prompt ? => ": n
+   input prompt "initial x ? => ": x0
+end sub
+
+sub axes(x0,map,a,b,c,iter,n,num)
+   declare def f,g,h
+   plot lines: 0,0;1,0;1,1;0,1;0,0
+   plot lines:1,1;0,0
+   select case map
+        case 1
+	   print "Logistic map: b="; b; ", iter="; iter; ", x0="; x0;", n=",n
+           print "after each plot, hit enter to iterate, q to quit"
+           print "hit s, then click on lower left followed by upper right to zoom"
+           for i=1 to num
+                x=i/num
+                plot x,f(x,b,iter);
+	   next i
+        case 2
+	   print "Cusp map: a="; a; ", iter="; iter; ", x0="; x0;", n=",n
+           for i=1 to num
+                x=i/num
+                plot x,g(x,a,iter);
+           next i
+        case else
+	   print "Quartic map: c="; c; ", iter="; iter; ", x0="; x0;", n=",n
+           for i=1 to num
+                x=i/num
+                plot x,h(x,c,iter);
+           next i
+   end select
+end sub
+
+def f(x,b,iter)
+   y=x
+   for i=1 to iter
+      y=4*b*y*(1-y)
+   next i
+   f=y
+end def
+
+def g(x,a,iter)
+   y=x  
+   for i=1 to iter
+      y=a*(1-2*abs(y-0.5))
+   next i
+   g=y  
+end def
+
+def h(x,c,iter)
+   y=x
+   for i=1 to iter
+      y=c*(1-(2*y-1)^4)
+   next i
+   h=y 
+end def
+

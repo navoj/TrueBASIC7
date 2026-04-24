@@ -1,0 +1,114 @@
+option nolet
+print "*****************************************************"
+print "Equilibrium vapour composition and tray temperature *"
+print "*****************************************************"
+print " version 1.0      (date :06/05/2015     )            "
+print "*****************************************************"
+print " peter.vlasschaert@gmail.com                         "
+print "*****************************************************"
+print
+nc=2 ! number of components
+input prompt " guess temperature on the tray ":tg
+print "------------------------------"
+print "p=760 ! mmHg pressure (1 atm) "
+print "------------------------------"
+input prompt " (1) p=760 ,(2) p<>760 => choose ": test
+if test =1 then 
+p=760
+print "------------------------"
+print "bubblepoint (ethanol) = "
+print "------------------------"
+x1=1
+call  bubblepoint(t,x1,y1,p,nc,tg)
+print "vapour composition = "; y1
+print "bubblepoint        = "; t
+print "------------------------"
+print "bubblepoint (water)   = "
+print "------------------------"
+x1=0
+call  bubblepoint(t,x1,y1,p,nc,tg)
+print "vapour composition = "; y1
+print "bubblepoint        = "; t
+else
+input prompt " pressure (mmHg) ":p
+input prompt " liquid composition 0<x1<1 ":x1
+call  bubblepoint(t,x1,y1,p,nc,tg)
+print "vapour composition = "; y1
+print "bubblepoint        = "; t
+end if
+
+
+
+
+
+end
+
+sub bubblepoint(t,x1,y1,p,nc,tg)
+! can be modified for binairy system
+! coefficient from Antoine vapour pressure
+dim aa(1,1)
+mat redim aa(nc,3)
+! first component
+aa(1,1)=18.5242
+aa(1,2)=3578
+aa(1,3)=-50.50
+! second component
+aa(2,1)=18.3036
+aa(2,2)=3816.4
+aa(2,3)=-46.13
+! mole fractions
+dim xp(1),g(1),ps(1),yy(1)
+mat redim xp(nc),g(nc),ps(nc)
+mat redim yy(2)
+xp(1)=x1  ! input
+xp(2)=1-x1
+! tg=guessed value for all tray temperature
+t=tg
+tel=0
+!*****************************************************
+!nonideal fluid:g(1),g(2) =activity coefficient
+!*****************************************************
+! wilson parameters :temperature indepent and constant
+!*****************************************************
+! g(1) -> '1' used for ethanol
+! g(2) -> '2' used for water
+!******************************************************
+lambda12=0.20916399
+lambda21=0.8228
+!******************************************************
+do
+tel=tel+1
+par1q =(lambda12/(xp(1)+lambda12*xp(2)))
+par1p =(lambda21/(xp(2)+lambda21*xp(1)))
+par1=par1q-par1p
+par2=log(xp(1)+lambda12*xp(2))
+par3=log(xp(2)+lambda21*xp(1))
+G(1)=exp(-par2+(xp(2)*par1))
+G(2)=exp(-par3+(xp(1)*par1))
+sumy = 0 ! sum init
+for j=1 to nc
+  ps(j)=exp(aa(j,1)-(aa(j,2)/(t+273+aa(j,3))))
+  yy(j)=ps(j)*g(j)*xp(j)/p
+  sumy=sumy+yy(j)
+next j
+vtest=abs(sumy-1)
+!*newton raphson method*
+!********************************************
+!.f function.................................
+!********************************************
+if vtest > 1e-7 then
+  f=sumy-1  
+end if
+!********************************************
+!.df function (slope differential)...........
+!********************************************
+fslope=0 !*sum init
+for j=1 to nc
+  fslope=fslope+((yy(j)*aa(j,2))/((T+273+aa(j,3))^2))
+next j
+  t=t-f/fslope
+  y1=yy(1)
+loop while (tel < 10000)
+end sub
+
+

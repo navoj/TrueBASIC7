@@ -1,0 +1,66 @@
+! Romberg Integration
+! Hisao Nakanishi
+program romberg
+   option nolet
+   library "sgfunc.trc"
+   library "sglib.trc"
+   dim romb(0,0),fx(0),x(0)
+   call initialize(xi,xf,n)
+   mat redim romb(n+1,n+1),fx(2^n+1),x(2^n+1)
+   call calculate(xi,xf,n,romb,fx,x)
+   call display(xi,xf,n,romb,fx,x)
+   set cursor 3,10
+   mat print romb
+   get key z
+end
+
+! initialize variables
+sub initialize(xi,xf,n)
+   input prompt "Romberg Table: start x -> ": xi
+   input prompt "end x -> ": xf
+   input prompt "max number of panels = 2^n: n -> ": n
+end sub
+
+def f(x)
+   f = sqr(4-x^2)
+! f=sqr(1-(sin(x))^2)
+end def
+
+sub calculate(xi,xf,n,romb(,),fx(),x())
+   declare def f
+   dxn = (xf-xi)/2^n
+   x(1) = xi
+   fx(1) = f(xi)
+   x(2^n+1) = xf
+   fx(2^n+1) = f(xf)
+   for i = 2 to 2^n
+      x(i) = xi+(i-1)*dxn
+      fx(i) = f(x(i))
+   next i
+   end = 0.5*(fx(1)+fx(2^n+1))
+   for i = 1 to n+1
+      dx=(xf-xi)/2^(i-1)
+      trap = end*dx
+      for j = 1 to 2^(i-1)-1
+         k = j*2^(n-i+1)+1
+         trap = trap+dx*(fx(k))
+      next j
+      romb(i,1) = trap
+      for j = 2 to i
+         romb(i,j) = romb(i,j-1)+(romb(i,j-1)-romb(i-1,j-1))/(4^(j-1)-1)
+      next j
+   next i
+end sub
+
+sub display(xi,xf,n,romb(,),fx(),x())
+   set background color "white"
+   call setcanvas("white")
+   set color "black"
+   call settitle("Romberg Integration")
+   call sethlabel("x")
+   call setvlabel("f(x)")
+   call datagraph(x,fx,3,0,"black")
+   set cursor 3,10
+   print "Romberg Integration: ";2^n;" panels max. Hit CR for table."
+   get key z
+end sub

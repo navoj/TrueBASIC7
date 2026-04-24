@@ -1,0 +1,165 @@
+option nolet
+print "----------------------------------------"
+print "LU decomposition use for solve lin.syst."
+print "----------------------------------------"
+print " find = L,U from A=a(nu,nu)             "
+print " algo : Crout method (version 1.0)      "
+print " peter.vlasschaert@gmail.com ,12/08/2015"
+print "----------------------------------------"
+!********************************************
+! six steps for crout's method  ' see below '
+!********************************************
+! extra steps :solve linear system
+!********************************************
+nu = 4
+! a*x=b
+dim b(1)
+mat redim b(nu)
+b(1) = 0
+b(2) = -90
+b(3) = 0
+b(4) = -90
+print " a*x=b ,' b= ' "
+print
+for i=1 to nu 
+ print " b(";i;")=",
+next i
+mat print b
+dim a(1,1),u(1,1),l(1,1)
+mat redim a(nu,nu),u(nu,nu),l(nu,nu)
+! input
+for i=1 to nu
+a(i,i)=-4
+next i
+a(1,2)=1
+a(1,3)=1
+a(2,1)=1
+a(2,4)=1
+a(3,1)=1
+a(3,4)=1
+a(4,2)=1
+a(4,3)=1
+print " a = "
+mat print a
+!********************
+!step 1: first column
+!********************
+for i=1 to nu
+  l(i,1)=a(i,1)
+next i
+!*******************
+!step 2: first row
+!*******************
+for j=2 to nu
+  u(1,j)=a(1,j)/l(1,1)
+next j
+! output
+dim c(1,1)
+mat redim c(nu,nu)
+!********************************
+!step 3: rest of the columns in L
+!********************************
+for j= 2 to nu-1
+   for i=j to nu
+call somprod(i,j,l(,),u(,),c(,),1,j-1)
+ l(i,j) = a(i,j)-c(i,j)
+   next i
+next j
+!******************************
+! step 4: rest of the rows in U
+!******************************
+for i= 2 to nu-1
+   for j=i+1 to nu
+call somprod(i,j,l(,),u(,),c(,),1,i-1)
+  u(i,j)=(a(i,j)-c(i,j))/l(i,i)
+   next j
+next i
+! *****************************
+! step 5: last diagonal element
+!******************************
+ call somprod(nu,nu,l(,),u(,),c(,),1,nu-1)
+l(nu,nu) = a(nu,nu)-c(nu,nu)
+!******************************
+! step 6:place 1 on diagonal u
+!******************************
+for i=1 to nu
+  u(i,i) = 1
+next i
+print "------------------"
+print " upper triangle = "
+print "------------------"
+mat print u
+print "------------------"
+print " lower triangle = "
+print "------------------"
+mat print l
+! check 
+print "-------------"
+print " check = 'a' "
+print " ------------"
+for i=1 to nu
+ for j=1 to nu
+ call somprod(i,j,l(,),u(,),c(,),1,nu)
+ next j
+next i
+mat print c
+!***************************************
+! lin system : step lin 1 => L*y =d, d=b
+!***************************************
+dim d(1),y(1)
+mat redim d(nu),y(nu)
+!------------------
+! copy so that b=d
+!------------------
+for i=1 to nu
+ d(i) = b(i)
+next i
+! step lin 1 : no 1
+!------------------
+ y(1)= d(1)/l(1,1)
+! step lin 1 : no 2
+!------------------
+  dim cc(1)
+  mat redim cc(nu)
+ for i=2 to nu
+  call somprodvec(i,l(,),y(),cc(),1,i-1)
+  y(i)=(d(i)-cc(i))/l(i,i)
+ next i
+print " L*y = b , 'y = ' "
+mat print y
+!***************************************
+! lin system : step lin 2 => U*x =y
+!***************************************
+!step lin 2 : no 1
+!-----------------
+ dim x(1)
+ mat redim x(nu)
+ x(nu) = y(nu)
+! step lin 2 : no2
+!-----------------
+for i=nu-1 to 1 step -1
+ call somprodvec(i,u(,),x(),cc(),i+1,nu)
+ x(i) = y(i) - cc(i)
+next i
+print " solution a*x=b , 'x= ' "
+for i=1 to nu 
+ print " x(";i;")=",
+next i
+mat print x
+end
+
+sub somprod(i,j,m(,),n(,),c(,),bg,be)
+ som=0
+ for k=bg to be
+  som = som + m(i,k)*n(k,j)
+ next k
+  c(i,j) = som
+end sub
+
+sub somprodvec(i,m(,),z(),cc(),bg,be)
+  som=0
+ for k=bg to be
+  som = som + m(i,k)*z(k)
+ next k
+ cc(i) = som
+end sub

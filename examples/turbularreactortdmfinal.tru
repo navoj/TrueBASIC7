@@ -1,0 +1,138 @@
+option nolet
+! tubularreactortdmfinal.tru
+print "-----------------------------"
+print "tubular reactor (solve TDMA) "
+print " A->B reactionrate=k_a       "
+print "-----------------------------"
+print " peter.vlasschaert@gmail.com "
+print " 2/07/2015  version 1.0      "
+print "-----------------------------"
+print " steady state =>                       "
+print "D*d/dx(dCA/dx)-u*dCA/dx-k_a*CA=0   (1) "
+print " BC: x=0 -> u*CA_in=u*CA-D*dCA/dx  (2) "
+print "     x=l -> dCA/dx=0               (3) "
+input prompt " example =1 , 2 do input = ":sel
+print
+if sel=1 then
+  u  =1
+  Da =1e-4
+  k_a =1
+  CA_in =1
+  l=10 
+  n=10 ! pratical n=50
+ else
+input prompt " u    =mean axial velocity    (m/s)     = ": u
+input prompt " D    =axial dispersion coef. (m^2/s)   = ":Da 
+input prompt " k_a  =reaction rate constant (s^-1)    = ":k_a
+input prompt " CA_in=input concentration A  (mol/m^3) = ":CA_in
+input prompt " L    =Length of the reactor  (m)       = ":l
+input prompt " concentration profile for 'n' parts  'integer ' = ":n
+end if
+print
+dx=l/n
+n_eq=n+1 ! number of equations
+no=n_eq
+dim a(1),b(1),c(1),d(1)
+mat redim a(no),b(no),c(no),d(no)
+! combination (1) and (2) FD schemes
+a_1=-2*Da/dx^2-3*u/dx-k_a-2*u^2/Da
+a_2= 2*Da/dx^2+u/dx
+d1 = -(2*u^2/Da+2*u/dx)*CA_in
+d(1)=d1
+! general equations TDMA  ( except last one use (3) ),2->n_eq-1
+a_d=Da/dx^2+u/dx
+b_d=-2*Da/dx^2-u/dx-k_a
+c_d= Da/dx^2
+! combination (1) and (3) FD schemes
+a_nmin = 2*Da/dx^2+u/dx
+a_n   = -2*Da/dx^2-u/dx-k_a
+dn=0
+x1=a_1
+x2=a_2
+x3=a_nmin
+x4=a_n
+call in_tridiag(no,a(),b(),c(),b_d,c_d,a_d,x1,x2,x3,x4)
+! TDMA solve 'no' equations
+!/////////////////////////////////////////////////
+call in_d(no,d(),d1)
+dim beta(1),gamma(1)
+mat redim beta(no),gamma(no)
+call beta_gamma(no,a(),b(),c(),d(),beta(),gamma())
+!///////////////solve (back substitution) //////////////////
+dim x(1)
+mat redim x(no)
+call back_solve (no,beta(),gamma(),c(),x())
+dim aa(1,1)
+mat redim aa(no,no)
+print " d(i)=aa(i,j)*x(j) => show: d(i) "
+print
+mat print d
+print " matrix aa(i,j)    =>            "
+print
+call show_tridiag(no,a(),b(),c(),aa(,))
+print " column CA(j)       =>            "
+print
+mat print x
+
+end
+
+sub beta_gamma(no,a(),b(),c(),d(),beta(),gamma())
+beta(1) = b(1)
+gamma(1)= d(1)/beta(1)
+for j=2 to no
+ beta (j)=b(j)-a(j)*c(j-1)/beta(j-1)
+ gamma(j)=(d(j)-a(j)*gamma(j-1))/beta(j)
+next j
+end sub
+
+sub back_solve (no,beta(),gamma(),c(),x())
+x(no)=gamma(no)
+! back substitution : solve n->n-1->....1
+for k=no-1 to 1 step -1
+  x(k)=gamma(k)-c(k)*x(k+1)/beta(k)
+next k
+end sub
+
+sub show_tridiag(no,a(),b(),c(),aa(,))
+for i=1 to no
+!=> main diagonal
+  aa(i,i)=b(i)
+!=>above diagonal
+ if i<no then
+  aa(i,i+1)=c(i)
+ end if
+!=>below diagonal
+ if i>=2 then
+  aa(i,i-1)=a(i)
+ end if
+next i
+mat print aa
+end sub
+
+sub in_tridiag(no,a(),b(),c(),md_b,ad_c,bd_a,x1,x2,x3,x4)
+!=> coef main diag
+b(1)=x1 ! correction first line (diagonal matrix)
+for i=2 to no-1
+  b(i)=md_b
+next i
+b(no)=x4 ! correction last line (diagonal matrix)
+!=> coef above diag
+c(1)=x2 ! second correction for first line (diagonal matrix)
+for i=2 to no-1
+  c(i)=ad_c
+next i
+!=> coef below diag
+for i=2 to no-1
+  a(i)=bd_a
+next i
+a(no)=x3 ! second correction for last line (diagonal matrix)
+end sub
+
+sub in_d(no,d(),d1)
+d(1)=d1
+for i=2 to no-1
+  d(i)=0
+next i
+d(no)=0
+end sub
+

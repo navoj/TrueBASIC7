@@ -1,0 +1,127 @@
+option nolet
+print
+! serie : analytical chemistry
+print "************************************************"
+print "* calculation : Theoretical :titrated v0=50ml  *"
+print "* of c0=0.1M HCl with V ml of c=0.1M Na0H.     *"
+print "* definition : phi = (c*v)/(c0*v0),version 1.0 *"
+print "************************************************"
+print "------------------------------------------------"
+print " peter.vlaschaert@gmail.com ,10/09/2016         "
+print "------------------------------------------------"
+print
+print "************************************************"
+print "* example : c=c0 => phi = v/50                 *"
+print " 1e Before EP : phi < 1 :[H(+)]>>>[OH(-)],pH<7 *"
+print " 2e        EP : phi = 1 :[H(+)]=[OH(-)]  ,pH=7 *"
+print " 3e after  EP : phi > 1 :[OH(-)]>>>[H(+)],pH>7 *"
+print "************************************************"
+print " reaction : HCl + NaOH -> NaCl + H(2)O  ,pH =7  "
+print " pKw = pOH + pH  => [OH(-)] = kw/[H(+)]         "
+print "************************************************"
+print " Charge Balance :                               "
+print "[H(+)]+[Na(+)] = [OH(-)]+[Cl(-)]        (1)    *"
+print " [Cl(-)] = c0*v0/(v0+v) => HCl          (2)    *"
+print " [Na(-)] = c*v/(v0+v)   => NaOH         (3)    *"
+print " (c*v-c0*v0)/(v+v0) =[OH(-)] - [H(+)]   (4)    *"
+print " (c0*v0)/(v+v0)*{phi-1) = kw/[H(+)]-[H(+)] (5) *"
+print " example :    phi = v/50 ,c=c0=.1M             *"
+print " (.1*50)/(v+50)*{v/50-1) = kw/[H(+)]-[H(+)](6) *"
+print "************************************************"
+print " pH = - log(10)[H(+)] = -1/ln(10) * ln[H(+)]   *"
+print " ************** ********************************"
+!file:Theoreticaltitrationstrongacidwithstrongbaseversion1
+!*******************************************************
+! theoretical:
+!*******************************************************
+! before EP : acid approximation (curve)
+!             (c0*v0)/(v+v0)*{1-phi} = [H(+)]
+!*******************************************************
+! by     EP : c0*v0 = c*v
+!*******************************************************
+! after  EP : basic approximation (curve)
+!             (c0*v0)/(v+v0)*{phi-1} = [OH(-)]=kw/[H(+)]
+!*******************************************************
+print
+print "*********"
+print " given = "  
+print "*********"
+kw = 1E-14 
+c0 = 0.1     ! HCl'concentration',M
+v0 = 50      ! HCl'volume       ',v0
+print " HCl => c0 = ";c0;" M , v0= ";v0;" ml"
+c  = 0.1     ! added NaOH 'concentration',M
+print " NaOH => c = ";c;" M"
+print
+print "*******************************"
+print " theoretical titration curve = "  
+print "*******************************"
+print
+print "V ml NaOH","phi","conc [H(+)]","pH"
+print
+for v=0 to 75 step 5 !'volume added NaOH'
+call right_eq_five(c0,v0,c,v,right_eq,phi)
+if phi = 1 then 
+ print " equivalence point : EP (phi = 1),NaCl"
+end if
+aa = 1
+bb = right_eq
+cc = - kw
+call quadratic_eq(aa,bb,cc,x1,x2)
+!********************************************************
+! pH = -log10([H(+)]),x1>0 only solution physical problem
+!********************************************************
+print v,phi,x1,-log10(x1)
+next v
+end
+
+sub right_eq_five(c0,v0,c,v,right_eq,phi)
+!***************************************
+! see quadratic_eq => (bb = right_eq)
+!***************************************
+!***************************************
+! total volume ,after added Na0H =vtotal 
+!***************************************
+vtotal = v+v0
+qq = c0*v0
+noem = qq/vtotal
+!*****************************
+! definition of phi from above
+!*****************************
+phi = (c*v)/(c0*v0)
+right_eq = noem*(phi-1)
+end sub
+
+sub quadratic_eq(aa,bb,cc,x1,x2)
+!***********************************
+!example : titration curve (HCl,NaOH)
+!aa =1
+!b =right_eq
+!c = - kw
+!***********************************
+!
+!***********************************
+! general quadratic equation 
+!***********************************
+! aa*x^2+bb*x+cc*x = 0
+!***********************************
+discr = (bb)^2-4*aa*cc
+if discr > 0 then 
+   sqr_discr = sqr(discr)
+   ! positiv root
+   x1 = (-bb+sqr_discr)/(2*aa)
+   ! negativ root
+   x2 = (-bb-sqr_discr)/(2*aa)
+elseif discr = 0 then
+   ! x1=x2 root
+   x1 = -bb/(2*aa)
+   x2 = x2
+elseif discr < 0 then
+  ! complex roots 'no physical meaning'
+ re_part = -bb/(2*aa)
+ im_part = sqr(-discr)/(2*aa)
+ print " complex roots),pairs "
+ print " x1 = ";re_part;" + i ";im_part
+ print " x2 = ";re_part;" - i ";im_part
+end if
+end sub

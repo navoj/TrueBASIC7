@@ -1,0 +1,301 @@
+option nolet
+print "*****************************************************************"
+print "* find 'DISPLAYreactionsystemproductsandreactants',version 1.0  *"       
+print "* peter.vlasschaert@gmail.com,10/03/2017    (H2+O2 -> H2O)      *"
+print "*****************************************************************"
+!filename:DISPLAYreactionsystemproductsandreactantsaqversion1finalfinal.tru
+!*****************************************
+! <   example  > 'above input ' = test = 2
+!*****************************************
+np = 1     ! number of 'products'
+nr = 2     ! number of 'reactants'  
+text1$ = " name  =  "
+text2$ = " product "
+dim a$(1),b$(1),c$(1)    ! products
+dim aa$(1),bb$(1),cc$(1) ! reactants
+mat redim a$(np),b$(np),c$(np)
+mat redim aa$(nr),bb$(nr),cc$(nr)
+test = 2   ! example
+print " give number : input (=1),example(=2) = ";test
+mat redim a$(np),b$(np)
+if test =1 then
+print " product ' input '     => "
+call input_products(np,a$(),text1$,text2$)
+else 
+a$(1)  = "H2O1"     ! string 'products '
+aa$(1) = "H2"       ! string 'reactants'
+aa$(2) = "O2"       ! string 'reactants'
+end if
+!********************************************
+! <products >
+mat b$ = a$     ! find, matrix input
+mat c$ = a$     ! find, display products
+! <reactants>
+mat bb$ = aa$     ! find, matrix input
+mat cc$ = aa$     ! find, display reactants
+!********************************************
+dim el_list$(1) ! el_list$ =(H,O)
+print "**********************************************"
+print " input 'products',number of input products  = ";np
+print " input 'products',number of input reactants = ";nr
+print "**********************************************"
+print
+mat print a$,aa$
+dim index(1,1),num(1) ! products
+mat redim num(np)     ! products
+dim indexr(1,1),numr(1) ! reactants
+mat redim numr(nr)      ! reactants
+!***************************
+! find max value 'mat num'
+!***************************
+! < products >
+for i=1 to np
+    call find_numbers_string(tel,b$(i),index(,))
+    num(i) = tel   
+ next i
+! < reactants >
+for i=1 to nr
+    call find_numbers_string(tel1r,bb$(i),indexr(,))
+    numr(i) = tel1r   
+ next i
+!*****************************************
+! find max rows in 'mat_index'
+!*****************************************
+call sort_bubble(np,num())         ! products
+n1 = num(np) ! max value -> number rows 'mat_index'
+print " maximun number of rows ,products = ";n1
+call sort_bubble(nr,numr())         ! reactants
+n11 = numr(nr) ! max value -> number rows 'mat_index'
+print " maximun number of rows ,products = ";n11
+!
+!****************************************************
+! build : mat_index
+!****************************************************
+dim mat_index(1,1)
+mat redim mat_index(n1,np*2)   ! two columns 'every products'
+dim mat_indexr(1,1)
+mat redim mat_indexr(n11,nr*2) ! two columns 'every reactants'
+
+!*********************************
+! first column  : number elements
+! second column : position
+!*********************************
+call mat_index(np,tel,num(),b$(),index(,),mat_index(,))
+call mat_index(nr,tel1r,numr(),bb$(),indexr(,),mat_indexr(,))
+mat print mat_index,mat_indexr
+!********************************************************
+! find 'elements' in the string a$(i),(i=1...np),products    
+!********************************************************
+!********************************************************
+! find 'elements' in the string a$(i),(i=1...np),reactants   
+!********************************************************
+dim elm$(1,1)           ! products
+mat redim elm$(n1,np) 
+!dim elmr$(1,1)         ! reactants,same
+!mat redim elmr$(n11,nr) 
+!**********************************
+! rows     => max value,before = n1,n11
+! columns  => number of products,reactants
+!**********************************
+call find_el_string(np,b$(),num(),mat_index(,),elm$(,))    ! products
+!call find_el_string(nr,bb$(),numr(),mat_indexr(,),elmr$(,))! reactants,same
+print " the element matrix => "
+mat print elm$
+print "****************************************"
+print " display product :reaction system   =>  "
+print "****************************************"
+print "************************************"
+print "* removes ones a$(i)  ,i=1..";np;"=> "
+print "* removes ones aa$(i) ,i=1..";nr;"=> "
+print "************************************"
+!****************************************
+!   < removes ones from b$(i), i=1..np >
+!   < removes ones from bb$(i),i=1..nr >
+!****************************************
+!example : c$(1)  "K4Fe1C6N6" -> "K4FeC6N6"
+!****************************************
+!*****************************************************
+print
+!*****************************************************
+! < products>
+for i=1 to np
+!***********************
+! dummie string = 'tem$'
+!***********************
+call removes_ones_string(i,c$())
+print " result,products(";i;")  = ";c$(i)
+next i
+print
+! < reactants>
+for i=1 to nr
+!***********************
+! dummie string = 'tem$'
+!***********************
+call removes_ones_string(i,cc$())
+print " result,reactants(";i;") = ";cc$(i)
+next i
+print
+!*****************************************************
+!*****************************************************
+print " find all elements in reaction 'system' => "
+print
+!*************************************
+! concatenate ,string parts together
+!*************************************
+call concatenate_string(np,b$(),length2,tem$)
+print " = > ",tem$
+!****************************************
+! change 'all numbers ' to 'commas' = ","
+!****************************************
+! < products >
+dim index_num(1,2)
+list_el$ = tem$
+call find_numbers_string(tel1,list_el$,index_num(,))
+dim index_numlist(1)
+mat redim index_numlist(tel1)
+for i=1 to tel1
+   index_numlist(i) = index_num(i,2)  
+next i
+print " position of number 'string list_el$ ,products ' = "
+print
+mat print index_numlist
+dim mat_el$(1)
+mat redim mat_el$(tel1)     
+call with_duplicates(tel1,length2,index_numlist(),list_el$,mat_el$())
+print "   matrix of all elements 'with duplicates'                      => "
+print
+mat print mat_el$
+print " ' removes duplicates ' matrix for all elements'reaction system' => "
+dim result$(1)
+call removes_duplicates(mat_el$(),result$(),target)
+print "   number : all elements = ";target-1
+n2 = target-1
+print
+mat print result$
+! display reaction system
+! O2+H2 -> H2O
+print "   <  display reaction H2,O2 -> H2O => >   "
+print
+print " " & cc$(1) & "+" & cc$(2) & " -> " & c$(1)
+end
+
+sub concatenate_string(np,b$(),length2,tem$)
+tem$ = ""
+for i=1 to np
+tem$ = tem$ & b$(i)
+next i
+length2 = len(tem$)
+end sub
+
+sub input_products(np,a$(),text1$,text2$)
+for i=1 to np
+    print text2$;"(";i;" )   => "
+    line input prompt text1$:a$(i)
+next i
+end sub
+
+sub mat_index(np,tel,num(),b$(),index(,),mat_index(,))
+for i=1 to np 
+    call find_numbers_string(tel,b$(i),index(,))
+    num(i) = tel
+!******************************************
+!   mat print index
+!******************************************
+    k=i
+!******************************************
+! i=k => ((i+(k-1)),(i+k))
+!******************************************
+ if i=k then         
+       for j=1 to num(i)
+         mat_index(j,i+(k-1)) = index (j,1)    
+         mat_index(j,i+k)     = index (j,2)
+       next j
+ end if
+next i
+end sub
+
+sub find_el_string(np,b$(),num(),mat_index(,),elm$(,))
+for vv=1 to np
+ elm$(1,vv) = b$(vv)[1:mat_index(1,2*vv)-1]
+for i=1 to num(vv)-1
+ elm$(i+1,vv) =  b$(vv)[mat_index(i,2*vv)+1:mat_index(i+1,2*vv)-1]
+next i
+next vv
+end sub
+
+sub with_duplicates(tel1,length2,index_numlist(),list_el$,mat_el$())
+mat_el$(1)=list_el$[1:index_numlist(1)-1]
+for i=2 to tel1-1
+  mat_el$(i) = list_el$[index_numlist(i-1)+1:index_numlist(i)-1]
+next i
+mat_el$(tel1)= list_el$[index_numlist(tel1-1)+1:length2-1]
+end sub 
+
+
+sub removes_duplicates(el$(),result$(),target)
+target = 1
+for i=1 to size(el$)
+  value$ = el$(i)
+  find = 0   ! begin nothing to find
+  for j=1 to target-1  ! first value target = 1 (nothing to do)
+      if result$(j) = value$ then
+         find = 1 !  find duplicates
+      end if
+  next j
+  if find = 0 then
+           result$(target)= value$
+     target = target + 1
+     mat redim result$(target)
+  end if
+next i
+end sub
+
+sub sort_bubble(np,array())
+! simple sort algo
+flag = 0
+do while flag = 0
+     flag = 1
+ for z=1 to np-1
+  if array(z) > array(z+1) then
+   ! interchange principle for variables
+     temp = array(z)
+     array(z)=array(z+1)
+     array(z+1) = temp
+     flag = 0
+  end if
+ next z
+loop
+end sub
+
+sub removes_ones_string(v1,c$())
+length1=len(c$(v1)) 
+for j=1 to length1           ! search string for ones
+ if c$(v1)[j:j] = "1" then   ! find symbol (= "1") in a string
+    tem$ = c$(v1)[1:j-1]& c$(v1)[j+1:length1]
+    c$(v1)=tem$              ! new string = one smaller string
+    length1 = length1-1      ! find ones ,string one smaller in length
+  else
+    tem$ = c$(v1)
+  end if
+  c$(v1)=tem$
+next j
+
+end sub
+
+sub find_numbers_string(tel,element$,index(,))
+length = len(element$) !number of symboles in the string
+i=0
+for n=1 to length
+  symbol = ORD(element$[n:n])
+  if symbol > 48 and symbol <= 56 then
+        i=i+1
+    mat redim index(i,2)
+    index (i,1) = symbol-48 ! number
+    index (i,2) = n         ! position string from numbers
+  end if
+next n
+tel = i     ! number of elements and number of indexes
+end sub
+
+
+

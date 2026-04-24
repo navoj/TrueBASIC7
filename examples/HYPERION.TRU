@@ -1,0 +1,95 @@
+!
+! motion of the "hyperion" (actually a dumbbell
+! theta() = dumbbell angle   omega() = dumbbell angular velocity t() = time
+!
+! made using kepler.tru
+!
+program hyperion
+   option nolet
+   library "sgfunc.trc"
+   library "sglib.trc"
+   dim theta(100000), omega(100000), t(100000)
+   call initialize(xc,vxc,yc,vyc,theta,omega,t,dt,mr,tot,st$)
+   call calculate(xc,vxc,yc,vyc,theta,omega,t,dt,mr,tot,st$)
+   call display(theta,omega,t,dt,mr)
+end
+! initialize variables
+! theta() = dumbbell angle  omega() = dumbbell angular velocity
+sub initialize(xc,vxc,yc,vyc,theta(),omega(),t(),dt,mr,tot,st$)
+   input prompt "mass ratio of saturn to sun -> ": mr 
+   input prompt "initial x position (in AU) -> ": xc
+   input prompt "initial y position (in AU) -> ": yc
+   input prompt "initial x velocity (in AU/yr) -> ": vxc
+   input prompt "initial y velocity (in AU/yr) -> ": vyc
+   input prompt "initial angle (in radians) -> ": theta(1)
+   input prompt "initial omega (in radians/s) -> ": omega(1)
+   input prompt "time step (in yrs) -> ": dt
+   input prompt "total time (in yrs) -> ": tot
+   input prompt "output file ->": st$
+   t(1) = 0
+end sub
+! use the Euler or another chosen method
+sub calculate(xc,vxc,yc,vyc,theta(),omega(),t(),dt,mr,tot,st$)
+   open #1: name st$, organization text, create newold
+   erase #1
+   print #1: t(1),theta(1),omega(1)
+   i = 0
+   do
+      i = i + 1
+      t(i+1) = t(i) + dt
+      call dv(xc,vxc,yc,vyc,omega(i),theta(i),t(i),dvxc,dvyc,domega,mr)
+      omega1 = omega(i)+0.5*dt*domega 
+      theta1 = theta(i)+0.5*dt*omega(i)
+      t1 = t(i)+0.5*dt
+      xc1 = xc+0.5*dt*vxc
+      vxc1 = vxc+0.5*dt*dvxc
+      yc1 = yc+0.5*dt*vyc
+      vyc1 = vyc+0.5*dt*dvyc
+      call dv(xc1,vxc1,yc1,vyc1,omega1,theta1,t1,dvxc2,dvyc2,domega2,mr)
+      omega(i+1) = omega(i)+dt*domega2
+      theta(i+1) = theta(i)+dt*omega1
+      if theta(i+1) > pi then theta(i+1) = theta(i+1) - 2*pi
+      if theta(i+1) < -pi then theta(i+1) = theta(i+1) + 2*pi
+      xc = xc+dt*vxc1
+      vxc = vxc+dt*dvxc2
+      yc = yc+dt*vyc1
+      vyc = vyc+dt*dvyc2
+      print #1: t(i+1),theta(i+1),omega(i+1)
+   loop until (t(i+1) >= tot or i+1 >= 100000)
+   close #1
+   mat redim omega(i+1),theta(i+1),t(i+1)
+end sub
+
+sub dv(xc0,vxc0,yc0,vyc0,omega0,theta0,t0,dvxc,dvyc,domega,mr)
+   r = sqr(xc0^2+yc0^2)
+   dvxc = -(4*pi^2*mr*xc0)/r^3
+   dvyc = -(4*pi^2*mr*yc0)/r^3
+   domega = -(12*pi^2*mr)*(xc0*sin(theta0)-yc0*cos(theta0))*(xc0*cos(theta0)+yc0*sin(theta0))/r^5
+end sub
+
+! display theta and omega in separate windows
+sub display(theta(),omega(),t(),dt,mr)
+   set background color "white"
+   call setcanvas("white")
+   set color "black"
+   clear
+   open #1: screen 0,.9,0,.45    ! bottom window
+   call settitle("Angular velocity vs. time")
+   call sethlabel("Time (yr)")
+   call setvlabel("Omega")
+   call datagraph(t,omega,1,1,"black")
+   close #1
+   open #1: screen 0,.9,.49,.94    ! top window
+   call settitle("Theta vs. time")
+   call sethlabel("Time (yr)")
+   call setvlabel("Theta")
+   call datagraph(t,theta,1,1,"black")
+   close #1
+   open #1: screen 0,.9,.94,1
+   set cursor 1,1
+   print "mass ratio = "; mr
+   print "time step = "; dt
+   close #1
+   get key z
+end sub
+

@@ -1,0 +1,97 @@
+option nolet
+print
+! serie : analytical chemistry
+print "************************************************"
+print "* find : (S)olubility = S 'AgBr(solid)'        *"
+print "* calculation : complex formation with a ligand*"
+print "* added  to the solid.                         *"
+print "* AgBr(solid) solved with NH(3)='ligand'= X    *" 
+print "  M(p)A(q):example M = Ag(+),A = Br(-),p=1,q=1 *"
+print "* example: AgBr(solid)    = Ag(+)+Br(-)   Ksp  *"
+print "        Ag(+)+NH(3)       = Ag(NH(3))(+)     k1*"
+print "        Ag(NH(3))(+)+NH(3)= Ag(NH(3))(2)(+)  k2*"
+print " general:  k1,k2,k3 to kn     (version 1.0)    *"
+print "************************************************"
+print "------------------------------------------------"
+print " peter.vlaschaert@gmail.com ,10/09/2016         "
+print "------------------------------------------------"
+! filename :complexformationwithligandfinalfinal.tru
+print
+print "***************************************************"
+print "* M => beta_c(0) ?                                *"
+print " MX(+) = k1*[M(+)][X],[MX(2)(+)] = k2*[MX(+)][x]  *"
+print " beta_c(0) = [M(+)]/([M(+)]+[MX(+)]+[MX(2)(+)])   *"
+print " example : k1,k2                                  *"
+print " beta_c(0) = 1/(1+k1*[X]+k1*k2*[x]^2)             *"
+print "***************************************************"
+print
+print "********************************************************"
+print " general : k1,k2,...kn  'n formations complexes with X'*"
+print "beta_c(0) = 1/(1+k1*[X]+k1*k2*[x]^2+..+k1*k2..kn*[x]^n)*"
+print "********************************************************"
+print
+print "*********"
+print " given = "  
+print "*********"
+print
+Ksp = 5.25E-13  ! solubility product M(p)A(q) (solid)
+print " Ksp = solubility product(equilibrium) = ";Ksp
+print
+print "!************************************************!"
+print "! examples : AgBr => p=1,q=1,Ag(2)CrO4 => p=2,q=1!"
+print "!************************************************!"
+p=1
+q=1
+print " M(p)A(q), p = ";p;" q = ";q
+! k1,k2.....kn => formation constant for complex
+number_ligand = 2
+print " number_ligand = ";number_ligand
+dim k(1)
+mat redim k(number_ligand)
+for i=1 to number_ligand
+  read k(i)
+next i
+print "*****************************************"
+print "* equilibrium constant for the complexes*"
+print "*****************************************"
+for i=1 to number_ligand
+  print "k(";i;")= ";k(i)
+next i
+print "*******************************"
+print "*ligand 'x' conc in M: X=NH(3)*"
+print "*******************************"
+x = 0.1
+print " conc X in 'M' = ";x;" M"
+print
+print "**********"
+print " result = "  
+print "**********"
+print
+call beta_complex_c0(number_ligand,k(),x,beta_c0)
+print " beta0 'beta_c(0)'  = ";beta_c0
+call solubility(Ksp,p,q,beta_c0,s)
+print " S = ' Solubility of M(p)A(q)(solid) ' => ";s;" M"
+data 1585,6761
+end
+
+sub solubility(Ksp,p,q,beta_c0,s)
+tel  = ksp
+noem = p^p*q^q*(beta_c0)^p
+ratio = tel/noem
+root = p+q
+s = (ratio)^(1/root)
+end sub
+
+sub beta_complex_c0(number_ligand,k(),x,beta_c0)
+w = number_ligand+1
+som  = 1
+for i=1 to w-1
+ prod = 1
+ for j=1 to i  
+   prod = prod * x^(w-i)*k(j)  
+  ! print i,j,prod
+ next j
+som = som + prod
+next i
+beta_c0 = 1/som 
+end sub

@@ -1,0 +1,46 @@
+option nolet
+do      ! repeat the exercise
+clear   ! after do the exercise clear the screen
+print
+print "****************************************************"
+print "*how to use different separator , or . for a number*"
+print "* peter.vlasschaert@gmail.com,    22/01/2017       *"
+print "****************************************************"
+!     filename:      belgiuminputtruefinal.tru
+print
+!********************************************
+!be: input:use , for numbers -> example 1,056
+!eu: input:use . for numbers -> example 1.056
+!********************************************
+print "**************************************************"
+print "choose : eu : number = 1.056,be : number = 1,056 *"
+print "**************************************************"
+print
+input prompt " eu or be       = ":ne$ ! option eu or be
+print
+if ne$ = "eu" then
+input prompt     " give a realnumber with  a point = ":a$
+num=val(a$)
+print " number = ";num      ! truebasic format
+else
+!*******************************************
+!* replace , with . to use val 'command'   *
+!* don't use =>   input prompt 'error'     *
+!*******************************************
+line input prompt " give a realnumber with a comma = ":a$
+length=len(a$)              ! length of the string
+n1 = cpos(a$,",")           ! find comma in string
+first$   = a$(1:n1-1)       ! first part before comma
+second$  = a$(n1+1:length)  ! second part after comma
+a$ = first$ & "." & second$ ! new string a$:use for val command
+print " string = ";a$       ! a$ = string
+num = val(a$)               ! find number in truebasic format
+print " number = ";num      ! num  = number
+end if
+input prompt "continue? Y/N = ":answer$  ! do exercise yes or no
+    if ucase$(answer$)= "N"  then     ! uppercase N
+       exit do                        ! end exercise
+    end if
+loop
+!get key input
+end

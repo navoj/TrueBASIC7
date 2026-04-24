@@ -1,0 +1,261 @@
+! Ising model in two dimensions on a square lattice
+! This version writes data to file(s), no graphics
+
+program ising2
+   library "sgfunc.trc"
+   library "sglib.trc"
+   option nolet
+   dim spin(0,0),order(0)
+   randomize
+   call initialize(spin,order,nmax,t1,t2,nt,h1,h2,nh,f1,f2$,ms0,ms1,ms,ns,ib,of1$,of2$,maxt)
+   time0=time
+   if nt>0 then
+      dt=(t2-t1)/nt
+   else
+      dt=0
+   end if
+   if nh>0 then
+      dh=(h2-h1)/nh
+   else
+      dh=0
+   end if
+   print
+   set zonewidth 13
+   print "  Temp (J/k)","  Magn Field","  Magnetizat","  Energy","  Susceptib ","  Heat Capacity"
+   print
+   m1=0
+   call init_spin(spin,nmax,f1,order,m1,maxt)
+   call transient(spin(,),t1,h1,nmax,ms0,ib,order(),m1,maxt)
+   if of1$ <> "" then
+      open #1: name of1$, organization text, create newold
+      erase #1
+   end if
+   for i=1 to nt+1
+      t=t1+(i-1)*dt
+      for j=1 to nh+1
+         h=h1+(j-1)*dh
+         if i<>1 or j<>1 then
+            if f2$="1" then
+               call init_spin(spin,nmax,f1,order,m1,maxt)
+            end if
+            call transient(spin(,),t,h,nmax,ms1,ib,order(),m1,maxt)
+         end if
+         call calculate(spin,t,h,ord,en,chi,ch,nmax,m1,ms,ns,ib,order,maxt)
+         print using "  #.#####^^^^": t,h,ord,en,chi,ch
+         if of1$ <> "" then
+            print #1, using "#.#####^^^^": t;
+            print #1, using "<#":", ";
+            print #1, using "#.#####^^^^": h;
+            print #1, using "<#":", ";
+            print #1, using "#.#####^^^^": ord;
+            print #1, using "<#":", ";
+            print #1, using "#.#####^^^^": en;
+            print #1, using "<#":", ";
+            print #1, using "#.#####^^^^": chi;
+            print #1, using "<#":", ";
+            print #1, using "#.#####^^^^": ch
+         end if
+      next j
+   next i
+   if of1$ <> "" then close #1
+   time1=time
+   cpu=round(time1-time0,2)
+   print
+   print "CPU time = ",cpu," sec"
+   for m=1 to m1
+      order(m)=order(m)/nmax^2
+   next m
+   if of2$ <> "" then
+      open #2: name of2$, organization text, create newold
+      erase #2
+      for m=1 to m1
+         print #2, using "######": m;
+         print #2, using "<#":", ";
+         print #2, using "#.#####^^^^": order(m)
+      next m
+      close #2
+   end if
+   print "Hit any key to plot magnetization time series ..."
+   get key z
+   call display(order(),m1,t1,t2,nt,h1,h2,nh,f1,ms0,f2$,ms1,ms,ns,ib)
+end
+
+! initialize variables
+! nmax = side of lattice
+sub initialize(spin(,),order(),nmax,t1,t2,nt,h1,h2,nh,f1,f2$,ms0,ms1,ms,ns,ib,of1$,of2$,maxt)
+   input prompt "lattice size nmax -> ": nmax ! lattice size is nmax by nmax
+   mat redim spin(0 to nmax+1,0 to nmax+1)
+   input prompt "initial spin config (1 up, -1 down, 2 random) -> ": f1 
+   input prompt "start and end temperatures (in units of J/k), # steps [0 for one T] -> ": t1,t2,nt
+   input prompt "start and end fields (in units of J/mu), # steps [0 for one H] -> ": h1,h2,nh
+   input prompt "ms0 (init trans), ms (rec interval [1 for all]), ns (#rec) -> ": ms0,ms,ns
+   if nt>0 or nh>0 then
+      line input prompt "reinitialize spins for each T/H? [1 yes, 0 no] -> ": f2$
+      input prompt "ms1 (transient per T/H) => ": ms1
+   end if
+   maxt=100001
+   if ms0+(ns-1)*ms+1>maxt or ms1+(ns-1)*ms+1>maxt then
+      print "maxt is too small!"
+      stop
+   end if
+   mat redim order(maxt)
+   input prompt "periodic (1) or free (2) boundary -> ": ib
+   line input prompt "output file for thermodynamic functions -> ": of1$
+   line input prompt "output file for magnetization time series -> ": of2$
+end sub
+
+! initialize spin directions
+! also initialize magnetization and energy
+sub init_spin(spin(,),nmax,f1,order(),m1,maxt)
+   m1=m1+1
+   if m1>maxt then
+      order(1)=order(m1-1)
+      m1=2
+   end if
+   if f1<>0 then
+      if f1=1 or f1=-1 then
+         for i = 0 to nmax+1
+            for j = 0 to nmax+1
+	       spin(i,j) = 0
+            next j
+         next i
+         for i = 1 to nmax
+            for j = 1 to nmax
+	       spin(i,j) = f1
+            next j
+         next i
+         order(m1)=f1*nmax^2
+      else
+         order(m1)=0
+         for i=1 to nmax
+            for j=1 to nmax
+               if(rnd <= 0.5) then
+                  spin(i,j) = 1
+               else 
+                  spin(i,j) = -1
+               end if
+               order(m1)=order(m1)+spin(i,j)
+            next j
+         next i
+      end if
+   end if
+end sub
+
+! Process transients as requested
+sub transient(spin(,),t,h,nmax,ms0,ib,order(),m1,maxt)
+   for m=1 to ms0
+      m1=m1+1
+      if m1>maxt then
+         order(1)=order(m1-1)
+         m1=2
+      end if
+      order(m1)=order(m1-1)
+      for i = 1 to nmax
+         i1=i-1
+         if ib=1 and i=1 then i1=nmax
+         i2=i+1
+         if ib=1 and i=nmax then i2=1
+         for j = 1 to nmax
+            j1=j-1
+            if ib=1 and j=1 then j1=nmax
+            j2=j+1
+            if ib=1 and j=nmax then j2=1
+            isum=spin(i1,j)+spin(i2,j)+spin(i,j1)+spin(i,j2)
+            de=2*spin(i,j)*(isum+h)
+            if de<0 then
+                spin(i,j)=-spin(i,j)
+                order(m1)=order(m1)+2*spin(i,j)
+            else if rnd<=exp(-de/t) then
+                spin(i,j)=-spin(i,j)
+                order(m1)=order(m1)+2*spin(i,j)
+            end if
+         next j
+      next i
+   next m
+end sub
+
+! do the real work here at temperature t and field h
+sub calculate(spin(,),t,h,ord,en,chi,ch,nmax,m1,ms,ns,ib,order(),maxt)
+   sum=0
+   sum2=0
+   sume=0
+   sume2=0
+   for k=1 to ns
+      xmag=0
+      xe=0
+      if k=1 then
+         m2=1
+      else
+         m2=ms+1
+      end if
+      for m=1 to m2
+         if m<m2 then
+            m1=m1+1
+            if m1>maxt then
+               order(1)=order(m1-1)
+               m1=2
+            end if
+            order(m1)=order(m1-1)
+         end if
+         for i = 1 to nmax    ! sweep along each row and column
+            i1=i-1
+            if ib=1 and i=1 then i1=nmax
+            i2=i+1
+            if ib=1 and i=nmax then i2=1
+            for j = 1 to nmax
+               j1=j-1
+               if ib=1 and j=1 then j1=nmax
+               j2=j+1
+               if ib=1 and j=nmax then j2=1
+               isum=spin(i1,j)+spin(i2,j)+spin(i,j1)+spin(i,j2)
+               if m<m2 then
+                  de=2*spin(i,j)*(isum+h)
+                  if de<0 then
+                     spin(i,j)=-spin(i,j)
+                     order(m1)=order(m1)+2*spin(i,j)
+                  else if rnd<=exp(-de/t) then
+                     spin(i,j)=-spin(i,j)
+                     order(m1)=order(m1)+2*spin(i,j)
+                  end if
+               else
+                  xmag=xmag+spin(i,j)
+                  xe=xe-0.5*spin(i,j)*isum-h*spin(i,j)
+               end if
+            next j
+         next i
+      next m
+      sum=sum+xmag
+      sum2=sum2+xmag^2
+      sume=sume+xe
+      sume2=sume2+xe^2
+   next k
+   ord=sum/ns
+   chi=(sum2/ns-ord^2)/(t*nmax^2)
+   ord=ord/nmax^2   
+   en=sume/ns
+   ch=(sume2/ns-en^2)/(t*nmax)^2
+   en=en/nmax^2
+end sub
+
+! Display the time series even if you didn't save it into a file
+sub display(order(),m1,t1,t2,nt,h1,h2,nh,f1,ms0,f2$,ms1,ms,ns,ib)
+   set background color "white"
+   call setcanvas("white")
+   set color "black"
+   clear
+   dim t(0)
+   mat redim t(m1),order(m1)
+   for i=1 to m1
+      t(i)=i
+   next i
+   call settitle("Magnetization Time Series for Ising Model in 2D")
+   call sethlabel("Time (Monte Carlo steps per spin)")
+   call setvlabel("Magnetization (normalized)")
+   call datagraph(t,order,3,1,"black")
+   set cursor 3,20
+   print "T1=";t1;", T2=";t2;", #T=";nt+1;", H1=";h1;", H2=";h2;", #H=";nh+1
+   set cursor 4,20
+   print "Boundary=";ib;", Initial config=";f1;", Reinitialize per T/H = ";f2$
+   set cursor 5,20
+   print "Initial transient=";ms0;", Trans per T/H=";ms1;", Rec int=";ms;", #rec=";ns
+end sub

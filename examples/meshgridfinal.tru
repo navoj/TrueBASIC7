@@ -1,0 +1,118 @@
+option nolet
+!meshgridfinal.tru
+print "generation of mesh data,version 1.1"
+print
+print "written by:peter.vlasschaert@gmail.com "
+print "date:11/06/2001, correction :05/08/2015"
+! "with truebasicgold edition   "
+! "will work also in older versions"
+! "meshout:square mesh,right-angled triangles"
+randomize
+print "finite element mesh:meshout"
+print "type:square mesh of right-angled triangles"
+print
+input prompt "number points x direction = ":npx
+input prompt "number points y direction = ":npy
+input prompt " even = 1 ,odd = 2 'integer' = ":sel
+nnp=npx*npy
+nel=2*(npx-1)*(npy-1)
+!define nodal point coordinates
+!v=(npy-1)*npx+npx=npy*npx=nnp
+dim x(1),y(1)
+mat redim x(nnp),y(nnp) 
+for iy=1 to npy
+  for ix=1 to npx
+      i=(iy-1)*npx+ix
+    x(i)=(ix-1)/(npx-1)
+    y(i)=(iy-1)/(npy-1)
+  next ix
+next iy
+print
+print "coordinates (x(),y()) = "
+print " x()"
+mat print x
+print " y()"
+mat print y
+print "press any key on the keyboard"
+print
+get key k
+!define the three nodes of each element in a (square mesh)
+!nxel=number of x elements (same for nyel) is one less than
+!nodes in one particulary direction.
+nxel=npx-1
+nyel=npy-1
+nxyel=nxel*nyel
+!coordinates of the uppertriangles m1 called 
+! nodes i,j,k from triangle
+m11=2*nxyel-1
+dim npi(1),npj(1),npk(1)
+mat redim npi(m11),npj(m11),npk(m11)
+for iy=1 to nyel
+  for ix=1 to nxel
+      nsq=(iy-1)*nxel+ix
+      m1=2*nsq-1
+      i=(iy-1)*npx+ix
+  npi(m1)=i
+  npj(m1)=i+npx+1
+  npk(m1)=i+npx
+  next ix
+next iy
+print " number triangle = counter clockwise numbering "
+print "m1 triangle nodes:'upper triangle':odd number"
+print
+!n=2*nxyel this is even
+!v odd numbers for  n=even
+!v=2*int(n/2*rnd)+1
+pg=2*nxyel
+v=2*int(pg/2*rnd)+1
+print "triangle number = ";v
+print npi(v),npj(v),npk(v)
+!coordinates of the lowertriangles m2 called 
+! nodes i,j,k from triangle
+m22=2*nxyel
+mat redim npi(m22),npj(m22),npk(m22)
+for iy=1 to nyel
+  for ix=1 to nxel
+      nsq=(iy-1)*nxel+ix
+      m2=2*nsq
+      i=(iy-1)*npx+ix
+  npi(m2)=i
+  npj(m2)=i+1
+  npk(m2)=i+npx+1
+  next ix
+next iy
+print "m2 triangle nodes:'lower triangle':even number"
+print
+!n=2*nxyel this is even
+!w even numbers for n=even
+!w=2*int(n/2*rnd)+2
+!w=2*int(pg/2*rnd)+2
+v=v+1
+w=v
+print "triangle number = ";w
+print npi(w),npj(w),npk(w)
+print
+print "randomize node in global coordinates"
+print "and also in the range of 0 =<x,y=<1 "
+print "------------------------------------"
+if sel =1 then
+print "triangle number = ";w
+w=w
+else
+w=w-1
+print "triangle number = ";w
+end if
+print
+print "node number =";npi(w),"x coordinate =";x(npi(w))
+print "                   ", "y coordinate =";y(npi(w))
+print "node number =";npj(w),"x coordinate =";x(npj(w))
+print "                   ", "y coordinate =";y(npj(w))
+print "node number =";npk(w),"x coordinate =";x(npk(w))
+print "                   ", "y coordinate =";y(npk(w))
+print
+print "now you can draw triangle with is global normalized coordinates"
+print
+print "end"
+get key m
+end
+

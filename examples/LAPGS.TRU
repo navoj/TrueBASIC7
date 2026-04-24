@@ -1,0 +1,143 @@
+!
+! calculate the electric potential and field lines
+! between two parallel square prisms at fixed potentials
+! use the Gauss-Seidel method
+! Program to accompany "Computational Physics" by N. Giordano and H. Nakanishi
+! modified by H. Nakanishi
+!
+program laplace
+   option nolet
+   library "sgfunc.trc"
+   library "sglib.trc"
+   dim v(0,0)    ! store the potential in this array
+   call initialize(v(,),max,out$,out2$,lmax,acc)
+   call calculate(v(,),max,n,iter,lmax,acc,diff,secs)     ! iterate with relaxation method
+   call display(v(,),max,out$,out2$,iter,lmax,acc,diff,secs)    ! plot final result
+end
+
+! initialize variables
+! v() = potential   i,j = position   max determines number of grid steps
+sub initialize(v(,),max,out$,out2$,lmax,acc)
+   print "number of grid steps per unit distance"
+   input prompt "(x and y run from -1 to 1) -> ": max
+   input prompt "size of square prism -> ": l
+   input prompt "accuracy per grid point -> ": acc
+   line input prompt "output file name for V -> ": out$
+   line input prompt "output file name for E -> ": out2$
+   mat redim v(-max to max,-max to max)  ! resize array
+   for i = -max to max                   ! zero out array
+      for j = -max to max
+         v(i,j) = 0
+      next j
+   next i
+   lmax = int(l*max/2+0.5)
+   for j = -lmax to lmax	! set up boundary conditions
+      for i = -lmax to lmax
+         v(i,j) = 1
+      next i
+   next j
+end sub
+
+! v() is the potential, max -> determines number of grid steps
+! n = number of iterations of relaxation algorithm
+sub calculate(v(,),max,n,i,lmax,acc,diff,secs)
+   secs = time
+   i = 0
+   do                     ! main loop - the real work is done here
+      i = i + 1
+      call update(v,max,diff,n,lmax)
+   loop until i > 10 and diff < acc
+   secs = time-secs
+end sub
+
+! use Gauss-Seidel relaxation algorithm to calculate new values of the potential
+! old values are replaced in situ as new ones become available.
+! diff is average change in potential during the current iteration
+sub update(v(,),max,diff,n,lmax)
+   diff = 0
+   for i = -max+1 to max-1
+      for j = -max+1 to max-1
+        if i < -lmax or i > lmax or j < -lmax or j > lmax then
+         tmp = v(i,j)
+         v(i,j) = (v(i-1,j) + v(i+1,j) + v(i,j+1) + v(i,j-1)) / 4
+         diff = diff + abs(tmp - v(i,j))
+        end if
+      next j
+   next i
+   diff = diff / (2*max+1)^2
+end sub
+
+! display final results
+sub display(v(,),max,out$,out2$,iter,lmax,acc,diff,secs)
+   dim x(0),y(0),ex(0),ey(0)
+   set background color "white"
+   call setcanvas("white")
+   set color "black"
+   clear
+   call settitle("Equipotential lines by Gauss-Seidel")
+   call sethlabel("X")
+   call setvlabel("Y")
+   call topograph(v,-1,1,-1,1,"black")  ! equipotential lines
+   set cursor 3,10
+   print "Number of iterations = ";iter;", CPU time = ";secs;" seconds"
+   set cursor 4,10
+   print "Accuracy/pt: required = ";acc;", actual = ";diff
+   get key z
+   max2 = (2*max+1)^2                   ! prepare for vector plot
+   if out$ <> "" then
+      open #1: name out$, organization text, create newold
+      erase #1
+   end if
+   if out2$ <> "" then
+      open #2: name out2$, organization text, create newold
+      erase #2
+   end if
+   mat redim x(max2),y(max2),ex(max2),ey(max2)
+   k = 0
+   for i = -max+1 to max-1
+      for j = -max+1 to max-1
+         k = k + 1
+         x(k) = i/max
+         y(k) = j/max
+         ex(k) = -(v(i+1,j) - v(i-1,j)) * max   ! compute electric field
+         ey(k) = -(v(i,j+1) - v(i,j-1)) * max   ! components
+         if ((i=-lmax or i=lmax) and j>=-lmax and j<=lmax) then ex(k)=2*ex(k)
+         if ((j=-lmax or j=lmax) and i>=-lmax and i<=lmax) then ey(k)=2*ey(k)
+         if out2$ <> "" then
+ 	    set #2: ZONEWIDTH 12
+            print #2, using "+#.#####^^^^": x(k);
+            set #2: ZONEWIDTH 3 
+            print #2: ", "; 
+            set #2: ZONEWIDTH 12
+            print #2, using "+#.#####^^^^": y(k); 
+            set #2: ZONEWIDTH 3 
+            print #2: ", ";
+            set #2: ZONEWIDTH 12
+            print #2, using "+#.#####^^^^": ex(k);
+            set #2: ZONEWIDTH 3
+            print #2: ", ";      
+            set #2: ZONEWIDTH 12
+            print #2, using "+#.#####^^^^": ey(k)
+         end if
+      next j
+   next i
+   if out2$ <> "" then close #2
+   mat redim x(k),y(k),ex(k),ey(k)
+   call settitle("Electric field by Gauss-Seidel")
+   call sethlabel("x")
+   call setvlabel("y")
+   call vectorgraph(x,y,ex,ey,0.025,3,"black")  ! make vector plot
+   set cursor 3,10
+   print "Number of iterations = ";iter;", CPU time = ";secs;" seconds"
+   set cursor 4,10
+   print "Accuracy/pt: required = ";acc;", actual = ";diff
+   if out$ <> "" then
+      for j = -max to max
+         for i = -max to max
+            print #1: i/max,j/max,v(i,j)
+         next i
+         print #1: ""
+      next j
+      close #1
+   end if
+end sub

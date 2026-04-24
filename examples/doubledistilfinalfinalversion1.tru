@@ -1,0 +1,135 @@
+option nolet
+print "*********************************************************"
+print " doublebindist: version 1                                "
+print " peter.vlasschaert@gmail.com ,date:28/05/2015            "
+print "*********************************************************"
+print "(F)eed=(B)ottom+(D)istillate             => first(unit)  "
+print "(D)istillate =(B1)ottom +(D1)istillate   => sec  (unit)  "
+print "(B)ottom     =(B2)ottom +(D2)istillate   => sec  (unit)  "
+print "*********************************************************"
+! number of components (n)
+n=4
+!**************************************************************** 
+dim fx(1) ,bx(1) ,dx(1)    ,b1x(1),d1x(1),b2x(1),d2x(1)
+mat redim fx(n),bx(n),dx(n),b1x(n),d1x(n),b2x(n),d2x(n)
+! feed to distillation plant
+f= 70  ! mol/min
+! mole fractions of the feed
+fx(1)=.2
+fx(2)=.4
+fx(3)=.25
+fx(4)=1-fx(1)-fx(2)-fx(3)
+print "       ==== feed ====             => first (unit) "
+print
+print "composition      => 'first,second,thridth,fourth' component "
+mat print fx
+print "molar flow rate  => ";f; " mol/min "
+print
+! output distillate molar flow (b1,d1),mole fractions (b1x,d1x)
+d1x(1)=0.35
+d1x(2)=0.54
+d1x(3)=0.04
+d1x(4)=1-d1x(1)-d1x(2)-d1x(3)
+b1x(1)=0.16
+b1x(2)=0.42
+b1x(3)=0.24
+b1x(4)=1-b1x(1)-b1x(2)-b1x(3)
+! output bottom     molar flow (b2,d2),mole fractions (b2x,d2x)
+d2x(1)=0.21
+d2x(2)=0.54
+d2x(3)=0.10
+d2x(4)=1-d2x(1)-d2x(2)-d2x(3)
+b2x(1)=0.01
+b2x(2)=0.10
+b2x(3)=0.65
+b2x(4)=1-b2x(1)-b2x(2)-b2x(3)
+dim ch(1)
+mat redim ch(n)
+! right hand side
+for i=1 to n
+    ch(i)=fx(i)*f
+next i
+! solve by cramer Ax=b
+dim a(1,1)
+mat redim a(4,4)
+for i=1 to n
+    a(i,1)=d1x(i)
+    a(i,2)=b1x(i)
+    a(i,3)=d2x(i)
+    a(i,4)=b2x(i)
+next i
+print " == given == : 'mol fractions of all output ' sec (unit) =>  "
+print "first    line : first   component ; d1,b1,d2,b2  "
+print "sec      line : second  component ; d1,b1,d2,b2  "
+print "thridth  line : thridth component ; d1,b1,d2,b2  "
+print "fourth   line : fourth  component ; d1,b1,d2,b2  "
+mat print a
+dim a_d1h(1,1),a_b1h(1,1),a_d2h(1,1),a_b2h(1,1)
+mat redim a_d1h(n,n),a_b1h(n,n),a_d2h(n,n),a_b2h(n,n)
+mat a_d1h = a
+mat a_b1h = a
+mat a_d2h = a
+mat a_b2h = a
+! d1,b1,d2,b2: flowrate
+for i=1 to n
+  a_d1h(i,1)=ch(i) ! d1
+  a_b1h(i,2)=ch(i) ! b1
+  a_d2h(i,3)=ch(i) ! d2
+  a_b2h(i,4)=ch(i) ! b2
+next i
+delta=det(a)
+if delta=0 then 
+  print "method fails to find solution 'method cramer'"
+  stop   
+end if
+d1_det=det(a_d1h)
+b1_det=det(a_b1h)
+d2_det=det(a_d2h)
+b2_det=det(a_b2h)
+! mol/min flowrate
+d1= d1_det/delta
+b1= b1_det/delta
+d2= d2_det/delta
+b2= b2_det/delta
+print "------------------------------------------------"
+print " output:sec (unit) from destillate first (unit) "
+print "------------------------------------------------"
+print "d1 = ";d1;" mol/min"
+print "b1 = ";b1;" mol/min"
+print "------------------------------------------------"
+print " output:sec (unit) from bottom     first (unit) "
+print "------------------------------------------------"
+print "d2 = ";d2;" mol/min"
+print "b2 = ";b2;" mol/min"
+! flow rate destillate ( first unit)
+d=d1+b1
+! flow rate bottom     ( first unit)
+b=d2+b2
+print "----------------------------"
+print "molar flow rate first (unit)"
+print "----------------------------"
+print " destillate = ";d; " mol/min"
+print " bottom     = ";b; " mol/min"
+dim xb(1),xd(1)
+mat redim xb(n),xd(n)
+!*****************************************
+! molar fraction of bottom composition
+!*****************************************
+print "***************************************"
+print "molar fraction (bottom)    ,first(unit)"
+print "***************************************"
+for i=1 to n
+xb(i)=(d2x(i)*d2+b2x(i)*b2)/b
+next i
+mat print xb
+!*****************************************
+! molar fraction of destillate  composition
+!*****************************************
+print "***************************************"
+print "molar fraction (destillate),first(unit)"
+print "***************************************"
+for i=1 to n
+xd(i)=(d1x(i)*d1+b1x(i)*b1)/d
+next i
+mat print xd
+end

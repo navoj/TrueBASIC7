@@ -1,0 +1,136 @@
+option nolet
+! program ADI method 'unsteady laplace'
+! LAPLACE2DUNSTEADYADITIMEINTERVALfinal.tru
+print "-----------------------------------------------------------"
+print " ((time sim )ADI method )  version 1.0 'unsteady heat2d'   "
+print " temperature distribution inside a square plate            "
+print " dT/dt=alpha*(d/dx(dT/dx)+d/dy(dT/dy))                     "
+print " initial condition (ic) = to °C                            "
+print " bc : left : dT/dx=0 right : T=t_r (fixed)                 " 
+print " bc : bottom : dT/dy=0 top : T=t_t (fixed)                 "
+print " peter.vlasschaert@gmail.com,  18/07/2015                  "
+print "-----------------------------------------------------------"
+input prompt " example = 1 , input = 2  'integer ' = ":sel
+if sel = 1 then
+dt = 0.05
+! dx=dy uniform grid
+dx=0.1
+alpha = 1 ! m^2/s
+div = 5
+t_max = 0.5 ! final time for simulation
+else 
+dx=0.1
+input prompt " timestep        (dt,s   )      = ":dt
+input prompt " finaltime       (t_max,s)      = ":t_max
+input prompt " conduction coef (alpha,m^2/s)  = ":alpha
+input prompt " number of division 'integer'   = ":div
+end if
+m=alpha*dt/dx^2
+print " CFL ((C)ourant (F)redric (L)evi) number = "; m
+m1=2+2/m
+m2=2/m-2
+no = div ! number of equations
+n=no+1   ! number of points in both direction x,y
+dim a(1),b(1),c(1),d(1)  ! TDMA parameter
+dim x(1),x1(1)
+mat redim a(no),b(no),c(no),d(no)
+mat redim x(no),x1(no)
+dim beta(1),gamma(1)
+mat redim beta(no),gamma(no)
+dim t(1,1),t_star(1,1)   ! number of points from division
+mat redim t(n,n),t_star(n,n)
+! BC top,right of a square (1,1)->(n,n)
+t_r=400 ! temperature right
+t_t=400 ! temperature top
+for k=1 to n
+  t(n,k)=t_r
+  t_star(n,k)=t_r
+  t(k,n)=t_t
+  t_star(k,n)=t_t
+next k
+to = 0 ! 'initial temperature' of interior nodes
+for i=1 to no
+  for j=1 to no
+  t(i,j)=to
+  t_star(i,j)=to
+  next j
+next i
+! build aa*x=d (aa -> tdma a,b,c)
+for k=1 to no
+c(k)=-1
+a(k)=c(k)
+b(k)=m1
+next k
+c(1)=-2.0
+for tb=0 to t_max step dt
+! first step :  time (n->n+1/2)
+!  xsweep 
+for j1=1 to no
+  if j1=1 then
+  ! BC : dT/dx = 0 'left bc'
+  ! use of ghost nodes
+   for i1=1 to  no
+     d(i1)=2*t(i1,2)+m2*t(i1,1)
+   next i1
+   d(no)=d(no)+t_r
+  else
+   for i1=1 to no
+     d(i1)=t(i1,j1+1)+t(i1,j1-1)+m2*t(i1,j1)
+   next i1
+   d(no)=d(no)+t_r
+  end if
+call beta_gamma(no,a(),b(),c(),d(),beta(),gamma())
+call back_solve (no,beta(),gamma(),c(),x())
+for cc=1 to no
+  t_star(cc,j1)=x(cc)
+next cc
+next j1
+print
+mat print t_star
+! second step: time (n+1/2 -> n)
+!  ysweep
+for i1=1 to no
+  if i1=1 then
+  ! BC : dT/dy=0 'bottom bc '
+  ! use of ghost nodes
+   for j1=1 to  no
+     d(j1)=2*t_star(i1+1,1)+m2*t_star(i1,1)
+   next j1
+   d(no)=d(no)+t_t
+  else
+   for j1=1 to no
+     d(j1)=t_star(i1-1,j1)+t_star(i1+1,j1)+m2*t_star(i1,j1)
+   next j1
+   d(no)=d(no)+t_t
+  end if
+call beta_gamma(no,a(),b(),c(),d(),beta(),gamma())
+call back_solve (no,beta(),gamma(),c(),x())
+for cc=1 to no
+  t(i1,cc)=x(cc)
+next cc
+next i1
+next tb
+mat print t
+end
+
+sub beta_gamma(no,a(),b(),c(),d(),beta(),gamma())
+beta(1) = b(1)
+gamma(1)= d(1)/beta(1)
+for j=2 to no
+ beta (j)=b(j)-a(j)*c(j-1)/beta(j-1)
+ gamma(j)=(d(j)-a(j)*gamma(j-1))/beta(j)
+next j
+end sub
+
+sub back_solve (no,beta(),gamma(),c(),x())
+x(no)=gamma(no)
+! back substitution : solve n->n-1->....1
+for k=no-1 to 1 step -1
+  x(k)=gamma(k)-c(k)*x(k+1)/beta(k)
+next k
+end sub
+
+
+
+
+

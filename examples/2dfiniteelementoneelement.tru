@@ -1,0 +1,182 @@
+option nolet
+! 2Dfiniteelementoneelement
+print "-----------------------------------------"
+print " 2D finite element 'three-node triangle' "
+print " * one element *  version 1.0            "
+print " peter.vlasschaert@gmail.com  06/08/2015 "
+print "-----------------------------------------"
+print " triangle ( ijk) ij,jk = convection,ki   "
+print "-----------------------------------------"
+! info:finite element analysis ( theory and practice),M J Fagan
+declare function JC,dist_p1top2
+print " distribution temperature 'linear variation'"
+Ta = 20 ! ambient temperature
+k=7.5   ! W/mm °C
+h=0.15  ! W/mm^2 °C
+x1 = 20 ! i
+y1 = 20 ! i
+x2 = 60 ! j
+y2 = 20 ! j
+x3 = 40 ! k
+y3 = 60 ! k
+dt = 1   ! thickness
+print " stiffness matrix = conduction + convection "
+! *** conduction part ***
+! Isotropic material kx=ky=k
+AA = JC(x1,y1,x2,y2,x3,y3)/2 !Area
+print "area = ";AA
+! b,c 'for one element (cyclic permutation)
+b1=y2-y3
+b2=y3-y1
+b3=y1-y2
+c1=x3-x2
+c2=x1-x3
+c3=x2-x1
+dim cd_tri(3,3)
+coef_cd = k*dt/(4*AA)
+cd_tri(1,1) = b1*b1+c1*c1
+cd_tri(1,2) = b1*b2+c1*c2
+cd_tri(1,3) = b1*b3+c1*c3
+cd_tri(2,1) = b2*b1+c2*c1
+cd_tri(2,2) = b2*b2+c2*c2
+cd_tri(2,3) = b2*b3+c2*c3
+cd_tri(3,1) = b3*b1+c3*c1
+cd_tri(3,2) = b3*b2+c3*c2
+cd_tri(3,3) = b3*b3+c3*c3
+mat cd_tri = coef_cd * cd_tri
+print " conduction part "
+mat print cd_tri 
+! **** convection part (side jk ) ****
+! phi = Ni*phi(i)+Nj*phi(j)+Nk*phi(k)
+! jk conduction side  Ni=0  'against'
+!*************************************
+dim cv_mat(1,1)
+mat redim cv_mat(3,3)
+dim s(1),coef_cv(1)
+mat redim s(3),coef_cv(3)
+! ccw direction (only one side ij or jk or ki )
+xp = x2
+yp = y2
+xq = x3
+yq = y3
+s(1)= 0                       !ij
+s(2)= dist_p1top2(xp,yp,xq,yq)!jk
+s(3)= 0                       !ki
+for i=1 to 3
+coef_cv(i)=h*s(i)*dt/6
+next i
+if s(1) <> 0 then    !ij-> k
+i=1
+ cv_mat(1,1) = 2*coef_cv(i)
+ cv_mat(2,2) = 2*coef_cv(i)
+ cv_mat(1,2) = 1*coef_cv(i)
+ cv_mat(2,1) = 1*coef_cv(i)
+end if
+
+if s(2) <> 0 then    !ij-> k
+i=2
+ cv_mat(2,2) = 2*coef_cv(i)
+ cv_mat(3,3) = 2*coef_cv(i)
+ cv_mat(2,3) = 1*coef_cv(i)
+ cv_mat(3,2) = 1*coef_cv(i)
+end if
+
+if s(3) <> 0 then    !ki-> j
+i=3
+ cv_mat(1,1) = 2*coef_cv(i)
+ cv_mat(3,3) = 2*coef_cv(i)
+ cv_mat(1,3) = 1*coef_cv(i)
+ cv_mat(3,1) = 1*coef_cv(i)
+end if
+print " convection part from jk : example ,select different s(i) "
+mat print cv_mat
+print " convection from surface = ijk "
+! all Ni,Nj,Nk 
+! every combination Ni*Nj <>0 after integration full ( 3*3)
+coef_cv_surface = h/12*AA
+ dim cv_surf(3,3)   ! triangle
+ mat cv_surf = con  ! every element 1
+for i=1 to 3
+  cv_surf(i,i)= 2
+next i
+for i=1 to 3
+  for j=1 to 3
+cv_surf(i,j)=coef_cv_surface*cv_surf(i,j)
+  next j
+next i
+mat print cv_surf
+print " result :stiffness matrix "
+dim stiff_mat(3,3)
+mat stiff_mat = cd_tri + cv_mat
+mat stiff_mat = stiff_mat + CV_surf
+mat print stiff_mat
+
+! A matrix = part of conduction + part of convection (jk and ijk)
+! A phi(t) = b  'b=load vector' t=i,j,k ; phi(t) also a vector
+print " load vector = part of edge convection + part of surface convection " 
+dim load_vec(1,3)
+mat load_vec = con ! every element 1
+print " part of edge convection = "
+
+if s(1) <> 0  then 
+load_vec(1,3)=0
+for i=1 to 3
+ load_vec(1,i) = s(1)*h*Ta*dt/2*load_vec(1,i)
+next i
+mat print load_vec
+end if
+
+if s(2) <> 0 then
+load_vec(1,1)=0
+for i=1 to 3
+ load_vec(1,i) = s(2)*h*Ta*dt/2*load_vec(1,i)
+next i
+mat print load_vec
+end if
+
+if s(3) <> 0 then
+load_vec(1,2)=0
+for i=1 to 3
+ load_vec(1,i) = s(3)*h*Ta*dt/2*load_vec(1,i)
+next i
+
+print " load vector : convection edge    = "
+mat print load_vec
+end if
+print " load vector : convection surface = "
+dim load_vec_surf(1,3)
+mat load_vec_surf = con  ! every element 1
+for i=1 to 3
+  load_vec_surf(1,i) = h*Ta*AA/3*load_vec_surf(1,i)
+next i
+mat print load_vec_surf
+print " result = load vector "
+dim load_mat(1,3)
+mat load_mat = load_vec+load_vec_surf
+mat print load_mat
+print " result =       Ax=d => x=inv(A)*d "
+print " phi(t) ,t=i,j,k vector  (temperature at i,j,k of triangle ) "
+dim d(3)
+for i=1 to 3
+  d(i) = load_vec_surf(1,i)
+next i
+! use output vector phi
+dim phi(3) ! i,j,k  i=1 ,j=2 ,k=3
+dim hulp(3,3) 
+mat hulp = inv(stiff_mat)
+mat phi =  hulp*d
+mat print phi
+
+get key done
+
+
+end
+
+function JC(x1,y1,x2,y2,x3,y3)
+JC = (x1-x3)*(y2-y3)-(x2-x3)*(y1-y3)
+end function
+
+function dist_p1top2(xp,yp,xq,yq)
+dist_p1top2 = sqr((xp-xq)^2+(yp-yq)^2)
+end function
+

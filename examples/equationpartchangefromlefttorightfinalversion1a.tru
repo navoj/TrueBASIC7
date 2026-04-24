@@ -1,0 +1,88 @@
+option nolet
+print
+print "******************************************"
+print "* equation ( left to right) 'version(1a)'*"
+print "* peter.vlasschaert@gmail.com,15/08/2016 *"
+print "******************************************"
+! filename :equationpartchangefromlefttorightfinalversion1a
+print
+dim coef(1),vars$(1)
+nu = 4 ! number of coefficient before variable
+nv = 4 ! number of variable
+mat redim coef(nu),vars$(nv)
+for i=1 to nu
+ read coef(i)
+next i
+vars$(1)= "x"
+vars$(2)= "y"
+vars$(3)= "z"
+vars$(4)= "u"
+print " coefficient = "
+mat print coef
+print " variables   = "
+mat print vars$
+print
+data -2,-5,3,5
+dim a$(1)
+mat redim a$(nu)
+print " equation = "
+print
+for i=1 to nu
+if coef(i) < 0 then
+  if i=4 then 
+   print coef(i);"*";vars$(i);"= 0";
+   a$(i) = str$(coef(i)) & "*" & vars$(i)
+   exit for
+ end if
+! correction version 1.0a
+print coef(i);"*";vars$(i);
+a$(i) = str$(coef(i)) & "*" & vars$(i)
+    else
+ if i=4 then 
+  print "+";coef(i);"*";vars$(i);"= 0";
+a$(i) = "+" & str$(coef(i)) & "*" & vars$(i) & "= 0"
+  exit for
+ end if
+! correction version 1.0a
+print "+";coef(i);"*";vars$(i);
+a$(i) = "+" & str$(coef(i)) & "*" & vars$(i)
+end if
+next i
+print
+print
+print " string version : equation = "
+print
+mat print a$
+! right hand site of equation
+dim aa$(1),coef1(1)
+mat redim aa$(nu),coef1(nu)
+for i=1 to nu
+  if coef(i) < 0 then
+    coef1(i)=(-1)*coef(i) ! dummy
+     aa$(i) = str$(coef1(i)) & "*" & vars$(i)
+  end if
+next i
+print
+print
+print " rhs (equation) = "
+print
+mat print aa$
+dim aaa$(1)
+mat redim aaa$(nu)
+print " lhs (equation) = "
+for i=1 to nu
+  if coef(i) > 0 then   
+     aaa$(i) = str$(coef(i)) & "*" & vars$(i)
+  end if
+next i
+print
+mat print aaa$
+print " lhs = rhs "
+print
+! postion : negative coef 'coef(1),coef(2)'
+b$  = aa$(1) & "+" & aa$(2)
+! position : positive coef 'coef(3),coef(4)'
+bb$ = aaa$(3) & "+" & aaa$(4)
+print bb$;" = ";b$
+end
+

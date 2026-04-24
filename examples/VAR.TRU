@@ -1,0 +1,183 @@
+
+! Time independent quantum mechanics - Lennard-Jones potential in one dimension
+! solve using variational-monte carlo method
+! Program to accompany "Computational Physics" by N. Giordano and H. Nakanishi
+! Copyright Prentice Hall 1997, 2006
+!
+! Minor mods by H. Nakanishi mostly for options and i/o. Made m=1/2 not 1.
+
+program var
+   option nolet
+   dim psi(0 to 2000),psiold(0 to 2000)   ! wave function
+   randomize
+   call initialize(psi,dx,d_psi,x_left,x_right,sigma,epsilon,energy,n_attempts)
+   open #1: screen 0,1,0.1,0.85
+   open #2: screen 0,1,0,0.1
+   window #2
+   set background color "white"
+   clear
+   set color "black"
+   window #1
+   set background color "white"
+   set color mix(45) 2/3, 2/3, 2/3
+   set window 0,6*sigma,-2,2              ! calculate energy of trial function
+   clear
+   call axes(sigma,epsilon)
+   set color "red"
+   call display(psi,dx,x_left,x_right)  ! display wave function
+   n_total = 0
+   n_moves = 0
+!   call save(psi,x_left,x_right,dx,energy,n_total)
+   do
+      window #1
+      call calculate(psi,psiold,dx,d_psi,x_left,x_right,sigma,epsilon,energy,n_accepted,n_total,n_moves,n_attempts)
+      window #2
+      clear
+      print "E=";energy,"d_psi=";d_psi,"accepted=";n_accepted
+      print "total attempts=";n_total,"total accepted=";n_moves
+      window #1
+      set color 45
+      call display(psiold,dx,x_left,x_right)
+      set color "red"
+      call display(psi,dx,x_left,x_right)
+      if key input then
+         get key z
+         c$ = chr$(z)
+         if c$ = "s" then
+            call save(psi,x_left,x_right,dx,energy,n_total)
+         else if c$ = "c" then  ! clear screen if too cluttered
+            clear
+            call axes(sigma,epsilon)   ! plot potential for comparison
+         else if c$ = "p" then
+            get key z
+         else if c$ = "q" then
+            exit do
+         else if c$ = "h" then
+              d_psi = 0.5*d_psi
+         else if c$ = "d" then
+              d_psi = 2*d_psi
+         end if
+      end if
+   loop
+   close #1
+   close #2
+end
+
+! initialize variables
+! psi(i) = wave function at grid site i
+! dx = grid step   d_psi = max size of Monte-Carlo changes in psi
+! x_left,x_right = boundaries of region (psi = 0 outside this)
+! sigma,epsilon = Lennard-Jones parameters
+! energy = energy of initial trial function
+sub initialize(psi(),dx,d_psi,x_left,x_right,sigma,epsilon,energy,n_attempts)
+   window #0
+   input prompt "Lennard-Jones energy scale (in hbar^2/2mL^2) => ": epsilon
+   input prompt "Lennard-Jones length scale (in units of L) => ": sigma
+   input prompt "System is (0,5*sigma) (in units of L). dx => ": dx
+   input prompt "d_psi (in units of initial trial function height => ": fr
+   input prompt "plot after this many attempted moves =>": n_attempts
+   print "Type c (clear), p (pause), q (quit), s (save), h (halve d_psi), or d (double)."
+   x_left = 0.5 * sigma
+   x_right = 5 * sigma
+   for i = x_left/dx to x_right/dx     ! initialize wave function
+      psi(i) = 0
+   next i
+   delta = 1.5 * sigma / dx
+   i_start = 1.1 * sigma / dx 
+   for i = i_start to i_start + delta
+      psi(i) = 1 / sqr(delta)
+   next i
+   d_psi = fr / sqr(delta)
+   call normalize(psi,dx,x_left,x_right)   ! normalize trial function
+   call calc_energy(psi,dx,x_left,x_right,sigma,epsilon,energy)
+end sub 
+
+! plot axes and potential
+sub axes(sigma,epsilon)
+   declare def potential
+   min = 0.7*sigma
+   max = 5*sigma
+   set color "black"
+   plot 0,0;max,0
+   set color "blue"
+   for x = min to max step 0.02*sigma
+      plot x,potential(x,sigma,epsilon) / (0.6*epsilon);
+   next x 
+   plot x,potential(x,sigma,epsilon) / (0.6*epsilon)
+end sub
+
+! display wave function
+sub display(psi(),dx,x_left,x_right)
+   for n = x_left/dx - 2 to x_right/dx + 2
+      plot n*dx,psi(n);
+   next n
+   plot n*dx,psi(n)
+end sub
+
+! do the work here
+! n_total = total number of Monte Carlo moves attempted
+! n_moves = total number of Monte Carlo moves accepted
+sub calculate(psi(),psiold(),dx,d_psi,x_left,x_right,sigma,epsilon,energy,n_a,n_total,n_moves,n_attempts)
+   declare def potential    ! declare my own function for this
+   max = x_right/dx
+   min = x_left/dx
+   for j = min to max
+      psiold(j) = psi(j)
+   next j
+   n_a = 0
+   for i = 1 to n_attempts
+      n = min + int(rnd*(max + 1 - min))  ! choose site to adjust randomly
+      psi_old = psi(n)                    ! with uniform probability
+      psi(n) = psi(n) + 2*(rnd-0.5)*d_psi ! adjust trial function
+      call calc_energy(psi,dx,x_left,x_right,sigma,epsilon,new_energy)
+      if new_energy > energy then     ! compare new energy to old energy
+         psi(n) = psi_old             ! keep new trial function only if it
+      else                            ! lowers the energy
+         energy = new_energy
+         call normalize(psi,dx,x_left,x_right)
+         n_a = n_a + 1
+      end if
+   next i
+   n_total = n_total + n_attempts
+   n_moves = n_moves + n_a
+end sub
+
+! Lennard-Jones potential
+def potential(x,sigma,epsilon)
+   r6 = (x/sigma)^(-6)
+   potential = 4 * epsilon * (r6^2 - r6)
+end def  
+
+! save wave function to a file
+sub save(psi(),x_left,x_right,dx,e,n_tot)
+   open #3: name "lj_var." & str$(e) & "." & str$(n_tot), create new, organization text
+   m_left = x_left / dx
+   m_right = x_right / dx
+   for i = m_left to m_right
+      print #3: i*dx,psi(i)
+   next i
+   close #3
+end sub
+
+! calculate energy of trial function
+sub calc_energy(psi(),dx,x_left,x_right,sigma,epsilon,energy)
+   declare def potential
+   energy = 0
+   sum = 0
+   for i = x_left/dx-1 to x_right/dx+1
+      energy = energy + dx * potential(i*dx,sigma,epsilon)*psi(i)^2 - dx * psi(i)*(psi(i+1) + psi(i-1) - 2*psi(i))/(dx^2)
+      sum = sum + psi(i) * psi(i) * dx
+   next i
+   energy = energy / sum
+end sub
+
+! normalize a trial function
+sub normalize(psi(),dx,x_left,x_right)
+   sum = 0
+   for i = x_left/dx-1 to x_right/dx+1
+      sum = sum + dx * psi(i) * psi(i)
+   next i
+   for i = x_left/dx-1 to x_right/dx+1
+      psi(i) = psi(i) / sqr(sum)
+   next i
+end sub

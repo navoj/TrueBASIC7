@@ -1,0 +1,89 @@
+option nolet
+print "*****************************"
+print " info ,'mat' command         "
+print " peter.vlasschaert@gmail.com "
+print "*****************************"
+print
+dim a(2,1)
+a(1,1)= 7
+a(2,1)=8
+dim b(1,2)
+b(1,1)=5
+b(1,2)=6
+dim c(2,2)
+c(1,1)=1
+c(1,2)=2
+c(2,1)=3
+c(2,2)=4
+dim e(2,2)
+e(1,1)=1
+e(1,2)=2
+e(2,1)=3
+e(2,2)=4
+dim d(1,2)
+print " given = matrix b,c "
+print " b= "
+mat print b
+print " c= "
+mat print c
+!*************************************
+! multiplication two matrices
+! b(1,2)*c(2,2) => d(1,2)
+! (1,2)*(2,2) contract to (1,2)
+!*************************************
+! 1e) (1,2)*(2,2) = (1,2)
+!*************************************
+call prod_mat(1,2,2,b(,),c(,),d(,))
+print " matrix = d =>multiplication matrix 'b*c' "
+print " dimension => dim d(1,2) "
+mat print d
+dim cmat(1,1)
+!*************************************
+! multiplicatication two matrices
+! d(1,2)*a(2,1) = > number 
+!*************************************
+! 2e) (1,2)*(2,1) = (1,1) = number
+!*************************************
+print " given = matrix a "
+print " a= "
+mat print a
+print "matrix = cmat =>multiplication matrix 'd*a'"
+call prod_mat(1,2,1,d(,),a(,),cmat(,))
+print "result => matrix multiplication = 'b*c*a' "
+print " cmat ' number ' = "
+print
+mat print cmat
+print
+kk=1
+ll=-4
+mat redim cmat(2,2)
+i=2
+j=2
+print " sum of two matrix kk= ";kk;" ll= ";ll
+print " given = matrix c,e "
+print "c= "
+mat print c
+print "e= "
+mat print e
+call som_mat(kk,ll,i,j,c(,),e(,),cmat(,))
+print " result cmat = ";kk;"*c+ ";ll;"*e"
+print
+mat print cmat
+end
+
+
+sub prod_mat(i,k,j,amat(,),bmat(,),cmat(,))
+mat redim amat(i,k),bmat(k,j),cmat(i,j)
+mat cmat = amat*bmat
+end sub
+
+sub som_mat(kk,ll,i,j,amat(,),bmat(,),cmat(,))
+!use :kk,ll float
+!     i,j integer
+mat redim amat(i,j),bmat(i,j),cmat(i,j)
+mat amat =kk*amat
+mat bmat =ll*bmat
+mat cmat = amat+bmat
+end sub 
+
+

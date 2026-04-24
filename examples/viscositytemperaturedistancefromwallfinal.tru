@@ -1,0 +1,113 @@
+option nolet
+! mu = viscosity
+! mu(T)=mu(a*y+b)=> mu(y)
+!*******************************************************
+! find relation 1e)between : viscosity   and temperature
+!               2e)between : temperature and distance
+!*******************************************************
+!1e)between : viscosity   and temperature
+dim temp(1),visco(1)
+print
+print "*****************************************************"
+Print "* viscosity and distance between two parallel plates*"
+print "* peter.vlasschaert@gmail.com,07/07/2016            *"
+print "*****************************************************"
+! filename:viscosityTEMPERATUREDISTANCEFROMWALLfinal.tru
+print
+nu=4 ! number of data values
+kw=3 ! kw ,3 values unknown (a,b,c) => a*T^2+b*T+c
+T_bot = 80   ! temperature at bottom
+print " temperature (bottom) = ";T_bot," °F"
+T_top = 200  ! temperature at top
+print " temperature (top   ) = ";T_top," °F"
+h     = .3   ! height between two plates
+print " distance between the two parallel plates = ";h;" ft"
+print
+mat redim temp(nu),visco(nu)
+mat read temp,visco
+print " given table : 'read-data' "
+print "---------------------------"
+print "temperature","viscosity"
+print
+for i=1 to nu
+    print temp(i),visco(i)
+next i
+print "---------------------------"
+print
+dim a(1,1)
+mat redim a(nu,kw)
+! b = A*x
+! Make matrix A => mat a
+for i=1 to nu
+ for j=1 to kw
+    a(i,j)= (temp(i))^(j-1)
+ next j
+next i
+print " A   'A*x = b' =>"
+print
+mat print a
+! b  mat visco = b
+dim b(1,1)
+mat redim b(nu,1)
+for i=1 to nu
+   b(i,1)=visco(i)
+next i
+print " b   'A*x = b' =>" 
+print
+mat print b
+print
+print "**************************************"
+print "*solve : with leastsquare method = > *"
+print "*x=inv(transpose(A)*A)*transpose(A)*b*"
+print "**************************************"
+print
+! find x: "leastsquare method"
+!first part: find transpose(a) => mat aa
+dim aa(1,1)
+mat redim aa(kw,nu)
+mat aa = trn(a) ! transpose
+!mat print aa
+!second part: inverse=()^-1
+! bb=inverse(a*aa)
+dim bb(1,1)
+mat redim bb(nu,nu)
+mat bb = a*aa
+mat bb = inv(bb)
+!mat print bb
+! thridth part: cc = aa*bb
+dim cc(1,1)
+mat redim cc(nu,kw)
+mat cc = aa*bb
+!mat print cc
+! fourth part: x=cc*b
+dim x(1,1)
+mat redim x(kw,1)
+mat x = cc * b
+print " relation between : viscosity = mu and temperature => "
+print
+print " mu(T)= (";x(3,1);")*T(y)^2+ (";x(2,1);")*T(y)+(";x(1,1);")"
+print
+! 2e)between : temperature and distance
+! linear T(y) = ax*y+bx
+! y=0 T(bottom) = bx = T_bot
+bx = T_bot
+! y=h T(top   ) = T_top
+ax = (T_top-T_bot)/h
+print " relation between : temperature = T and distance=y => "
+print
+print " T(y) = ";ax;" * y + ";bx
+print
+dim xx(1,1)
+mat redim xx(kw,1)
+! input from T(y) in mu(T)
+xx(1,1)=x(3,1)*ax*ax 
+xx(2,1)=2*ax*bx*x(3,1)+ax*x(2,1)
+xx(3,1)=x(3,1)*bx*bx+x(2,1)*bx+x(1,1)
+print " relation between : viscosity = mu and distance=y  => "
+print
+print " mu(y)= (";xx(1,1);")*y^2+(";xx(2,1);") * y+ (";xx(3,1);")"
+! temperature values
+data 80,120,160,200
+! => viscosity values
+data 16.0e-6,14.0e-6,11.0e-6,7.0e-6
+end

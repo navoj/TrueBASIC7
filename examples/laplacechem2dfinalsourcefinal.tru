@@ -1,0 +1,135 @@
+option nolet
+! laplacechem2dfinalsourcefinal.tru
+print " ------------------------------------------------------"
+print " laplace operator = (d/dx(d(T)/dx)+d/dy(d(T)/dy)=0     "
+print "-------------------------------------------------------"
+print "-------------------------------------------------------"
+print " 2D steady 'Laplace equation with source' version 1.0  "
+print " peter.vlasschaert@gmail.com, 08/07/2015               "
+print "-------------------------------------------------------"
+N=5
+input prompt " example = 1 , input = 2       = ":sel
+print
+if sel =1 then
+   tb =100
+   tp =200
+   tl =300
+   tr =400
+   ep =1e-6
+else
+input prompt " dimension of square           = ":N
+input prompt " bottom temperature of square  = ":tb
+input prompt " top    temperature of square  = ":tp
+input prompt " left   temperature of square  = ":tl
+input prompt " right  temperature of square  = ":tr
+input prompt " error ('between two values ') = ":ep
+end if
+print
+dim T(1,1),To(1,1)
+mat redim T(n,n),To(n,n)
+!  boundary condition = bc (fixed)
+! * bottom row *
+for i=2 to n-1
+   t(i,1) = tl
+next i
+! * top    row *
+for i=2 to n-1
+   t(i,n) = tr
+next i
+! * lef column *
+for j=2 to n-1
+   t(1,j) = tp
+next j
+! * right column *
+for j=2 to n-1
+   t(n,j) = tb
+next j
+print " bc = (b)oundary (c)onditions ic= (i)ntial (c)ondition inside are 'zero' "
+mat print t
+! when mat command doesn't exit ( use double loop i,j)
+mat to = t
+dim residual (1,1) ,residualo(1,1)
+mat redim residual(n,n),residualo(n,n)
+dim diff(1,1)
+mat redim diff(n,n)
+!*****************************
+for i=2 to n-1
+    for j=2 to n-1
+      residualo(i,j)=ep
+    next j
+next i
+ ! source matrix
+dim q(1,1)
+mat redim q(n,n)
+a=100
+b=2
+print pi
+call source_q(n,q(,),a,b)
+print " q source "
+mat print q
+!*****************************
+r=0
+do
+for i=2 to n-1
+    for j=2 to n-1
+!**************************************************************
+! 'five star molecule' for laplace operator (neutral)
+!**************************************************************
+!        1               n                   t(i,j+1)
+!     1 -4  1   <->   w  c  e  <->  t(i-1,j) -4*t(i,j) t(i+1,j)
+!        1               s                   t(i,j-1)
+!**************************************************************
+! correction for the source q
+!**************************************************************
+      t(i,j)=(t(i-1,j)+t(i+1,j)+t(i,j-1)+t(i,j+1)+q(i,j))/4
+    next j
+  next i
+! check difference
+call res(n,residual(,),t(,),to(,))
+call res_ref (n,residual(,),residualo(,),diff(,))
+for  i=2 to n-1
+  for j=2 to n-1
+    if diff(i,j)< residualo(i,j) then 
+          exit do
+    end if
+  next j
+next i
+mat to = t
+r= r+1
+loop
+!***********************************
+print " temperature distribution on the square "
+mat print to
+print "  error matrix                          "
+mat print residual
+print " number of iterations = ";r
+end
+
+sub source_q(n,q(,),a,b)
+for  i=2 to n-1
+  for j=2 to n-1
+   q(i,j)=a*sin(pi*i)*exp(i*j)*b     
+  next j
+next i
+end sub
+
+
+sub res ( n,residual(,),t(,),to(,))
+for  i=2 to n-1
+    for j=2 to n-1
+     residual(i,j)=abs(to(i,j)-t(i,j))
+    next j
+next i
+end sub
+
+sub res_ref (n,residual(,),residualo(,),diff(,))
+for  i=2 to n-1
+  for j=2 to n-1
+   diff(i,j)=abs(residual(i,j)-residualo(i,j))
+  next j
+next i
+end sub
+   
+
+
+

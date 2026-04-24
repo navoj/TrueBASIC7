@@ -1,0 +1,53 @@
+option nolet
+print "********************************************"
+print " enthalpy (liquid) version 1                "
+print "--------------------------------------------"
+print "  peter.vlasschaert@gmail.com, 04/06/2015   "
+print "********************************************"
+print
+!***************************************************
+! H=enthalpy calculation routine (L=liquid,V=Vapour)
+! HL=liquid enthalpy (given,°R,Btu/lbmol)
+!***************************************************
+dim a(2,3)  ! 
+dim ent_l(2)
+for i=1 to 2
+  for j=1 to 3
+     read a(i,j)
+  next j
+next i
+tc = 45   
+print "stage temperature (°C) = ";tc; " °C"
+x=0.2 
+print " mole fraction     (x)  = ";x
+call enthalpy_liq(a(,),tc,x,HL)
+print
+for i= 1 to 2
+print "--------------------------------------------------"
+print " conversion °C->°R : °R=(1.8*°C)+492.0 = T_R      "
+print "--------------------------------------------------"
+print " ent_l(";i;")= ";a(i,1);"+";a(i,2);"*T_R+";a(i,3);"*T_R^2"
+print
+next i
+print
+print "****************************"
+print " data from coef (polynoom =)"
+print "****************************"
+mat print a
+print
+print "enthalpy_liquid (HL) = ";HL; " J/gmol"
+DATA 0.1,0.2,0.3
+DATA 0.4,0.5,0.6
+end
+
+sub enthalpy_liq(a(,),tc,x,HL)
+dim ent_l(2)
+T_R=(1.8*tc)+492.0
+for i=1 to 2  
+ENT_L(i)=a(i,1)+a(i,2)*T_R+a(i,3)*T_R*T_R
+next i
+print
+print "***********1 Btu/lbmol=2.326 J/gmol**********"
+HL=(ENT_L(1)*x+ENT_L(2)*(1-x))*2.326
+end sub
+

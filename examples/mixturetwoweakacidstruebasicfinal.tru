@@ -1,0 +1,67 @@
+option nolet
+!chemistry analytical serie
+! filename :mixturetwoweakacidstruebasicfinal.tru
+print "********************************************************"
+print " amphoteric salt : MH(n)A = M(+)+ H(n)A(-)'version 1.0'*"
+print " general         : MHB    = M(+)+ HB(-) = m + hb       *"
+print " peter.vlasschaert@gmail.com,02/10/2016                *"
+print "********************************************************"
+print "************************************************************"
+print "examples: NaHCO3,NaHSO3,KH-Ftalaat  n=1 -> Na(+)+HB(-)      "
+print "          NaH(2)PO4                 n=2 -> Na(+)+H(2)PO4(-) " 
+print "************************************************************"
+print "************************************************************"
+print " formula: H(m)B ( m=2),ka1,ka2,pkw=pH+pOH                   "
+print " definition :amphoteric salt : nature acid (give H(+)) or   "
+print "                               nature base (take H(+))      "
+print "                up    give                                  "
+print "nature acid : HB(-)        = H(+)  + B(2-) (1)              "                
+print "nature base : HB(-) + H(+) = H(2)B         (2)              "
+print "aqua        : H(2)O        = H(+)+OH(-)    (3)              "
+print " [H(+)]tot = [B(2-)]-[H(2)B]+[0H(-)]                        "
+print "H(m)B   = H(+) + H(m-1)B(-) -> H(2)B = H(+) + HB(-)-> ka1   "
+print "H(m-1)B(-) = H(+) + H(m-2)B(2-)-> HB(-)= H(+) + B(2-) -> ka2"    
+print " nature acid :   (1) -> ka2   = ([H(+)]*[B(2-)])/[HB(-)]    "
+print " nature base :   (2) -> 1/ka1 = ([H(2)B])/([HB(-)]*[H(+)])  "
+print "************************************************************"
+print
+print " input => "
+print
+ca1=0.01    ! concentration first weak acid ,mono protic acid
+ca2=0.1     ! concentration second weak acid,mono protic acid
+k1a1=0.0001 !equilibrium constant (first  weak acid)
+k2a2=0.00001!equilibrium constant (second weak acid)
+kw  = 1E-14 ! pH+pOH = 14 = pKw
+print "concentration first  weak acid,ca1  = ";ca1;" M"
+print "concentration second weak acid,ca1  = ";ca2;" M"
+print "equilibrium constant,first, k1a1    = ";k1a1
+print "equilibrium constant,second,k2a2    = ";k2a2
+print
+print " result => "
+print
+call first_approx(ca1,k1a1,ca2,k2a2,h)
+print " first approximation = ";h;" M"
+!  take kw <> 0
+call mix_gen_weakacids(kw,ca1,k1a1,ca2,k2a2,h)
+print
+print " kw<>0,[H(+)] = ";h;" M"
+print
+print " pH  = ";-log(h)/log(10)
+call first_approx(ca1,k1a1,ca2,k2a2,h)
+!  take kw = 0
+call mix_gen_weakacids(0,ca1,k1a1,ca2,k2a2,h)
+print
+print " kw=0, [H(+)] = ";h;" M"
+print
+print " pH  = ";-log(h)/log(10)
+end
+
+sub mix_gen_weakacids(kw,ca1,k1a1,ca2,k2a2,h)
+first_weak  = (ca1*h*k1a1)/(k1a1+h) 
+second_weak = (ca2*h*k2a2)/(k2a2+h) 
+h=sqr(kw+first_weak+second_weak)
+end sub
+
+sub first_approx(ca1,k1a1,ca2,k2a2,h)
+h=sqr(ca1*k1a1+ca2*k2a2)
+end sub

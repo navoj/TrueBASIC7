@@ -1,0 +1,301 @@
+! Fourier analysis routines - compute the FFT of a signal
+! this program does forward and backward transforms
+! Program to accompany "Computational Physics" by N. Giordano and Nakanishi
+! Copyright Prentice Hall 1997, 2006
+!
+! Modified by H. Nakanishi for ease of use
+
+program fourier
+   library "sgfunc.trc"
+   library "sglib.trc"
+   option nolet
+   dim t(65536),y(65536)
+   call readin(t,y,n_points,store$,isign,real$,imag$)  ! read in data
+   call fft(y,n_points,isign)              ! perform fft
+   call calc_freq(t,n_points,isign)        ! calculate corresponding frequencies
+   call display(t,y,n_points,isign,real$,imag$)        ! display results
+   set color "black"
+   if isign>0 then
+      print "Save results in ";store$;".fr, ";store$;
+      input prompt ".fi ? [1=yes,0=no] => ": isave
+      if isave=1 then
+         input prompt "Save all data or only up to Nyquist frequency ? [1=all,0=Nyq] => ": inyq
+      end if
+   else
+      print "Save results in ";store$;".br, ";store$;
+      input prompt ".bi ? [1=yes,0=no] => ": isave
+   end if
+   if isave=1 then
+      call save(t,y,n_points,store$,isign,inyq)    ! save them too
+   end if
+   print "Done!"
+end
+
+! calculate the frequencies that go with the transformed signal
+! the time array t() matches the array containing the transform
+! so t(i) with i odd is for the cosine transform while i even is for
+! the sine transform
+sub calc_freq(t(),n,isign)
+   dt = t(3) - t(1)
+   for i = 1 to 2*n-1 step 2
+      t(i) = (i-1) / (2*n*dt)
+      t(i+1) = t(i)
+   next i
+end sub
+
+! save the transform results
+! for forward transforms (isign = +1):
+!    the cosine transform goes into the file store$.fr 
+!    the sine transform into store$.fi
+! for backward transforms (isign = -1):
+!    store the result in the file store$.br and store$.bi
+sub save(t(),y(),n,store$,isign,inyq)
+   if isign = +1 then                 ! forward transform
+      open #1: name store$ & ".fr", organization text, create newold
+      erase #1
+      open #2: name store$ & ".fi", organization text, create newold
+      erase #2
+      if inyq=0 then
+         end = n-1
+      else
+         end = 2*n-1
+      end if
+      for i = 1 to end step 2
+        print #1: t(i),",",y(i)  
+        print #2: t(i+1),",",y(i+1)  
+      next i
+      close #1
+      close #2
+   else                                ! backward transform
+      open #1: name store$ & ".br", organization text, create newold
+      erase #1
+      open #2: name store$ & ".bi", organization text, create newold
+      erase #2
+      for i = 1 to 2*n-1 step 2
+        print #1: t(i),",",y(i)
+        print #2: t(i+1),",",y(i+1)
+      next i
+      close #1
+      close #2
+   end if
+end sub
+
+! read the data from a file and put it into arrays t() (time data)
+! and y() (the signal data)
+! note that for a forward transform of a real data set,
+! a zero imaginary part is assigned automatically.
+sub readin(t(),y(),n_points,store$,isign,real$,imag$)
+   realdata = 2
+   input prompt "forward (+1) or backward (-1) transform -> ": isign
+   if isign = 1 then
+      input prompt "real data [1] or complex [2] ? -> ": realdata
+   end if
+   input prompt "name of real part input file -> ": real$
+   open #1: name real$, organization text, create old
+   if realdata = 2 then
+      input prompt "name of imaginary part input file -> ": imag$
+      open #2: name imag$, organization text, create old
+   else
+      imag$ = "real"
+   end if
+   m = posr(real$,".")-1
+   if m = -1 then
+      m = len(real$)
+   end if
+   store$ = real$[1:m]
+   if isign = 1 then
+      i = 1
+      n_points = 0
+      do
+         ask #1: pointer place$
+         if place$ = "END" then exit do
+         input #1: t(i),y(i)
+         i = i+2
+         n_points = n_points + 1
+      loop
+      close #1
+      i0 = i
+      i = 1
+      if realdata = 1 then
+         do
+            y(i+1) = 0               ! fill the imaginary parts with zeros
+            t(i+1) = t(i)
+            i = i + 2
+         loop until i > 2*n_points
+      else
+         do
+            ask #2: pointer place$
+            if place$ = "END" then exit do
+            input #2: t(i+1),y(i+1)
+            i = i + 2
+         loop until i > 2*n_points
+         close #2
+      end if
+      k = 1   ! pad with zeros up to the next power of 2 for n_points
+      do 
+         if 2^k >= n_points then exit do
+         k = k + 1
+      loop
+      for j = i0 to 2^k
+         y(j) = 0
+      next j
+      n_points = 2^k
+      mat redim t(2*n_points),y(2*n_points)          ! trim arrays to size used
+   else  ! for the inverse transform assume that the number of data
+         ! points is already 2^n where n is an integer
+         ! so no padding will be required
+      i = 1
+      n_points = 0
+      do
+         ask #1: pointer place$
+         if place$ = "END" then exit do
+         input #1: t(i),y(i)
+         i = i+2
+         n_points = n_points + 1
+      loop
+      close #1
+      i = 1
+      do
+         ask #2: pointer place$
+         if place$ = "END" then exit do
+         input #2: t(i+1),y(i+1)
+         i = i+2
+      loop
+      close #2
+      mat redim t(2*n_points),y(2*n_points)
+   end if
+end sub
+
+! display the sine and cosine transforms separately if this is a forward
+! transform
+sub display(t(),d(),n,isign,real$,imag$)
+   input prompt "Display only a portion ? [1=yes,0=no] => ":idisp
+   if idisp=1 then
+      input prompt "xmax ? => ":xmax
+   end if
+   set background color "white"
+   call setcanvas("white")
+   set color "black"
+   dim ycos(0),ysin(0),tcos(0)
+   if isign = 1 then
+      mat redim ycos(n/2),ysin(n/2),tcos(n/2)
+      if idisp <> 1 then
+         for i = 1 to n/2 ! only displaying up to Nyquist's frequency
+            ycos(i) = d(2*i-1)
+            ysin(i) = d(2*i)
+            tcos(i) = t(2*i-1)
+         next i
+      else
+         for i = 1 to n/2
+            if t(2*i-1) > xmax then exit for
+            ycos(i) = d(2*i-1)
+            ysin(i) = d(2*i)
+            tcos(i) = t(2*i-1)
+         next i
+         mat redim ycos(i),ysin(i),tcos(i)
+      end if
+      call settitle("FFT")
+      call sethlabel("Frequency (Hz)")
+      call setvlabel("F(nu)")
+      call datagraph(tcos,ycos,3,1,"black")    ! graph real part
+      call adddatagraph(tcos,ysin,4,2,"red")   ! add imaginary part to graph
+   else
+      mat redim ycos(n),ysin(n),tcos(n)
+      for i = 1 to n
+         ycos(i) = d(2*i-1) 
+         ysin(i) = d(2*i)
+         tcos(i) = t(2*i-1)
+      next i
+      call settitle("Back FFT")
+      call sethlabel("Time (sec)")
+      call setvlabel("f(t)")
+      call datagraph(tcos,ycos,3,1,"black")
+      call adddatagraph(tcos,ysin,4,2,"red") 
+   end if
+end sub
+
+! fourier transform of a complex data set
+! n_points = number of data points - n_points must be a power of 2
+! f_type = +1 -> forward transform
+! f_type = -1 -> backward transform
+! the data comes in array y()
+! real part and imaginary parts are interleaved
+! real part in y(0), y 
+! imaginary part of data comes in yi() 
+! the result is returned in the arrays yr() and yi()
+sub fft(y(),n_points,f_type)
+   dim yr(0),yi(0)
+   option angle radians
+   declare def p_val
+   j = 1
+   n_p = n_points
+   mat redim yr(n_points),yi(n_points)
+   for i = 1 to n_points            ! split the data up into real and imaginary
+      yr(i) = y(j)                  ! parts 
+      yi(i) = y(j+1)
+      j = j + 2
+   next i
+   n_power = 1
+   do    ! first determine n_power where  n_points = 2^n_power   
+      if n_p / 2 <= 1 then exit do
+      n_p = n_p / 2
+      n_power = n_power + 1
+   loop
+   n1 = n_power - 1
+   n2 = n_points / 2
+   for i = 1 to n_power
+      k = 0
+      do
+         for j = 1 to n2
+            ex = 2 * pi * p_val(k/(2^n1),n_power) / n_points
+            cos_factor = cos(ex)
+            sin_factor = sin(-f_type*ex)
+            k = k + 1
+            tmp_real = cos_factor * yr(k+n2) + sin_factor * yi(k+n2)
+            tmp_imag = cos_factor * yi(k+n2) - sin_factor * yr(k+n2)
+            yr(k+n2) = yr(k) - tmp_real
+            yi(k+n2) = yi(k) - tmp_imag
+            yr(k) = yr(k) + tmp_real
+            yi(k) = yi(k) + tmp_imag
+         next j
+         k = k + n2
+      loop until k >= n_points
+      n1 = n1 - 1
+      n2 = n2 / 2
+   next i
+! now do the bit reversal stuff
+   for i = 1 to n_points
+      p = p_val(i-1,n_power) + 1
+      if p > i then     ! switch places
+         tmp_real = yr(i)
+         tmp_imag = yi(i)
+         yr(i) = yr(p)
+         yi(i) = yi(p)
+         yr(p) = tmp_real
+         yi(p) = tmp_imag
+      end if
+   next i
+! finally have to repack results into the array y()
+   if f_type > 0 then   ! a forward transform
+      for i = 1 to n_points
+         y(2*i-1) = yr(i)
+         y(2*i) = yi(i)
+      next i
+   else                 ! a backward transform
+      for i = 1 to n_points
+         y(2*i-1) = yr(i) / n_points
+         y(2*i) = yi(i) / n_points
+      next i
+   end if
+end sub
+
+! bit reversal function - does double duty
+function p_val(a,b)
+   tmp = int(a)
+   p = 0
+   for i = 1 to b
+      p = 2 * p + tmp - 2 * int(tmp / 2)
+      tmp = int(tmp / 2)
+   next i
+   p_val = p
+end function

@@ -1,0 +1,28 @@
+program create
+   library "sgfunc.trc"
+   library "sglib.trc"
+   option nolet
+   dim f(0),a(0),phi(0),t(0)
+   input prompt "Sampling period, number => ": dt,n
+   input prompt "How many components => ": m
+   mat redim f(m),a(m),phi(m)
+   input prompt "Output file name => ": store$
+   mat redim t(n)
+   open #1: name store$, org text, create newold
+   erase #1
+   for i=1 to m
+      print "Component #";i
+      input prompt "  frequency (Hz), amplitude, phase (radians) => ": f(i),a(i),phi(i)
+   next i
+   for k=1 to n
+      t(k)=(k-1)*dt
+      fun=0
+      for j=1 to m
+         fun=fun+a(j)*sin(t(k)*2*pi*f(j)+phi(j))
+      next j
+      print #1: t(k),",",fun
+   next k
+   close #1
+   set color "black"
+   print "Done!"
+end

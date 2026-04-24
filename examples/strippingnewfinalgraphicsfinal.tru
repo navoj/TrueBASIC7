@@ -1,0 +1,170 @@
+option nolet
+! strippingnewfinalfinal.tru
+print "*************************************************"
+print "stripping column : version 1.0 with graphics     "
+print "binary  mixture :example (H(2),CO)               "
+print "*************************************************"
+print " peter.vlasschaert@gmail.com  ; date: 08/06/2015 "
+print "*************************************************"
+dim x(40),y(40)
+print "------------------------------------------------------"
+print "feeding = above in the column                  =>     "
+print "------------------------------------------------------"
+print
+input prompt " liquid (feeding) ,kg-mole/hr :55 kg-mole/h  = ":L
+input prompt " liquid to vapour ratio,L/V=m : 2.75         = ":m
+input prompt " vle (k=cte)  y=k*x           : y=4*x        = ":k
+print " liquid binary mixture =>   (xf,xb)            "
+input prompt " liquid first component mole % : H(2) 2.5 %  = ":xf
+input prompt " purity (above)         mole % : H(2) .25 %  = ":xb
+yb=xb
+print " vapour boilup rate (bottom) = ";l/m;" kg-mole/hr "
+print
+!********************************************
+! OL= operating line => y=m*x+b , b=(yb-m*xb)
+!********************************************
+yf=m*(xf-xb)+yb
+print "------------------------------"
+print " OL : operating line =>       "
+print "------------------------------"
+print " first point (xb,yb)  = ";xb,yb
+print " second point (xf,yf) = ";xf,yf
+print "------------------------------"
+print
+print "----------------------"
+print " tray => calculation  "
+print "----------------------"
+! wright down all equations   => =>
+x(1)=xb
+y(1)=yb
+b=(y(1)-m*x(1))
+! x(i) =>
+for i=2 to 10
+ x(i)=(k*x(i-1)-b)/m
+ if x(i) < xf then
+   tel=i
+ end if
+next i
+! y(i) =>
+for i=2 to 10
+ y(i)=k*x(i-1)
+next i
+mat redim x(tel+1),y(tel+1)
+print
+print " position x => "; x(tel)
+print 
+print "-------------------------------------------"
+print "number of trays (column)+bottom = "; tel-1
+print "-------------------------------------------"
+p1=y(tel+1)-y(tel)
+q1=yf-y(tel)
+z1=100*q1/p1
+print " all full trays + % above the full trays = ";tel-1;"+";z1;" %"
+print
+print "info to build up and draw the trays on paper = "
+print
+print "-------------"
+print " x values => "
+print "-------------"
+mat print x
+print "-------------"
+print " y values => "
+print "-------------"
+mat print y
+!***************************************************************
+vv=14! dimension of the drawing window(aspect ratio control)
+!***************************************************************
+xwin=vv
+ywin=vv
+nt=vv !number of tickmarks on the axes
+! part off total screen reserved for graphics
+open #1:screen 0.3,1,0.3,1
+window #1
+call draw_asp(xwin,ywin,asp)
+set color "black"
+call draw_axes(0,xwin,0,ywin,nt)
+! °45 degree line
+plot lines:0,0;vv,vv*asp
+s1=0.04
+z3$= "green"
+for i=1 to vv
+call smallcir_dr(s1,i,i*asp,scale,asp,z3$)
+next i
+! vle : y=k*x plot
+set color "red"
+plot lines:0,0;vv,k*vv*asp
+! ol : y=m*x+b
+set color "blue"
+plot lines: xb,yb*asp;vv,(m*vv+b)*asp
+! draw two points 1e) xb,yb 2e)xf,yf small dots (black)
+z3$="black"
+s1=0.05
+call smallcir_dr(s1,xb,yb*asp,scale,asp,z3$)
+call smallcir_dr(s1,xf,yf*asp,scale,asp,z3$)
+plot lines : xb,0;xb,yb*asp
+plot lines : xf,0;xf,yf*asp
+! draw the tray ( make scheme)
+! all full trays
+for i=1 to tel-1
+  plot lines : x(i),y(i)*asp ;x(i),y(i+1)*asp
+  plot lines : x(i),y(i+1)*asp;x(i+1),y(i+1)*asp
+next i
+! % tray (not full tay)
+plot lines : x(tel),y(tel)*asp;x(tel),yf*asp
+plot lines : x(tel),yf*asp;xf,yf*asp
+! get info to graph 
+plot text,at xb,yb : "(xb,yb)"
+plot text,at xf,yf*asp : "(xf,yf)"
+plot text,at 4,4*asp :" green line (45° degree line ) = ref "
+plot text,at 3,3*asp : " blue  line ( operating line ) = OL  "
+plot text,at 2,2*asp : " red   line (equilibrium line) = VLE "
+get key pse
+end
+
+sub draw_asp(xwin,ywin,asp)
+set window -xwin,xwin,-ywin,ywin
+! control aspect ratio for circle not ellips
+ask pixels px,py
+if px>py then
+   asp=px/py
+else
+   asp=py/px
+end if
+end sub
+
+SUB draw_axes(xmin,xmax,ymin,ymax,nt)
+    LET ntick = nt                ! number of tick marks
+    ! distance between tick marks on x-axis
+    LET dx = (xmax - xmin)/ntick
+    ! distance between tick marks on y-axis
+    LET dy = (ymax - ymin)/ntick
+    ! include margin
+    SET WINDOW xmin - dx,xmax + dx,ymin - dy,ymax + dy
+    LET x0 = max(0,xmin)
+    LET y0 = max(0,ymin)
+    IF ymin*ymax < 0 then
+       LET y0 = 0
+    ELSE
+       LET y0 = ymin
+    END IF
+    PLOT LINES: xmin,y0;xmax,y0   ! horizontal axis
+    PLOT LINES: x0,ymin;x0,ymax   ! vertical axis
+    LET tx = 0.1*dy               ! size of tick mark
+    LET ty = 0.1*dx
+    FOR itick = 0 to ntick
+        LET x = xmin + itick*dx
+        PLOT LINES: x,y0 - tx; x,y0 + tx    ! draw ticks on x axis
+        LET y = ymin + itick*dy
+        PLOT LINES: x0 - ty,y; x0 + ty,y    ! draw ticks on y axis
+    NEXT itick
+END SUB
+
+sub smallcir_dr(s1,xf,yf,scale,asp,z3$)
+set color z3$
+for theta=0 to 2*3.14 step 0.01
+    plot points:s1*cos(theta)+xf,s1*sin(theta)*asp+yf
+!plot ! disconnect plot
+next theta
+end sub
+
+

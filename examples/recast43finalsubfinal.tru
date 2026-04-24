@@ -1,0 +1,99 @@
+option nolet
+print "------------------------------------------------------------"
+print " recast : smaller matrix in a bigger matrix version 1.0     "
+print " peter.vlasschaert@gmail.com ,07/08/2015                    "
+print "------------------------------------------------------------"
+dim a(4,4)    ! structure
+n=UBOUND(a,1) ! max value index = i
+mat print a
+! put inside smaller matrix (2,2) in a bigger matrix
+! example
+for i=1 to n
+ for j=1 to n
+     a(i,j)=i+j-1
+ next j
+next i
+print " example matrix (bigger matrix) = "
+mat print a
+print "------------------------------"
+print " k = 1,2,3,..n  (example n=4) "
+print "------------------------------"
+print
+print "-----------------"
+print " input = k value "
+print "-----------------"
+input prompt " removes column and row with same index = ":k
+print " k = ";k
+call remove_col_row_same_index(k,n,a(,))
+mat print a
+!  put in a matrix b (3*3)
+dim b(3,3)
+b(1,1)=11
+b(1,2)=12
+b(1,3)=13
+b(2,1)=14
+b(2,2)=15
+b(2,3)=16
+b(3,1)=17
+b(3,2)=18
+b(3,3)=19
+print " smaller matrix = "
+mat print b
+dim d(3)
+! must be sorted first ( = elimination of k value from matrix dd)
+dim dd(1)
+mat redim dd(n)
+call vec_d(n,k,dd(),d())
+mat print d 
+print " recast matrix = "
+call recast(n,d(),a(,),b(,))
+mat print a
+end
+
+sub remove_col_row_same_index(k,n,a(,))
+! removes column
+for j=1 to n
+ if j<>k then
+ a(k,j) =0
+ end if
+next j
+! removes row 
+for i=1 to n
+ if i<>k then
+ a(i,k) =0
+ end if
+next i
+! correction
+a(k,k) = 0
+end sub
+
+sub recast(n,d(),a(,),b(,))
+for i=1 to n-1
+ for j=1 to n-1 
+! replace smaller matrix in a bigger matrix
+! One dimension lower = b matrix
+ a(d(i),d(j))=b(i,j)
+ next j
+next i
+end sub
+
+sub vec_d(n,k,dd(),d())
+for i=1 to n
+  dd(i)=i
+next i
+z=0
+for i=1 to n
+! elimination of the k value
+ if dd(i)<>k then
+   z=z+1
+! put other values except k in d array
+  d(z)=dd(i)
+ end if
+next i
+end sub
+
+
+
+
+
+

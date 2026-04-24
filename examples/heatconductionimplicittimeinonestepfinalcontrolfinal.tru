@@ -1,0 +1,140 @@
+option nolet
+! heatconductionimplicittimeintervalfinal.tru
+print "----------------------------------------------"
+print " heat conduction (time interval ) (solve TDMA)"
+print " unsteady   (implicit method)                 "
+print "----------------------------------------------"
+print " peter.vlasschaert@gmail.com "
+print " 20/7/2015  version 1.0      "
+print "-----------------------------"
+print " unsteady state =>                         "
+print " dT/dt=alpha*d/dx(dT/dx)              (1)  "
+print " T=temperature,t=time,x=space              "
+print " IC: T=T(t,x)=T(0,x) given temperature=t_in"
+print " BC: x=0 left   -> T=T0               (2)  "
+print "     x=l right  -> T=Tl               (3)  "
+print " CFL number = m = alpha*dt/dx^2            "
+print "-------------------------------------------"
+input prompt " example =1 , 2 do input = ":sel
+print
+if sel=1 then
+  alpha  = 2
+  dt     = .2
+  t_in   = 20  ! temperature
+  tl     = 300 ! right temperature of the slab
+  to     = 40  ! left temperature  of the slab
+  l=4
+  n=4
+ else
+input prompt " time step(s    )              = ":dt
+input prompt " alpha    (m^2/s)              = ":alpha
+input prompt " initial temperature         = ":t_in
+input prompt " left  temperature (= left ) = ":to
+input prompt " right temperature (= right) = ":tl
+input prompt " Length of the slab (m)   = ":l
+input prompt " concentration profile for 'n' parts  'integer ' = ":n
+end if
+print
+dx = l/n
+n_eq=n
+no=n_eq
+m = (alpha*dt)/dx^2
+print " length of interval = ";dx
+print " time step          = ";dt
+print " alpha (coef .)     = ";alpha
+print
+print " stability  m = ";m
+dim a(1),b(1),c(1),d(1)
+mat redim a(no),b(no),c(no),d(no)
+! initial temperature profile
+print " initial temperature profile °C = "
+no_i=n_eq+2
+dim t_i(1)
+mat redim t_i(no_i)
+t_i(1)=to
+for i=2 to no_i-1
+  t_i(i)=t_in
+next i
+t_i(no_i)=tl
+mat print t_i
+! combination (1) and (2) FD schemes
+a_1= 2*m+1
+a_2=- m
+d1 =t_in+m*to
+d(1)=d1
+! general equations TDMA  ( except last one use (3) ),2->n_eq-1
+a_d=-m
+b_d=2*m+1
+c_d=-m
+! combination (1) and (3) FD schemes
+a_nmin =- m
+a_n   = 2*m+1
+dn=t_in+tl*m
+x1=a_1
+x2=a_2
+x3=a_nmin
+x4=a_n
+dim x(1),aa(1,1),beta(1),gamma(1)
+mat redim x(no),aa(no,no),beta(no),gamma(no)
+call in_tridiag(no,a(),b(),c(),b_d,c_d,a_d,x1,x2,x3,x4)
+! TDMA solve 'no' equations
+!/////////////////////////////////////////////////
+call in_d(no,d(),d1,dn)
+call beta_gamma(no,a(),b(),c(),d(),beta(),gamma())
+!///////////////solve (back substitution) //////////////////
+call back_solve (no,beta(),gamma(),c(),x())
+print
+!call show_tridiag(no,a(),b(),c(),aa(,))
+print " column T(j) temperature  distribution inside the slab=> "; dt; " sec"
+print
+mat print x
+end
+
+sub in_tridiag(no,a(),b(),c(),md_b,ad_c,bd_a,x1,x2,x3,x4)
+!=> coef main diag
+b(1)=x1 ! correction first line (diagonal matrix)
+for i=2 to no-1
+  b(i)=md_b
+next i
+b(no)=x4 ! correction last line (diagonal matrix)
+!=> coef above diag
+c(1)=x2 ! second correction for first line (diagonal matrix)
+for i=2 to no-1
+  c(i)=ad_c
+next i
+!=> coef below diag
+for i=2 to no-1
+  a(i)=bd_a
+next i
+a(no)=x3 ! second correction for last line (diagonal matrix)
+end sub
+
+
+
+sub beta_gamma(no,a(),b(),c(),d(),beta(),gamma())
+beta(1) = b(1)
+gamma(1)= d(1)/beta(1)
+for j=2 to no
+ beta (j)=b(j)-a(j)*c(j-1)/beta(j-1)
+ gamma(j)=(d(j)-a(j)*gamma(j-1))/beta(j)
+next j
+end sub
+
+sub back_solve (no,beta(),gamma(),c(),x())
+x(no)=gamma(no)
+! back substitution : solve n->n-1->....1
+for k=no-1 to 1 step -1
+  x(k)=gamma(k)-c(k)*x(k+1)/beta(k)
+next k
+end sub
+
+
+
+sub in_d(no,d(),d1,dn)
+d(1)=d1
+for i=2 to no-1
+  d(i)=d1
+next i
+d(no)=dn
+end sub
+

@@ -1,0 +1,179 @@
+option nolet 
+print "************************************************"
+print "* complex : Matrix Sum 'version1',example:diag *"
+print "* peter.vlasschaert@gmail.com ,14/04/2017      *"
+print "************************************************"
+print
+!*******************************
+! How to do :Complex Matrix Sum
+!*******************************
+dim eye(1,1)
+dim c_A(1,1,2),cA_r(1,1),cA_i(1,1)! 2 from (r)e,(i)mag
+dim c_B(1,1,2),cB_r(1,1),cB_i(1,1)! 2 from (r)e,(i)mag
+! use to : sum re,imag
+dim c_sum(1,1,2),cs_r(1,1),cs_i(1,1)! s :sum
+! use to : 
+N = 2
+mat redim eye(N,N)
+mat redim c_A(N,N,2),cA_r(N,N),cA_i(N,N)
+mat redim c_B(N,N,2),cB_r(N,N),cB_i(N,N)
+mat redim c_sum(N,N,2),cs_r(1,1),cs_i(1,1)
+mat eye = idn(N,N)  ! N by N identity matrix
+print "****************************"
+print " identity matrix ";N;"by";N
+print "****************************"
+mat print eye
+!*******************************************
+! diagonal matrix complex , 'c_A(N,N,2)'
+! every element diagonal : 1+2*jj,jj=sqr(-1)
+!*******************************************
+for i=1 to N
+   for j=1 to N
+   c_A(i,j,1) = eye(i,j)      ! Re     part
+   c_A(i,j,2) = 2*eye(i,j)    ! Imag   part
+   next j
+next i
+!*************************************
+! Re part in :  cA_r(N,N) 'out matrix'
+!*************************************
+call read_cmat(N,N,1,cA_r(,),c_A(,,))
+print "******************************"
+print " real part : matrix, mat cA_r "
+print "******************************"
+print
+mat print cA_r                        
+!*************************************
+! Imag part in :  cA_i(N,N) 'out matrix'
+!*************************************
+call read_cmat(N,N,2,cA_i(,),c_A(,,))
+print "******************************"
+print " imag part : matrix, mat cA_i "
+print "******************************"
+print             
+mat print cA_i                       
+!*******************************************
+! diagonal matrix complex , 'c_B(N,N,2)'
+! every element diagonal : 4+5*jj,jj=sqr(-1)
+!*******************************************
+for i=1 to N
+   for j=1 to N
+   c_B(i,j,1) = 4*eye(i,j)    ! Re     part
+   c_B(i,j,2) = 5*eye(i,j)    ! Imag   part
+   next j
+next i
+!*************************************
+! Re part in :  cB_r(N,N) 'out matrix'
+!************************************
+call read_cmat(N,N,1,cB_r(,),c_B(,,))
+print "******************************"
+print " real part : matrix, mat cB_r "
+print "******************************"
+print
+mat print cB_r 
+!*************************************
+! Imag part in :  cB_i(N,N) 'out matrix'
+!*************************************
+call read_cmat(N,N,2,cB_i(,),c_B(,,))
+print "******************************"
+print " imag part : matrix, mat cB_i "
+print "******************************"
+print
+mat print cB_i 
+print "*************************************"
+print "* sum : cA_r+cB_r = cs_r (real part)*"
+print "*************************************"
+mat cs_r = cA_r + cB_r
+mat print cs_r
+print "*************************************"
+print " sum : cA_i+cB_i = cs_i (imag part) *"
+print "*************************************"
+mat cs_i = cA_i+ cB_i
+mat print cs_i
+FOR i=1 to N               ! Matrix c_sum : c_A+c_B
+    FOR j=1 to N
+        c_sum(i,j,1), c_sum(i,j,2) = 0.      
+ CALL csum( c_A(i,j,1), c_A(i,j,2),c_B(i,j,1), c_B(i,j,2),rpart,ipart)
+        c_sum(i,j,1) = c_sum(i,j,1) + rpart
+        c_sum(i,j,2) = c_sum(i,j,2) + ipart      
+    NEXT j
+NEXT i
+print " real part:sum ,use call csum = "
+dim css_r(1,1)
+mat redim css_r(N,N)
+call read_cmat(N,N,1,css_r(,),c_sum(,,))
+mat print css_r
+print " imag part:sum ,use call csum = "
+dim css_i(1,1)
+mat redim css_i(N,N)
+call read_cmat(N,N,2,css_i(,),c_sum(,,))
+mat print css_i
+end
+
+
+sub read_cmat(lrow,lcol,mm,cout(,),cin(,,))
+! mm = 1 real matrix
+! mm = 2 imaginair matrix
+! lrow ' number of rows    '
+! lcol ' number of columns '
+for i=1 to lrow
+  for j=1 to lcol 
+ cout(i,j) = cin(i,j,mm)
+  next j
+next i
+end sub
+
+!*********************************************
+! complex functions: cmin,csum,cmult,cdiv,cabs
+!*********************************************
+
+!*********************************
+!rem : i=sqr(-1),i*i=i^2=-1
+!rem : i*i*i   = - i
+!rem : i*i*i*i = (-1)*(-1) = 1
+!*********************************
+
+
+SUB cmin(ar,ai,br,bi,cr,ci)
+!****************************************
+! Complex substraction; c = a-b
+!   (cr + i*ci) = (ar + i*ai)+(br + i*bi)
+!****************************************
+     cr = ar-br
+     ci = ai-bi
+END SUB
+
+SUB csum(ar,ai,br,bi,cr,ci)
+!****************************************
+! Complex sommation; c = a+b
+!   (cr + i*ci) = (ar + i*ai)+(br + i*bi)
+!****************************************
+     cr = ar+br
+     ci = ai+bi
+END SUB
+
+SUB cmult(ar,ai,br,bi,cr,ci)
+!****************************************
+! Complex multiplication; c = a*b
+!   (cr + i*ci) = (ar + i*ai)*(br + i*bi)
+!****************************************
+     cr = ar*br - ai*bi
+     ci = ar*bi + ai*br
+END SUB
+
+SUB cdiv(ar,ai,br,bi,cr,ci)
+!*************************************************************
+! Complex multiplication; c = a/b
+!(cr + i*ci) = (ar + i*ai)/(br + i*bi)
+!(cr + i*ci) = (ar + i*ai)/(br + i*bi) *1
+!(cr + i*ci) = (ar + i*ai)/(br + i*bi)*(br - i*bi)/(br - i*bi)
+! denom = (br - i*bi)*(br + i*bi)
+!*************************************************************
+    denom = br*br + bi*bi
+     cr = (ar*br + ai*bi)/denom
+     ci = (ai*br - ar*bi)/denom
+END SUB
+
+DEF cabs(ar,ai)
+    ! Complex absolute value
+    LET cabs = sqr(ar^2 + ai^2)
+END DEF

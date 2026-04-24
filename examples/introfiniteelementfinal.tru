@@ -1,0 +1,174 @@
+option nolet
+! introfiniteelementfinal.tru
+print "-----------------------------"
+print " compositewall (solve TDMA)  "
+print " peter.vlasschaert@gmail.com "
+print " 26/7/2015  version 1.0      "
+print "-----------------------------"
+print " intro finite element =>                   "
+print " Heat conduction :through a composite wall "
+print " q = -k*A*dT/dx 'fourier law'         (1)  "
+print " k= thermal conductivity                   "
+print " T=temperature'°C',x=space' 1D '           "
+print " BC: x=0 left   -> T=T0               (2)  "
+print "            first   wall,k1=k(1),dx1=dx(1) "
+print "            second  wall,k2=k(2),dx2=dx(2) "
+print "            thirdth wall,k3=k(3),dx3=dx(3) "
+print "     x=l right  -> T=Tl               (3)  "
+print " A_S(i) =A1=A2=A3=1  (i=1..3)              "
+print "-------------------------------------------"
+! input prompt " example =1 , 2 do input = ":sel
+n_wall =3
+T0 = 200   ! temperature at x=0
+TL = 20     ! temperarature at x=L
+dim k(1),dx(1),a_s(1)
+mat redim k(n_wall),dx(n_wall),a_s(n_wall)
+! thermal conductivity
+k(1)=80e-3       ! 'W/(mm*°C)'
+k(2)=1e-3
+k(3)=80e-3
+print "thermal conductivity 'vector' ( W/mm°c)  = "
+mat print k
+! tickness of the wall
+dx(1) = 10         ! 'mm'
+dx(2) =  5
+dx(3) = 10
+print "tickness of all elements in composite wall 'vector' (mm)  = "
+mat print dx
+! surface
+a_s(1) =1
+a_s(2) =1
+a_s(3) =1
+! stifness coef:wall
+dim coef(1)
+mat redim coef(n_wall)
+for i=1 to n_wall
+  coef(i) = k(i)*a_s(i)/dx(i)
+next i
+! build : stiffness matrix [k(e)],linear
+dim ke(2,2)
+ke(1,1)=1
+ke(1,2)=-1
+ke(2,1)=-1
+ke(2,2)=1
+! build element ' matrix ' :
+! number n_wall (1e row =first wall ,2e row = first wall
+! 3e row = second wall , 4e row = second wall ,5e row =thridth wall..
+nt = n_wall* 2
+dim kh(2,2)
+mat redim kh(nt,2)
+for i=1 to 2*(n_wall) step 2
+ kh(i,1)=ke(1,1)
+ kh(i,2)=ke(1,2)
+ kh(i+1,1)=ke(2,1)
+ kh(i+1,2)=ke(2,2)
+next i
+!mat print kh
+tt=1
+for i=1 to 2*(n_wall) step 2
+ kh(i,1)=coef(tt)*ke(1,1)
+ kh(i,2)=coef(tt)*ke(1,2)
+ kh(i+1,1)=coef(tt)*ke(2,1)
+ kh(i+1,2)=coef(tt)*ke(2,2)
+tt=tt+1
+next i
+mat print kh
+! global stiffness matrix :found by summing these equations [ks]
+no=n_wall+1
+dim ks(1,1)
+mat redim ks(no,no)
+!mat print ks
+for i=1 to 2
+  for j=1 to 2
+ks(i,j)=kh(i,j)
+  next j
+next i
+for i=2 to 3
+ for j=2 to 3
+ks(i,j)=kh(i+1,j-1)
+ next j
+next i
+for i=3 to 4
+  for j=3 to 4
+ks(i,j)=kh(i+2,j-2)
+  next j
+next i
+! diagonal : global matrix correction
+ks(2,2) = kh(2,2)+kh(3,1)
+for i=3 to no-1
+ks(i,i) = kh(i+1,2)+kh(i+2,1)
+next i
+print " global stiffness matix = "
+mat print ks
+! unknow temperature left =T2 side from insulation and right = T3 side
+! T1=T0 wall T2 insulation T3 wall T4 (need solve to find T2,T3)
+!**** constuct solve (with TDMA) *******
+dim a(1),b(1),c(1),d(1)
+v=no-2
+mat redim a(v),b(v),c(v),d(v)
+! first line : BC for T0 =200°C
+a(1) = ks(2,1)*T0
+b(1) = ks(2,2)
+c(1) = ks(2,3)
+! how construct d(1)
+d(1)= - a(1)
+a(1)=0
+for i=2 to no-2
+ for j=i+1 to no-1
+ a(i)=ks(i+1,j-1)
+ b(i)=ks(i+1,j)
+ c(i)=ks(i+1,j+1)
+ next j
+next i
+! correct last equation (bc , x=L, TL=20°C
+c(v)=TL*c(v)
+! how construct last d
+d(v)=-c(v)
+c(v)=0
+!mat(ks)*t(i)=d(i)
+print 
+print " system of equations to solve (TDMA) = "
+print a(1),b(1),c(1),d(1)
+print a(2),b(2),c(2),d(2)
+dim beta(1),gamma(1)
+mat redim beta(v),gamma(v)
+call beta_gamma(v,a(),b(),c(),d(),beta(),gamma())
+dim x(1)
+mat redim x(v)
+call back_solve (v,beta(),gamma(),c(),x())
+print
+print " temperature inside composite wall '°C' "
+mat print x
+dim t(1)
+mat redim t(no)
+t(1)=T0
+for i=2 to no-1
+  t(i)=x(i-1)
+next i
+t(no)=TL
+print " temperature profile composite wall '°C' "
+mat print t
+end
+
+
+sub beta_gamma(no,a(),b(),c(),d(),beta(),gamma())
+beta(1) = b(1)
+gamma(1)= d(1)/beta(1)
+for j=2 to no
+ beta (j)=b(j)-a(j)*c(j-1)/beta(j-1)
+ gamma(j)=(d(j)-a(j)*gamma(j-1))/beta(j)
+next j
+end sub
+
+sub back_solve (no,beta(),gamma(),c(),x())
+x(no)=gamma(no)
+! back substitution : solve n->n-1->....1
+for k=no-1 to 1 step -1
+  x(k)=gamma(k)-c(k)*x(k+1)/beta(k)
+next k
+end sub
+
+
+
+
+

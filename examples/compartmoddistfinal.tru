@@ -1,0 +1,125 @@
+option nolet
+print "**********************************************************"
+print " compartmoddist version (1.0)                             "
+print " (bin)distillation :'1-propanol/ethanol'  x1+x2=1 liquid  "
+print "                                          y1+y2=1 vapour  "
+print " 1=first component 2=second component                     "
+print "----------------------------------------------------------"
+print " peter.vlasschaert@gmail.com                              "
+print " date: 01/06/2015                                         "
+print "**********************************************************"
+print "**********************************************************************************"
+print "compartiment distillation model: =====> euler integration (dt)                    "
+print "        reboiler           : ((b)ottom   :column),b,xb,yb                         "
+print "three sections : 1e) (s)tripping   section,xs,ys                                  "
+print "               : 2e) (f)eed        section,xf,yf , z=mol fraction,f=feed flow rate"
+print "               : 3e) (r)ectifying  section,xr,yr                                  "
+print "        condenser-(R)eflux : ((d)istillate:column),d,xd,yd                        "
+print "**********************************************************************************"
+print "name : (v)apor (s)tripping =vs ,y mol fraction (vapour) => ys                     "
+print "     : (l)iquid(s)tripping =ls ,x mol fraction (liquid) => xs                     "
+print "     : (m)ass (d)istillate = md , (m)ass (b)ottom ,m(r)=m(f)=m(s)                 "
+print "     :  vapor flowrate for all trays => v=vs=vf=vr                                "
+print "**********************************************************************************"
+print
+!-------------------------------------------------------
+! no controllers are implemented (pid,pi,pd)
+! we need to input flow rates values for every time step
+!-------------------------------------------------------
+n=20 ! n =5000 (n=20 to show output view,to see what happening)
+dim xb(1),xs(1),xf(1),xr(1),xd(1),yb(1),ys(1),yf(1),yr(1)
+dim lr(1),r(1),ls(1),b(1),v(1),tijd(1)
+mat redim xb(n),xs(n),xf(n),xr(n),xd(n),yb(n),ys(n),yf(n),yr(n)
+mat redim lr(n),r(n),ls(n),b(n),v(n),tijd(n)
+dt=0.005   ! time step      ( min            )
+Z =0.5     ! mol fraction   (feed composition)
+f =100     ! feed flow rate (mol/min         ) 
+!******************************************************************
+!  yi=ki*xi  system equilibrium equation
+! relative volatility "alpha >1 to do seperation ,alpha(i,j)=ki/kj"
+!******************************************************************
+alpha= 2.0
+! reflux flow ratio  (mol/min)
+Reflux    = 128
+! vapor boil-up rate (mol/min)
+Vap       = 178
+! time initialisation
+tijd(1)=0
+! initial values for liquid rate => linear profile :'xb<xs<xf<xd': 0<x<1 "
+xb(1)=0.249
+xs(1)=0.366
+xf(1)=0.473
+xr(1)=0.605
+xd(1)=0.751
+! ->      bottom holdup (mol)
+mb=100  
+! -> reflux drum holdup (mol)
+md=100
+! tray holdups (mol)
+ms=mb/10
+mf=mb/10
+mr=mb/10
+r(1)=reflux
+v(1)=vap 
+!           ==== vapour composition ====>
+yb(1)=(alpha*xb(1))/(1+(alpha-1)*xb(1)) ! bottom vapour
+ys(1)=(alpha*xs(1))/(1+(alpha-1)*xs(1)) ! stripping vapour
+yf(1)=(alpha*xf(1))/(1+(alpha-1)*xf(1)) ! feed vapour
+yr(1)=(alpha*xr(1))/(1+(alpha-1)*xr(1)) ! rectifying vapour
+!           =============================
+ls(1)=r(1)+f     !  liquid flow rate stripping section
+lr(1)=r(1)       !  liquid flow rate rectifying section
+b(1)=ls(1)-v(1)  !eq (1) bottom flowrate
+print
+print "value ","time","xd","xr","xf","xs","xb"
+print "-----------------------------------------------------------------------------------------------------"
+print 1,tijd(1),xd(1),xr(1),xf(1),xs(1),xb(1)
+for i=2 to  n
+    r(i)=reflux
+    v(i)=vap 
+! vapour phase compositions y
+yb(i)=(alpha*xb(i))/(1+(alpha-1)*xb(i)) ! bottom vapour
+ys(i)=(alpha*xs(i))/(1+(alpha-1)*xs(i)) ! stripping vapour
+yf(i)=(alpha*xf(i))/(1+(alpha-1)*xf(i)) ! feed vapour
+yr(i)=(alpha*xr(i))/(1+(alpha-1)*xr(i)) ! rectifying vapour
+! yd excluded,why no vapour reflux drum
+!dynamics calculation of model
+ls(i)=r(i)+f   !  liquid flow rate stripping section
+lr(i)=r(i)     !  liquid flow rate rectifying section
+!******************************************************************
+! why this: (balances of flow rate around reboiler)
+! liquid comming down column from stripping section =ls
+! reboiler produce some output (v)apour and some (b)ottom flow rate 
+! =>ls=v+b => v=ls-b => ls-b-v=0
+! component continuity equation
+!------------------------------------------------------------------
+! mb*(d(xb)/dt)=ls*xs-b*xb-v*yb -> euler equation
+!*******************************************************************
+b(i)=ls(i)-v(i)  !eq (1)
+!*******************************************************************
+! differential equations : euler integration
+! dx/dt=f(x) => dx=x(i+1)-x(i) => x(i+1)=x(i)+f(x)*dt
+!*******************************************************************
+! bottom section (euler)
+ xb(i)=xb(i-1)+(1/mb*(ls(i-1)*xs(i-1)-b(i-1)*xb(i-1)-v(i)*yb(i)))*dt
+! stripping          section (euler), see above
+! balances (stripping section) lf+v(reboiler)-ls-v(stripping)=0
+! component continuity equation    ? (lf=ls) ,v= v(reboiler)=v(str..)
+!-------------------------------
+! ms*(d(xs)/dt)=ls(i)*(xf(i)-xs(i))+v(i)*(yb(i)-ys(i))
+ xs(i)=xs(i-1)+(1/ms*(ls(i-1)*(xf(i-1)-xs(i-1))+v(i-1)*(yb(i-1)-ys(i-1))))*dt
+! feed               section (euler)
+ xf(i)=xf(i-1)+1/mf*dt*(lr(i-1)*xr(i-1)-ls(i-1)*xf(i-1)+f*z+v(i-1)*(ys(i-1)-yf(i-1)))
+! rectifying         section (euler)
+xr(i)=xr(i-1)+1/mr*dt*(lr(i-1)*(xd(i-1)-xr(i-1))+v(i-1)*(yf(i-1)-yr(i-1)))
+! condenser-reflux   section (euler)
+ xd(i)=xd(i-1)+1/md*dt*(v(i-1)*(yr(i-1)-xd(i-1)))
+   tijd(i)=tijd(i-1)+dt
+   if xb(i)> 1 or xd(i)>1 or xr(i)>1 or xf(i)>1 or xs(i)>1 or xb(i)>1 then
+      exit for
+      mat redim tijd(i),xd(i),xr(i),xf(i),xs(i),xb(i)
+   end if
+   print i,tijd(i),xd(i),xr(i),xf(i),xs(i),xb(i)
+next i
+end
+

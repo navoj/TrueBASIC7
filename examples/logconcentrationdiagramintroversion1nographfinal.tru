@@ -1,0 +1,105 @@
+option nolet
+print "***********************************************"
+print " intro:Log concentration diagram,no graph      "
+print "***********************************************"
+print " first principles : pH versus log10[C],version1"
+print "***********************************************"
+print "***********************************************"
+print " ref : left < pka < right                      "
+print " Ca = [A(1-)] +[HA],weak acid-> ka             "
+print " alpha_A = [A(1-)]/Ca,alpha_HA =[HA]/Ca        "
+print " left : [H(+)]>ka =>  see sub left_ka          "
+print " right: [H(+)]<ka =>  see sub right_ka         "
+print "***********************************************"
+print "***********************************************"
+print "peter.vlasschaert@gmail.com,04/11/2016         "
+print "***********************************************"
+print
+!---------------------------------------------------------
+!filename:logconcentrationdiagramintroversion1nographfinal
+!---------------------------------------------------------
+!--------------------------------------
+! [H+],[OH(1-)] not calculated
+! log_h = log10[H+] = -pH
+! log_oh = log10[OH(1-)]= pH-pkw
+!--------------------------------------
+!**************************************
+! math :
+!   log (x*y) = log(x)+log(y)
+!   log (x/y) = log(x)-log(y)
+!   log (x)^a = a*log(x)
+!**************************************
+! pH = - log[H(+)],pC = -log[C]
+! pH+pOH = pkw 
+!**************************************
+! [A(-)] = Ca*(ka/(ka+[H(+)]))      (1)
+! [HA  ] = ca*([H(+)]/(ka+[H(+)]))  (2)
+! example : log10(100) =2
+!**************************************
+print "*********"
+print "*given  *"
+print "*********"
+pkw = 14    ! dissociation constant 'aqua     '
+pka = 4.75  ! dissociation constant 'weak acid',acid acetic
+Ca  = 0.01  ! concentration 'weak acid'
+print " dissociatio  constant 'aqua     ',pkw = ";pkw
+print " dissociation constant 'weak acid',pka = ";pka
+print " concentration         'weak acid',Ca  = ";Ca
+print "***********"
+print "*result   *"
+print "***********"
+call system_point(Ca,pka,pH_s,logc_s)
+print " system point =>  (";pH_s;",";logc_s;")"
+print
+! first => left
+print " left from ka => "
+print
+print "pH","log10[A(-)]","log10[HA]"
+for pH = 0.1 to pka-0.1 step .5
+call left_ka(Ca,pka,pH,log_A_l,log_HA_l)
+print pH,log_A_l,log_HA_l
+next pH
+! second => right
+print
+print " right from ka => "
+print
+print "pH","log10[A(-)]","log10[HA]"
+for pH = pka +0.1 to 12 step .5
+call right_ka(Ca,pka,pH,log_A_r,log_HA_r )
+print pH,log_A_r,log_HA_r
+next pH
+end
+
+sub left_ka(Ca,pka,pH,log_A_l,log_HA_l)
+!*************************
+! [H(+)]>ka => 
+!*************************
+! [A(-)] = Ca*(ka/([H(+)])
+! [HA  ] = ca
+!*************************
+! use : rule math
+!*************************
+log_A_l  = log10(Ca)-pka+pH
+log_HA_l = log10(Ca)
+end sub
+
+sub right_ka(Ca,pka,pH,log_A_r,log_HA_r )
+!*************************
+! [H(+)]<ka => 
+!*************************
+! [A(-)] = Ca      
+! [HA  ] = ca*([H(+)]/(ka))  
+!*************************
+log_A_r   = log10(Ca)
+log_HA_r  = log10(Ca)+pka-pH
+end sub
+
+sub system_point(Ca,pka,pH_s,logc_s)
+!************************************
+! systempoint ,pH = pka and log10(Ca)
+!************************************
+pH_s   = pKa      ! x cor.
+logc_s = log10(Ca)! y cor
+end sub
+
+

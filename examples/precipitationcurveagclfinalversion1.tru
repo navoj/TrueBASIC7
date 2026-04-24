@@ -1,0 +1,250 @@
+option nolet
+open #1:screen 0,0.5,0,1
+open #2:screen .5,1,.5,1
+window #1
+! serie :analytical chemistry
+! filename :precipitationcurveagclfinalversion1.tru
+print
+print "*********************************************"
+print "* precipitation curve AgCl,version 1.0      *" 
+print "* use: ksp=[Ag(+)][Cl(-)]=10^(-10)          *"
+print "*  => pAg+pCl = -log(10)(10^(-10)) = 10     *"
+print "*********************************************"
+print "*  titration curve:draw(x ml AgNO3,pAg)     *"
+print "* 1e) before EP => [Cl(-)] -> [Ag(+)]       *"
+print "* 2e) by     EP => [Cl(-)] = [Ag(+)]        *"
+print "* 3e) after  EP => excess [Ag(+)]           *"
+print "*********************************************"
+print "* buret           : x ml AgNO3 0.1N    to   *"
+print "* erlenmeyer flask:(NaCl 10 ml 0.1N)        *"
+print "*********************************************"
+print "*reaction:NaCl + AgNO3 = AgCl'solid'+ NaNO3 *"
+print "*********************************************"
+print "* peter.vlasschaert@gmail.com,04/10/2016    *"
+print "*********************************************"
+print
+print "************"
+print "* given =  *"
+print "************"
+ksp     = 1E-10
+p_ksp   = -log10(ksp)
+c_agno3 = 0.1
+c_nacl  = 0.1
+v0_nacl = 10 
+print " solubility product ksp(AgCl) =  ";ksp
+print " conc AgNO3          = ";c_agno3;" N,buret      "
+print " conc NaCl           = ";c_nacl ;" N,erlenmeyer "
+print " initial volume Nacl = ";v0_nacl;" ml,erlenmeyer"
+print
+print "************"
+print "* result = *"
+print "************"
+print " ************************************************"
+print " x ml,added AgNO3 to Nacl solution of 0.1N,10ml *"
+print " ************************************************"
+print "initial x=0  "
+print
+print "ml,0.1N Ag(+)","Cl(-),erl.","totvol","[Cl(-)]","pCl","      pAg"
+print 0,v0_nacl;" ml",v0_nacl,0.1,-log10(0.1),0
+print
+print " before EP = "
+print
+print "ml,0.1N Ag(+)","Cl(-),erl.","totvol","[Cl(-)]","pCl","      pAg"
+for x=1 to 9 step 4
+cl = ((v0_nacl-x)/(v0_nacl+x))*c_nacl
+pCl = -log10(cl)
+pAg = 10 - pCl  ! from ksp 'AgCl'
+print x,v0_nacl-x,v0_nacl+x,cl,pCl,pAg
+next x
+print " just before x=9.9 "
+print
+x=9.9
+cl = ((v0_nacl-x)/(v0_nacl+x))*c_nacl
+pCl = -log10(cl)
+pAg = 10 - pCl  ! from ksp 'AgCl'
+print x,v0_nacl-x,v0_nacl+x,cl,pCl,pAg
+! only need cl,pcl,pAg,before Ep
+print
+print " by EP = "
+print
+x=(v0_nacl*c_nacl)/c_agno3
+x_eq =x
+cl =(ksp)^(1/2)
+pCl = -log10(cl)
+pAg = 10 - pCl 
+print x,v0_nacl-x,v0_nacl+x,cl,pCl,pAg
+print
+print "ml,0.1N Ag(+)"," tot_vol,erl.","Ag(+)"," pCl"," pAg"
+print " => just after EP x=10.1 'excess [Ag(+)]' "
+print
+x_excess =0.1  ! "after EP extra x_eq
+x=x_eq + x_excess
+tot_vol = (v0_nacl+x)
+Ag = (x_excess*c_agno3)/tot_vol
+pAg_e = -log10(Ag)
+pCl_e = 10 - pAg_e
+print x,tot_vol,Ag,pCl_e,pAg_e
+for x_excess = 1 to 9 step 4
+x=x_eq + x_excess
+tot_vol = (v0_nacl+x)
+Ag = (x_excess*c_agno3)/tot_vol
+pAg_e = -log10(Ag)
+pCl_e = 10 - pAg_e
+print x,tot_vol,Ag,pCl_e,pAg_e
+next x_excess
+!*******************************************
+window #2 ! draw graph right part of screen
+!*******************************************
+! windows 2 ,subs ,for :before,by,after 'EP'
+!*******************************************
+dim xp(2),yp(2)
+ntx = 14 ! tick marks x-axis
+nty = 9  ! tick marks y-axis
+xp(1)=0   ! xmin
+xp(2)=ntx ! xmax 
+yp(1)=0   ! ymin
+yp(2)=nty ! ymax
+ask pixels px,py
+asp_r = 1! px/py  !aspect ratio correction(rectangular window)
+set window xp(1)*asp_r,xp(2)*asp_r,yp(1),yp(2)
+call draw_axes(xp(1)*asp_r,xp(2)*asp_r,yp(1),yp(2),ntx,nty)
+set color "black"
+!*********************************************************
+! info : graph,title,numbering,label axes
+!*********************************************************
+title$ = " titration curve ,NaCl+AgNO3 =AgCl'solid'+NaNO3"
+x_txt$ = "ml AgNO3"
+y_txt$ = "pAg"
+txt = 2  !  distance from right part of the window
+!**********************************************************
+call num_txt_axes(title$,x_txt$,y_txt$,xp(),yp(),txt)
+!**********************************************************
+! draw graph in the window x-axes ,y-axes(right part)
+!**********************************************************
+set color "red" ! color of the graph
+!***********************************
+! before EP =>
+!***********************************
+for x=0 to 9.99991 step 0.0001
+call before_EP(x,v0_nacl,c_nacl,cl,pCl,pAg,p_ksp)
+plot points :x,pAg
+next x
+!***********************************
+! by EP => point ( only one value)
+!***********************************
+call by_EP(x,v0_nacl,c_nacl,c_agno3,x_eq,cl_eq,pCl,pAg,p_ksp)
+x_ep = x_eq
+y_ep = pAg
+set color "green"
+!*************************************************
+!coordinate EP ( x_eq,pAg)
+!*************************************************
+!plot lines :x_eq,0;x_eq,pAg   ! vertical line
+!plot lines :0,pAg;x_eq,pAg    ! horizontale line
+plot text,at x_eq+0.1,pAg+.1:"EP"
+!*************************************************
+! cross hair
+!*************************************************
+z=.3
+plot lines :x_eq-z,pAg;x_eq+z,pAg
+plot lines :x_eq,pAg+z;x_eq,pAg-z
+!***********************************
+! after  EP =>
+!***********************************
+set color "red"
+! just after EP
+for x_excess = x_eq to x_eq + .61 step 0.00001
+call after_EP(x_excess,x_eq,v0_nacl,c_agno3,tot_vol,Ag,pAg_e,pCl_e,p_ksp)
+plot points :x_excess,pAg_e
+next x_excess
+! general after Ep
+for x_excess = x_eq +.61 to xp(2) step 0.00001
+call after_EP(x_excess,x_eq,v0_nacl,c_agno3,tot_vol,Ag,pAg_e,pCl_e,p_ksp)
+plot points :x_excess,pAg_e
+next x_excess
+end
+
+sub num_txt_axes(title$,x_txt$,y_txt$,xp(),yp(),txt)
+plot text,at 1,yp(2)-1:title$
+!*****************************************
+!**** range x axis  0 to xmax      *******
+!*****************************************
+for i=0 to xp(2)
+ plot text,at i,0.2/yp(2):str$(i)
+next i !,
+plot text,at xp(2)-txt,0.5:x_txt$
+!*****************************************
+!**** range y axis  0 to ymax ************
+!*****************************************
+for i=1 to yp(2)
+ plot text,at 0.2,i:str$(i)
+next i
+plot text,at 0.3,yp(2)-0.5:y_txt$
+end sub
+
+
+
+SUB draw_axes(xmin,xmax,ymin,ymax,ntx,nty)
+! axis :for distribution function
+! see extra,website
+    ! distance between tick marks on x-axis
+    LET dx = (xmax - xmin)/ntx
+    ! distance between tick marks on y-axis
+    LET dy = (ymax - ymin)/nty
+    SET WINDOW xmin ,xmax ,ymin ,ymax
+    LET x0 = max(0,xmin)
+    LET y0 = max(0,ymin)
+    IF ymin*ymax < 0 then
+       LET y0 = 0
+    ELSE
+       LET y0 = ymin
+    END IF
+    PLOT LINES: xmin,y0;xmax,y0   ! horizontal axis
+    PLOT LINES: x0,ymin;x0,ymax   ! vertical axis
+    LET tx = 0.1*dy               ! size of tick mark
+    LET ty = 0.1*dx
+    FOR itick = 0 to ntx
+        LET x = xmin + itick*dx
+        PLOT LINES: x,y0 - tx; x,y0 + tx    ! draw ticks on x axis
+    next itick
+    FOR itick = 0 to nty
+        LET y = ymin + itick*dy
+        PLOT LINES: x0 - ty,y; x0 + ty,y    ! draw ticks on y axis
+    NEXT itick
+END SUB
+
+sub before_EP(x,v0_nacl,c_nacl,cl,pCl,pAg,p_ksp)
+cl = ((v0_nacl-x)/(v0_nacl+x))*c_nacl
+!************************************************
+!  command => pcl=- log10(cl) = - log(cl)/log(10)
+!************************************************
+! log(cl) -> math  : ln(cl)
+!************************************************
+pCl = -log10(cl)
+pAg = p_ksp - pCl  ! from ksp 'AgCl'= '10'
+end sub
+
+sub by_EP(x,v0_nacl,c_nacl,c_agno3,x_eq,cl_eq,pCl,pAg,p_ksp)
+ksp = 10^(-p_ksp) 
+!***************************************
+! p_ksp = -log10(ksp) <=>ksp = 10^(-p_ksp)
+!***************************************
+x=(v0_nacl*c_nacl)/c_agno3
+x_eq =x
+!***********************************************
+! ksp =[Ag(+)]*[Cl(-)] ,by EP : [Ag(+)]=[Cl(-)]
+! ksp = [Ag(+)]^2 = [Cl(-)]^2 => cl
+!***********************************************
+cl_eq = (ksp)^(1/2)
+pCl = -log10(cl_eq)
+pAg = p_ksp - pCl 
+end sub
+
+sub after_EP(x_excess,x_eq,v0_nacl,c_agno3,tot_vol,Ag,pAg_e,pCl_e,p_ksp)
+x=x_eq + x_excess
+tot_vol = (v0_nacl+x)
+Ag = (x_excess*c_agno3)/tot_vol
+pAg_e = -log10(Ag)
+pCl_e = p_ksp - pAg_e ! from ksp 'AgCl'= '10'
+end sub
+

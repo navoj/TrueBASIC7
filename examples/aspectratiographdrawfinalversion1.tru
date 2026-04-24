@@ -1,0 +1,247 @@
+option nolet
+open #1:screen 0,0.5,0,1
+open #2:screen .5,1,.5,1
+window #1
+!****************************************************
+! serie :analytical chemistry
+! filename :aspectratiographdrawfinalversion1
+!****************************************************
+print
+print "*********************************************"
+print "* aspectratio ,intro        'version 1.0'   *"
+print "* peter.vlasschaert@gmail.com,24/10/2016    *"
+print "*********************************************"
+print
+print "************"
+print "* given =  *"
+print "************"
+!**********************************
+! info to display data on the graph
+!**********************************
+print
+print "********************************************"
+print "* px > py:pixels,rectangle window (px,py)  *"
+print "********************************************"
+s1=0.01       ! radius
+z3$ = "red"   ! color 'circle'
+print "***********"
+print " circle => "
+print "***********"
+print
+print " radius = ";s1
+print " color  = ";z3$
+print
+print "*********************************************************"
+print "*choose : big x_axes = 1,normal x_axes = 2,firstpart = 3*"
+print "*********************************************************"
+choose     = 2
+print
+print " choose     = ";choose
+print 
+print "********************************"
+print "*circle_typ : small = 1,big = 2*"
+print "********************************"
+! same = s1 ,see below
+circle_typ = 2
+print
+print " circle_typ = ";circle_typ
+print
+print "*******************************"
+print "* data ,(x values,y values)   *"
+print "*******************************"
+print
+dim xp(2),yp(2)
+tb_x = 0   ! xmin
+te_x = 20  ! xmax
+nt_x = 10  ! tick marks x-axis
+tb_y = 1   ! ymin
+te_y = 7   ! ymax
+nt_y = 12  ! tick marks y-axis
+ask pixels px1,py1
+!*********************************************************
+! info : graph,title,numbering,label axes
+!*********************************************************
+title$ = "graph:'x values versus y values'"
+x_txt$ = "x,value"
+y_txt$ = "y,value"
+txt = 2  !  distance from right part of the window
+!read data statement, x data = ml, y data = scm-1
+dim xy(2,1)
+!read x data
+n=12 !  number x data = number y data
+mat redim xy(2,n)
+! x  data
+for i=1 to n
+  read xy(1,i)
+next i
+print " number of data = ";n
+print
+! y  data
+for i=1 to n
+  read xy(2,i)
+next i
+print " x-data = ' => "
+print
+for i=1 to n
+  print xy(1,i);
+next i
+print
+print " y-data = ' => "
+print
+for i=1 to n
+  print xy(2,i);
+next i
+print
+print "******************************"
+print " number of pixels(window 1) = "
+print "******************************"
+print
+print "**************************"
+print " x-axis:number x-pixels = ";px1
+print " y-axis:number y-pixels = ";py1
+print "**************************"
+!*******************************************
+window #2 ! draw graph right part of screen
+!*******************************************
+ask pixels px,py
+ntx = nt_x ! tick marks x-axis
+nty = nt_y ! tick marks y-axis
+xp(1)=tb_x   ! xmin,cm
+xp(2)=te_x   ! xmax,cm 
+yp(1)=tb_y   ! ymin,kg
+yp(2)=te_y   ! ymax,kg
+if choose = 1  then
+asp_r = 1    ! big x_axes   (small,big,respect)
+print "window# = 2, asp_r = 1     => ";asp_r;",px = ";px;", py =";py
+end if
+if choose = 2  then
+asp_r = px/py! normal x_axes   (small,big,respect)
+print "window# = 2, asp_r = px/py => ";asp_r;",px = ";px;", py =";py
+end if
+if choose = 3 then
+asp_r = py/px ! only first part of data(small,big,respect)
+print "window# = 2, asp_r = py/px => ";asp_r;",px = ";px;", py =";py
+end if
+vx1 = xp(1)*asp_r
+vx2 = xp(2)*asp_r
+vy1 = yp(1)
+vy2 = yp(2)
+set window vx1,vx2,vy1,vy2
+call draw_axes(vx1,vx2,vy1,vy2,ntx,nty)
+set color "black"
+!**********************************************************
+call num_txt_axes(title$,x_txt$,y_txt$,xp(),yp(),txt,ntx,nty)
+!**********************************************************
+! draw graph in the window x-axes ,y-axes(right part)
+!**********************************************************
+set color "red" ! color of the graph
+!*************************************************
+! data x,y
+!*************************************************
+z3$ = "red"   ! color 'circle'
+! you can change this to get circles 
+! draw n circles for data xy
+if cirle_typ =1 then
+!**************
+! small circles
+!**************
+scale_x = (vx2-vx1)*py/px    ! small circles
+scale_y = (vy2-vy1)          !*px/py
+  else
+!*************
+! big circles
+!*************
+scale_x = (vx2-vx1)          ! big circles
+scale_y = (vy2-vy1)*px/py    !*px/py
+end if
+!
+for i=1 to n
+call smallcir_dr(s1,xy(1,i),xy(2,i),scale_x,scale_y,z3$)
+flood xy(1,i),xy(2,i)   ! fill circle with color 'red'
+next i
+!*********************************************************
+! data : x,y
+!*********************************************************
+!*********************************************************
+! data statement, x values
+!*********************************************************
+data 1.2,2.8,5.2,7.4,10,11.6,12.6,14,15.4,16.2,17,18.6
+!*********************************************************
+! data statement, y values * 1000
+!*********************************************************
+data 1.123,2.234,3.451,4.123,5.213,6.231,4.233,3.256,2.656
+data 2.237,1.923,1.562,0.985
+!data 6.523,5.683,4.722,3.841,2.759,2.201,1.943,1.864,2.155
+!data 2.336,2.493,2.822,3.351
+!*********************************************************
+get key done
+end
+
+
+
+!*********************************************
+!*********************************************
+
+sub smallcir_dr(s1,xf,yf,scale_x,scale_y,z3$)
+x_sc = scale_x
+y_sc = scale_y
+set color z3$
+for theta=0 to 2*3.14 step 0.0001    
+vpx = s1*x_sc*cos(theta)+xf
+vpy = s1*y_sc*sin(theta)+yf
+    plot points:vpx,vpy  
+next theta
+end sub
+
+sub num_txt_axes(title$,x_txt$,y_txt$,xp(),yp(),txt,ntx,nty)
+ mx = xp(2)-xp(1)
+ my = yp(2)-yp(1)
+plot text,at xp(1)+mx/txt,yp(2)-my/(txt*txt):title$
+!*****************************************
+!**** range x axis  0 to xmax      *******
+!*****************************************
+for i=2 to ntx
+ m1 = xp(1)+mx/ntx*(i-1)
+ plot text,at m1,yp(1):str$(m1)
+next i
+plot text,at xp(2)-txt,yp(1)+txt/4:x_txt$
+!*****************************************
+!**** range y axis  0 to ymax ************
+!*****************************************
+for i=2 to nty
+ m2 = yp(1)+my/nty*(i-1)
+ plot text,at xp(1),m2:str$(m2)
+next i
+plot text,at xp(1)+txt,yp(2)-txt/4:y_txt$
+end sub
+
+SUB draw_axes(xmin,xmax,ymin,ymax,ntx,nty)
+! axis :for distribution function
+! see extra,website
+    ! distance between tick marks on x-axis
+    LET dx = (xmax - xmin)/ntx
+    ! distance between tick marks on y-axis
+    LET dy = (ymax - ymin)/nty
+    SET WINDOW xmin ,xmax ,ymin ,ymax
+    LET x0 = max(0,xmin)
+    LET y0 = max(0,ymin)
+    IF ymin*ymax < 0 then
+       LET y0 = 0
+    ELSE
+       LET y0 = ymin
+    END IF
+    PLOT LINES: xmin,y0;xmax,y0   ! horizontal axis
+    PLOT LINES: x0,ymin;x0,ymax   ! vertical axis
+    LET tx = 0.1*dy               ! size of tick mark
+    LET ty = 0.1*dx
+    FOR itick = 0 to ntx
+        LET x = xmin + itick*dx
+        PLOT LINES: x,y0 - tx; x,y0 + tx    ! draw ticks on x axis
+    next itick
+    FOR itick = 0 to nty
+        LET y = ymin + itick*dy
+        PLOT LINES: x0 - ty,y; x0 + ty,y    ! draw ticks on y axis
+    NEXT itick
+END SUB
+
+

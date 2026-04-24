@@ -1,0 +1,133 @@
+option nolet
+print
+print
+!********************************
+!*****drawtxytablesfinal.tru*****
+!********************************
+print "-------------------------------------------------"
+print " build data tables ( Txy diagram)  version 1.0   "
+print "make data a table with sub 'linspace'=general use"
+print "-------------------------------------------------"
+print " peter.vlasschaert@gmail.com,14/09/2015          "
+print "-------------------------------------------------"
+print
+print
+p  = 200  ! pressure Kpa
+nc = 2    ! number of products
+nv = 10   ! number of points to draw
+dim a(1),b(1),c(1),aa$(1)
+mat redim a(nc),b(nc),c(nc),aa$(nc)
+print " coef : Antoine equation "
+print
+for i=1 to nc
+read a(i),b(i),c(i),aa$(i)
+print a(i),b(i),c(i),aa$(i)
+next i
+print
+print " pressure of the mixture ";aa$(1);",";aa$(2);" at ";p;" Kpa"
+print
+dim tb(1)
+mat redim tb(nc)
+call bubp(nc,a(),b(),c(),p,tb())
+for i=1 to nc
+print " boiling point of ";aa$(i);" at ";p; " Kpa = ";tb(i);" °K"
+next i
+print
+! => next part x,y values to draw xy chart
+dim kk(1,4)
+mat redim kk(nv,4)
+!******************************************
+! temperature range between tb(1) and tb(2)
+! = >  general use :sub 'linspace ' values
+!******************************************
+dim temp(1)
+mat redim temp(nv)
+call linspace(nv,tb(),temp())
+print " temperature : temp(i) = > i=1..";nv
+print
+mat print temp
+!********************************
+! calculation => k1(i) => i=1..nv 
+!********************************
+dim k1(1)
+mat redim k1(nv)
+for j=1 to nv
+ kk(j,1) = a(1)
+ kk(j,2) = b(1)
+ kk(j,3) = c(1)
+next j
+call antoine_eq(nv,temp(),p,kk(,))
+for i=1 to nv
+  k1(i) = kk(i,4)
+next i
+print " k1(i) = > i=1..";nv 
+print
+mat print k1
+!********************************
+! calculation => k2(i) => i=1..nv 
+!********************************
+dim k2(1)
+mat redim k2(nv)
+for j=1 to nv
+ kk(j,1) = a(2)
+ kk(j,2) = b(2)
+ kk(j,3) = c(2)
+next j
+call antoine_eq(nv,temp(),p,kk(,))
+for i=1 to nv
+  k2(i) = kk(i,4)
+next i
+print 
+print " k2(i) = > i=1..";nv 
+print
+mat print k2
+! calculation x(i),y(i)
+dim x(1),y(1)
+mat redim x(nv),y(nv)
+call x_y_values( nv,k1(),k2(),x(),y())
+print
+print " liquid fraction : x(i) = > i=1..";nv
+print
+mat print x
+print " vapor  fraction : y(i) = > i=1..";nv 
+print
+mat print y
+!******************************
+! coef values antoine equation*
+!******************************
+! benzene
+data 14.1603,2948.78,-44.5633,benzene
+! toluene
+data 14.2515,3242.38,-47.1806,toluene
+end
+
+sub x_y_values( nv,k1(),k2(),x(),y())
+for i=1 to nv
+ x(i)=(1-k2(i))/(k1(i)-k2(i))
+ y(i)= k1(i)*x(i)
+next i
+end sub
+
+sub antoine_eq(nv,temp1(),p,kk(,))
+! calculation kk values (y=k*x)
+for j=1 to nv
+!4 => three coef 1..3,4-> k(1),k(2)
+ kk(j,4)=exp(kk(j,1)-kk(j,2)/(temp1(j)+kk(j,3)))/p
+next j
+end sub
+
+sub bubp(nc,a(),b(),c(),p,tb())
+for i=1 to nc
+ tb(i)=b(i)/(a(i)-log(p))-c(i)
+next i
+end sub
+
+sub linspace(nv,tb(),temp())
+ymax = max(tb(1),tb(2))
+ymin = min(tb(1),tb(2))
+for i=1 to nv
+ m = (i-1)/(nv-1)
+ temp(i)= ymin + m *(ymax-ymin)
+next i
+end sub
+

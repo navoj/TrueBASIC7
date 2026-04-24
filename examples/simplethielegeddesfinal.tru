@@ -1,0 +1,313 @@
+option nolet
+print
+print "--------------------------------------------------"
+print " THIELE-GEDDES plateWISE CALCULATION (version 1.0)"
+print " GIVEN : feed,fixed number of plates,refux        "
+print "       : temperature profile must be assumed      "
+print " check : at end of calculation => new k values    "
+print "--------------------------------------------------"
+print " peter.vlasschaert@gmail.com   16/10/2015         "
+print "--------------------------------------------------"
+print
+input prompt " nice output = 1 , otherwise = 2 ( integer ) = ":sel
+!****************************************************
+! info : Distillation Dynamics and Control          *
+!      : Pradeep B.Deshpande                        *
+!      : Instrument Society of America '1985' ( ISA)*
+!****************************************************
+! simplethielegeddesfinal.tru
+dim a(1),b(1),k(1)
+dim xf(1)
+nc = 3  ! number of components
+mat redim a(nc),b(nc),k(nc)
+! => ' read from data statement '
+mat redim xf(nc)
+pt = 1  ! total pressure in atm ,pt > 0
+r = 2   ! reflux ratio, r > 0
+!*****************************
+! feed quality   0 = < q =< 1*
+!*****************************
+q = 1   ! ? feed quality ' q=0 :vapor q=1 : liquid '
+z = 3   ! number of stages (r)ectifier ( integer > 0)
+! input coef for equilibrium equation = K
+for i=1 to nc
+    read a(i),b(i),xf(i)
+next i
+! temperature input (°C)
+t=85     ! temperature on top of the column(°C)
+t=t+273  ! temperature (°K)
+! material balance  100 mole of the feed,feed plate
+f = 100
+call equil(nc,t,pt,a(),b(),k())
+mat print k
+ov = r/(r+1)
+!***********************
+! =>  rectifier section*
+!***********************
+print "<== from top to below (feed) ==>"
+dim rd(1),rv(1)
+mat redim rd(z),rv(z)
+!***********************
+! column :plate 1 ( p=1)
+!***********************
+call liquid_ratios_r(nc,1,rd(),k())
+call vapor_ratios_r(nc,1,ov,rd(),rv(),k())
+call new_temperature(t)
+call equil(nc,t,pt,a(),b(),k())
+!*******************************
+! column :plate 2 -> z ( p=2..z)
+!*******************************
+for p=2 to z
+    call liquid_ratios_rz(nc,p,rd(),rv(),k())
+    call vapor_ratios_rz(nc,p,ov,rd(),rv(),k())
+  if p = z then
+    exit for
+  else
+    call new_temperature(t)
+    call equil(nc,t,pt,a(),b(),k())
+    mat print k
+  end if
+next p
+print "<== from bottom to up (feed) ==>"
+dim vw(1),rw(1)
+mat redim vw(nc),rw(nc)
+!**********************
+! => stripping section*
+!**********************
+print " f=w+d => d = f-w ( d > 0) => f > w "
+print
+print " f = ";f
+do 
+  !***********************************************
+  ! new input => correction of sum = ? =1 'check '
+  !***********************************************
+      som = 0
+      p = 0
+  do
+      !******************
+      ! check w against f
+      !******************
+      input prompt " estimate :molal flows of the bottom = ":w
+      if w < f then 
+        exit do
+     else
+        print " error => ";w;" > ";f ; " =>  w < f  "
+        print
+     end if
+  loop
+s = 3 ! number of stages in stripper
+!****************************************
+!  f = w+d           ' material balance
+!****************************************
+!****************************************
+! f*xf = w*xd + d*xw ' component balance 
+!****************************************
+D = F-W    ! material balance ! D > 0
+o = r+d
+ob = o +q*f
+vb = ob - w
+ov = vb/ob
+e = w/f    !  'bottom/feed'
+!*************************
+!column : plate 0 'bottom'
+!*************************
+print " bottom (plate = 0) highest temperature of the column (reboiler) "
+input prompt " enter bottom temperature (°C) = ":t
+t = t+273 ! kelvin
+call equil(nc,t,pt,a(),b(),k())
+mat print k
+call vapor_ratios_s(nc,0,vw(),k())
+call liquid_ratios_s(nc,0,ov,vw(),rw(),k())
+call new_temperature(t)
+call equil(nc,t,pt,a(),b(),k())
+mat print k
+!*******************************
+! column :plate 1 -> s ( p=2..s)
+!*******************************
+for p=1 to s
+    call vapor_ratios_ss(nc,p,ov,vw(),rw(),k())
+    call liquid_ratios_ss(nc,p,ov,vw(),rw(),k())
+  if p = s then
+    exit for
+  else
+    call new_temperature(t)
+    call equil(nc,t,pt,a(),b(),k())
+    mat print k
+  end if
+next p
+!**************************************************
+! db = ratios of distillate to bottom composition.
+!**************************************************
+dim db(1)
+mat redim db(nc)
+call ratio_rw_rv(nc,rw(),rv(),db())
+! sum ? = 1
+dim g(1)
+mat redim g(nc)
+som = 0
+for i=1 to nc
+!********************************************
+!see website => petervlaschemeng.weebly.com *
+!********************************************
+   g(i) = xf(i)/((1-db(i))*e +db(i))
+next i
+print " g = "
+mat print g
+for i=1 to nc
+  som = som +g(i)
+next i
+print " sum  ? = 1  then check => "
+print " som = "; som
+print " recalculation press  'Y'es or 'N'o to return : material balance "
+input v$
+if v$ = "N" or v$ = "n" then 
+   exit do
+end if
+loop
+print
+if sel = 1 then
+clear
+print " =>  output ' thiele/geddes ' platewise calculation ' "
+print
+print "--------------------------------------------------"
+print " THIELE-GEDDES plateWISE CALCULATION (version 1.0)"
+print " GIVEN : feed,fixed number of plates,refux        "
+print "       : temperature profile must be assumed      "
+print " check : at end of calculation => new k values    "
+print "--------------------------------------------------"
+print " peter.vlasschaert@gmail.com   16/10/2015         "
+print "--------------------------------------------------"
+print
+!*************************************************************
+print " =>  output ' thiele/geddes ' platewise calculation ' "
+print
+  call  equil(nc,t,pt,a(),b(),k())
+print
+mat print g
+print " sum = ";som
+print " k values for ";nc;" components "
+print 
+mat print k
+print 
+print " molal flow of the bottom = ";w
+!*************************************************************
+get key v
+   else
+print " =>  output ' thiele/geddes ' platewise calculation ' "
+print
+call  equil(nc,t,pt,a(),b(),k())
+print
+mat print g
+print " sum = ";som
+print " k values for ";nc;" components "
+print 
+mat print k
+print 
+get key w
+end if
+data 10.73,-3784.063,.6
+data 10.687,-4088.28,.25
+data 14.791,-6168.489,.15
+get key u
+end
+
+sub ratio_rw_rv(nc,rw(),rv(),db())
+for i = 1 to nc
+  db(i)=rw(i)/rv(i)
+next i
+print " db = "
+mat print db
+end sub
+
+sub liquid_ratios_rz(nc,p,rd(),rv(),k())
+!  plate ( p = 2..z)
+print " liquid  ratio ,plate = ";p
+for i=1 to nc
+    rd(i)=rv(i)/k(i)
+    print " liquid ratio  = ";rd(i)
+next i
+end sub
+
+sub vapor_ratios_rz(nc,p,ov,rd(),rv(),k())
+!  plate ( p = 2..z)
+print " vapor  ratio ,plate = ";p
+for i=1 to nc
+    rv(i)=((rd(i)-1)*ov+1)
+    print " vapor ratio   = ";rv(i)
+next i
+end sub
+
+sub new_temperature(t)
+input prompt " enter new temperature (°C) = ":t
+t = t + 273
+end sub
+
+sub liquid_ratios_r(nc,p,rd(),k())
+! first plate ( p = 1)
+print "  plate = ";p
+for i=1 to nc
+    rd(i)=1/k(i)
+    print " liquid ratio  = ";rd(i)
+next i
+end sub
+
+sub vapor_ratios_r(nc,p,ov,rd(),rv(),k())
+! first plate ( p = 1)
+print "  plate = ";p
+for i=1 to nc
+    rv(i)=((rd(i)-1)*ov+1)
+    print " vapor ratio  = ";rv(i)
+next i
+end sub
+
+sub liquid_ratios_s(nc,p,ov,vw(),rw(),k())
+! first plate ( p = 1)
+print "  plate = ";p
+for i=1 to nc
+    rw(i)=((vw(i)-1)*ov+1)
+    print " vapor ratio   = ";rw(i)
+next i
+end sub
+
+sub vapor_ratios_ss(nc,p,ov,vw(),rw(),k())
+!  plate ( p = 1..s)
+print "  plate = ";p
+for i=1 to nc
+    vw(i)=k(i)*rw(i)
+    print " vapor ratio   = ";vw(i)
+next i
+end sub
+
+sub liquid_ratios_ss(nc,p,ov,vw(),rw(),k())
+! plate ( p = 1..s)
+print "  plate = ";p
+for i=1 to nc
+    rw(i)=((vw(i)-1)*ov+1)
+    print " liquid ratio  = ";rw(i)
+next i
+end sub
+
+sub vapor_ratios_s(nc,p,vw(),k())
+! bottom ( p = 0)
+print "  bottom = ";p
+for i=1 to nc
+    vw(i) = k(i)
+    print " vapor ratio   = ";vw(i)
+next i
+end sub
+
+sub equil(nc,t,pt,a(),b(),k())
+! t (kelvin) => t=t(°C)+ 273.
+! pt (atm)
+print " K values at ";pt,"atm","temperature ";t-273," °C"
+for i=1 to nc
+  k(i) =exp(a(i)+b(i)/t)/pt
+next i
+end sub
+
+sub mole_frac_feed(nc,xf())
+for i=1 to nc
+ input prompt " number of the component = ":i
+ input prompt " mole fraction of the feed = ":xf(i)
+next i
+end sub

@@ -1,0 +1,136 @@
+option nolet
+print "-------------------------------------------------------"
+print " binary distillation design program (version 1.0)      "
+print "-------------------------------------------------------"
+print " given :: xb,xd ,rr = reflux ratio                     "
+print " result = calculation (number of trays ,number of feed)"
+print "-------------------------------------------------------"
+print " peter.vlasschaert@gmail.com, 09/10/2015               "
+print "-------------------------------------------------------"
+! declare used function
+declare function equil
+print
+!***************************************************
+! bindistdesignfinal                               *
+!***************************************************
+! input                                            *
+!***************************************************
+! feed
+f = 100     ! feed flowrate
+z = .5      ! feed composition
+q = 1.0     ! quality of the feed  (lquid=q=1,q=vapor = 0)
+alpha = 2.00
+ xb = 0.02
+ xd = 0.98
+!***********************************
+! given: reflux ratio              *
+!***********************************
+rr  = 2.56 ! 
+!********************
+! calculation vr,lr *
+!********************
+! => ' f*z = dd*xd + bb*xb '
+!********************
+dd = f*(z-xb)/(xd-xb)! component balance
+! => ' f = dd + bb '
+bb = f-dd            ! total mass balance
+dim x(1),y(1)
+mat redim x(100),y(100)
+  call v_l(dd,rr,q,f,vs,ls,vr,lr)
+!*************************************************
+! intercept =q line (intersection) operating lines
+!*************************************************
+ pp1 = vs*z+(1-q)*bb*xb
+ pp2 = (1-q)*ls+vs*q
+xint = pp1/pp2
+yb = equil(xb,alpha)
+!********************
+! n = 1 :bottom tray
+!********************
+   x(1) = (bb*xb+vs*yb)/ls
+   y(1) = equil(x(1),alpha)
+!************************
+! n = 2..100
+!************************
+do
+!********************************************
+! reason to leave the loop stripping section*
+!  to find = to find feed tray => nf        *
+!********************************************
+   for i=2 to 100
+       x(i)=(bb*xb+vs*y(i-1))/ls
+      if x(i) > xint then 
+         j = i
+         exit do
+       else
+      y(i) = equil( x(i),alpha) 
+     end if
+   next i
+   stop ! exit do ?
+loop
+ nf = j-1
+!*************************************
+! n = nf+1 : (r)ectifying,feed exclude
+!*************************************
+do
+!*********************************************
+! reason to leave the loop rectifying section*
+!  to find = to find last tray => nt         *
+!*********************************************
+ for ii = nf+1 to 100
+  x(ii) = (vr*y(ii-1)+bb*xb-f*z)/lr
+  y(ii) = equil(x(ii),alpha)
+  if y(ii) > xd then
+     jj = ii
+     exit do
+  end if
+ next ii
+ stop ! exit do ?
+loop 
+nt = jj
+!************************************
+! to reduce the length of the vector*
+!************************************
+mat redim x(nt),y(nt)
+!***************
+! before output*
+!***************
+call output_design(alpha,xb,xd,z,rr,q,nf,nt,x(),y(),yb)
+get key done
+end
+
+sub output_design(alpha,xb,xd,z,rr,q,nf,nt,x(),y(),yb)
+print " given  => "
+print
+print " alpha = ";alpha," xb = ";xb," xd = ";xd," z = ";z
+print " q = ";q," rr = ";rr
+print
+print " output => "
+print
+print " number of plates      = ";nt
+print " number of feed plates = ";nf
+print 
+print "number = "," x = "," y = "
+print
+print 0,xb,yb
+for i=1 to nt 
+  print i,x(i),y(i)
+next i
+end sub
+
+
+
+sub v_l(dd,r,q,f,vs,ls,vr,lr)
+lr = r*dd  ! rr = lr/dd 
+vr = dd + lr
+!********************
+! calculation vs,ls *
+!********************
+vs = vr-(1-q)*f
+ls = lr + q*f
+end sub
+
+function equil(xx,alpha)
+equil = alpha*xx/(1+(alpha-1)*xx)
+end function
+

@@ -1,0 +1,236 @@
+option nolet
+!globalstiffnessgalerkinlaplacetwoelementfinal.tru
+print "*******************************************"
+print " global :stiffness matrix,laplace equation "
+print " method :galerkin(two element) 'version 1.0"
+print " peter.vlasschaert@gmail.com,04/08/2015    "
+print "*******************************************"
+print " triangle A: local 1,2,3 -> global 1,2,3 "
+print " triangle B: local 1,2,3 -> global 1,3,4 "
+!**************************************************
+! info :Hartley grandin ,jR.
+!       Fundamentals of the finite element method
+!       Macmillan Publishing company
+!       pg :333-350
+!**************************************************
+! input triangle (x1,y1),(x2,y2),(x3,y3)
+declare function J_C,dist_p1_p2
+!***************input ***********************************
+! input triangle
+!********************************************************
+! Ta = T ambient fluid =air
+Ta = 50 ! °C
+print " temperature ambient fluid (example air) = ";Ta
+! triangle A
+x1a=0
+y1a=0
+x2a=5
+y2a=0
+x3a=2.5
+y3a=2
+! triangle B
+x1b=0
+y1b=0
+x2b=2.5
+y2b=2
+x3b=0
+y3b=4
+! triangle A
+call bb(y1a,y2a,y3a,b1,b2,b3)
+b1a=b1
+b2a=b2
+b3a=b3
+call cc(x1a,x2a,x3a,c1,c2,c3)
+c1a=c1
+c2a=c2
+c3a=c3
+! triangle B
+call bb(y1b,y2b,y3b,b1,b2,b3)
+b1b=b1
+b2b=b2
+b3b=b3
+call cc(x1b,x2b,x3b,c1,c2,c3)
+c1b=c1
+c2b=c2
+c3b=c3
+!**************************************************
+! physics
+k=25
+print " thermal conductivity 'W/length*°C' = ";k
+h=5
+print " convection heat transfer coefficient 'W/length^2*°C' = ";h
+!**************************************************
+!****************** calculation *************************
+dim cdx(1,1),cdy(1,1)
+mat redim cdx(3,3),cdy(3,3)
+!cdx conduction
+dim cdxa(1,1),cdxb(1,1)
+mat redim cdxa(3,3),cdxb(3,3)
+call cdx_m(b1a,b2a,b3a,cdxa(,))
+call cdx_m(b1b,b2b,b3b,cdxb(,))
+! cdy conduction
+dim cdya(1,1),cdyb(1,1)
+mat redim cdya(3,3),cdyb(3,3)
+call cdy_m(c1a,c2a,c3a,cdya(,))
+call cdy_m(c1b,c2b,c3b,cdyb(,))
+!print " jacobi (a) = ";J_C(x1a,x2a,x3a,y1a,y2a,y3a)
+!print " jacobi (b) = ";J_C(x1b,x2b,x3b,y1b,y2b,y3b)
+!print " area of the triangle element (a) = ";J_C(x1a,x2a,x3a,y1a,y2a,y3a)/2
+!print " area of the triangle element (b) = ";J_C(x1b,x2b,x3b,y1b,y2b,y3b)/2
+coef_ca = k/(2*J_C(x1a,x2a,x3a,y1a,y2a,y3a))
+coef_cb = k/(2*J_C(x1b,x2b,x3b,y1b,y2b,y3b))
+call out_cdxy(coef_ca,cdxa(,),cdya(,))
+call out_cdxy(coef_cb,cdxb(,),cdyb(,))
+! against point 1 side (pt 2 and pt3),need T surrounding=Tinfinity=Ta=Tambient
+! distance side 1 =distance between pt2 and pt3
+! side 2, side 3 no convection ( can be isolated or inside side = not at boundary)
+dim kcv1(1,1),kcva(1,1),kcvb(1,1)
+mat redim kcv1(3,3),kcva(3,3),kcvb(3,3)
+! why kc2=kc3=0 ? see above 
+s1a=dist_p1_p2(x2a,y2a,x3a,y3a) !°
+s1b=dist_p1_p2(x2b,y2b,x3b,y3b)
+!print " distance side (1) ";s1a
+!print " distance side (1) ";s1b
+!*****************************************************************************
+! The element trial function for the galerkin is the interpolation
+! formula "Three node triangle " 
+! natural coordinates T=L1*T1+L2*T2+L3*T3=[N]{qi} , property = L1+L2+L3 = 1
+! global coordinates : x = L1*x1+L2*x2+L3*x3=[N]{xi}
+!                      y= [N]{yi}
+!D =differentation : Dx[N]= 1/J_C*[b1 b2 b3] for x
+!                    Dy[N]= 1/J_C*[c1 c2 c3] for y
+! convert : steay state laplace equation to this kind form
+! weigt function = interpolation function = shape function
+! ' use Gauss'theorem '
+!*****************************************************************************
+! result : for this example L1=0 all entries below matrix Li*Lj need to be integrated
+! 1D : length :integrate domain ( Li^alpha*Lj^beta)= alpha!*beta!/(1+alpha+beta)! * S1°
+!*****************************************************************************
+! example : Li,Lj i=1 or j=1 or both i=j=1 no contribution in the above integration
+!*****************************************************************************
+! contribution L2*L2 ,L3*L3 -> 2/6
+! contribution L2*L3 ,L3*L2 ->1/6
+coef_va=s1a*h/6
+coef_vb=s1b*h/6
+!print " coef for convection = ";coef_va
+!print " coef for convection = ";coef_va
+kcv1(2,2)=2
+kcv1(2,3)=1
+kcv1(3,2)=1
+kcv1(3,3)=2
+! reason triangle B same L1=0 ,L2=L3 <>0
+mat kcva=kcv1
+mat kcvb=kcv1
+!mat print kcv1
+!print "heat convection matrix = "
+mat kcva=coef_va*kcva
+!mat print kcv1
+print "  global stiffness matrix = conduction(cdx,cdy) + convection "
+! hulp matrix co
+dim co(1,1),coa(1,1),cob(1,1)
+mat redim co(3,3),coa(3,3),cob(3,3)
+print "triangle A = "
+print " conduction (cdx,cdy)              = "
+call som_cdx_cdy(coa(,),cdxa(,),cdya(,))
+mat print coa
+print " conduction (cdx,cdy) + convection = "
+mat coa = coa+kcva
+print " global stifness matrix  [ke(element )]=k[e]   = "
+mat print coa
+print "triangle B = "
+print " conduction (cdx,cdy)              = "
+call som_cdx_cdy(cob(,),cdxb(,),cdyb(,))
+mat print cob
+print " conduction (cdx,cdy) + convection = "
+mat cob = cob+kcvb
+print " global stifness matrix  [ke(element )]=k[e]   = "
+mat print cob
+print " global siffness matrix  = "
+print "two-element assemblage equation, four points = 'triangle A+B ' "
+print
+! global 1,2,3
+dim co_two(1,1),co_twoa(1,1),co_twob(1,1)
+mat redim co_two(4,4),co_twoa(4,4),co_twob(4,4)
+! triangle a
+for i=1 to 3
+ for j=1 to 3
+co_twoa(i,j)=coa(i,j)
+ next j
+next i
+co_twob(1,1)=cob(1,1)
+co_twob(1,3)=cob(1,2)
+co_twob(1,4)=cob(1,3)
+co_twob(3,1)=cob(2,1)
+co_twob(3,3)=cob(2,2)
+co_twob(3,4)=cob(2,3)
+co_twob(4,1)=cob(3,1)
+co_twob(4,3)=cob(3,2)
+co_twob(4,4)=cob(3,3)
+! mat print co_twob
+dim kst(1,1)
+mat redim kst(4,4)
+mat kst=co_twoa+co_twob
+mat print kst
+end
+
+sub som_cdx_cdy(co(,),cdxa(,),cdya(,))
+mat co = cdxa+cdya
+end sub
+
+function J_C(x1,x2,x3,y1,y2,y3)
+J_C=(x1-x3)*(y2-y3)-(x2-x3)*(y1-y3)
+end function
+
+function dist_p1_p2(xp,yp,xq,yq)
+dist_p1_p2=sqr((xp-xq)^2+(yp-yq)^2)
+end function
+
+sub bb(y1,y2,y3,b1,b2,b3)
+b1=y2-y3
+b2=y3-y1
+b3=y1-y2
+end sub
+
+sub cc(x1,x2,x3,c1,c2,c3)
+c1=x3-x2
+c2=x1-x3
+c3=x2-x1
+end sub
+
+sub cdx_m(b1,b2,b3,cdx(,))
+!cdx conduction
+cdx(1,1) =b1*b1
+cdx(1,2) =b1*b2
+cdx(1,3) =b1*b3
+cdx(2,1) =b2*b1
+cdx(2,2) =b2*b2
+cdx(2,3) =b2*b3
+cdx(3,1) =b3*b1
+cdx(3,2) =b3*b2
+cdx(3,3) =b3*b3
+end sub
+
+sub cdy_m(c1,c2,c3,cdy(,))
+cdy(1,1) =c1*c1
+cdy(1,2) =c1*c2
+cdy(1,3) =c1*c3
+cdy(2,1) =c2*c1
+cdy(2,2) =c2*c2
+cdy(2,3) =c2*c3
+cdy(3,1) =c3*c1
+cdy(3,2) =c3*c2
+cdy(3,3) =c3*c3
+end sub
+
+sub out_cdxy(coef_ca,cdxa(,),cdya(,))
+!print " coef for conduction = ";coef_ca
+!print " heat conduction matrix cd_x  = "
+mat cdxa = coef_ca*cdxa
+!mat print cdxa
+!print " heat conduction matrix cd_y  = "
+mat cdya = coef_ca*cdya
+!mat print cdya
+end sub
+
+
+

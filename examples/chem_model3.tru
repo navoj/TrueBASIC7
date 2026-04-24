@@ -1,0 +1,89 @@
+! introduction example chemical engineering (ODE)
+option nolet
+print "-------------------------------------------------------------"
+print " chem model (3a)  :chemical engineering                      "
+print " Three CSTRs in Series(Three-isothermal)'feedbackcontroller' "
+print " ------------------------------------------------------------"
+print " diff eq :1e) dCa1/dt=1/tau*(ca0-Ca1)-k*Ca1      (dCa1dt)    "  
+print "          2e) dCa2/dt=1/tau*(ca1-Ca2)-k*Ca2      (dCa2dt)    "
+print "          3e) dCa3/dt=1/tau*(ca2-Ca3)-k*Ca3      (dCa3dt)    "
+print "-------------------------------------------------------------"
+print " E=err=Ca3_set-Ca3      'feedback controller                 "
+print " CAM=.8+kc*(E+rint/tau1)                                     "
+print " Ca0=CAM+cad                                                 "
+print " ------------------------------------------------------------"
+print " initial condition t=0                                       "
+print "                  Ca0=0,Ca1=.4,Ca2=.2,Ca3=.1                 "
+print " method :euler                                               "
+print "-------------------------------------------------------------"
+print " peter.vlasschaert@gmail.com   (28/11/2014)                  "
+print "-------------------------------------------------------------"
+print "-------------------------------------------------------------"
+declare function dCa1dt,dCa2dt,dCa3dt
+print "-------------------------"
+print "parameter                "
+print "-------------------------"
+tau=2
+k=.5 
+! feedback controller
+Ca3_set=.1
+Erint  =0
+kc=30
+tau1=5
+print "-------------------------"
+print " disturbance             "
+print "-------------------------"
+cad=.2
+print "-------------------------"
+print " initial condition ->    "
+print "-------------------------"
+t0=0
+t=t0
+ca1=.4
+ca2=.2
+ca3=0.1
+delta_t = .05  ! timestep
+print "--------------------------------------"
+print " domain: t0.........tf                "
+print "--------------------------------------"
+tf=3
+print "simulation time = ";tf; " s"
+print
+print
+print " time          Ca1      Ca2       Ca3        "
+print "---------------------------------------------"
+print
+nu=0
+input prompt "distance between output = ":out_dist
+tprint = out_dist/delta_t
+print
+print t,ca1,ca2,ca3, "initial condition "
+do while (t <= tf)
+nu=nu+1 ! update teller
+err=Ca3_set-ca3
+cam=0.8+kc*(err+erint/tau1)
+ca0=cam+cad
+ca1=ca1+dCa1dt(ca0,ca1,ca2,ca3,tau,k)*delta_t
+ca2=ca2+dCa2dt(ca0,ca1,ca2,ca3,tau,k)*delta_t
+ca3=ca3+dCa3dt(ca0,ca1,ca2,ca3,tau,k)*delta_t
+if int(nu/(tprint))=nu/(tprint) then
+  print t,ca1,ca2,ca3
+end if
+t=t+delta_t
+loop
+get key done
+end
+! function
+function dCa1dt(ca0,ca1,ca2,ca3,tau,k)
+dCa1dt=1/tau*(ca0-Ca1)-k*Ca1  
+end function
+
+function dCa2dt(ca0,ca1,ca2,ca3,tau,k)
+dCa2dt=1/tau*(ca1-Ca2)-k*Ca2  
+end function
+
+function dCa3dt(ca0,ca1,ca2,ca3,tau,k)
+dCa3dt=1/tau*(ca2-Ca3)-k*Ca3  
+end function
+
+

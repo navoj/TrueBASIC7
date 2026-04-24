@@ -1,0 +1,77 @@
+option nolet
+print
+print "***************************************"
+print " one dimensional:  'finite elements'   "
+print " build : stiffness vector 'B' from 'A' "
+print " peter.vlasschaert@gmail.com,02/08/2016"
+print "***************************************"
+print " m = 3 ,for quadratic elements         "
+print " m = 2 ,for linear    elements         "
+print "***************************************"
+!filename:copyvecainvecbquadraticelementfinalsubfinal.tru
+print
+dim a(1,1)
+m=3   ! block dimension
+n=3   ! number of blocks
+print " block dimension  'm'  = ";m
+print " number of blocks 'n'  = ";n
+print
+mat redim a(n*m,1) ! vector
+! read vec a:  read - data stament
+for  i=1 to m*n
+      read a(i,1)
+ next i
+print " vector 'A' "
+print
+mat print a
+dim B(1,1)
+call build_stiffness(n,m,a(,),b(,))
+print
+print "build: stiffness vector 'B'"
+print
+mat print b
+print
+print " number of connection between the blocks :'+' operator = ";n-1
+print
+print "***********************************************"
+print " info:                                         "
+print " see : vec 'A',three blocks m by 1             "
+print " 3+4=7  ! connection first block  with second  "
+print " 6+7=13 ! connection second block with thirth  "
+print "***********************************************"
+! data : for vector 'A'
+data 1,2,3  ! first  block
+data 4,5,6  ! second block
+data 7,8,9  ! thirth block
+end
+
+sub build_stiffness(n,m,a(,),b(,))
+!**************************************
+! vector : matrix with one column (*,1)
+! * = number of elements 
+!**************************************
+tt=m-1
+mat redim B(tt*n+1,1)
+mat b = 0
+! connect vectors in one dimension (stiffness vector)
+! finite element calculation
+for i=1 to n
+    k = tt*i-1
+    ! copy block (m,1) in to the vector B
+  for i1=1 to m       
+      !*****************************
+      ! connection here : 3+4  =7  *
+      !                   6+7  =13 *
+      !*****************************
+   B(k+i1-1,1) = B(k+i1-1,1)+A(m*i+i1-m,1)      
+  next i1
+next i
+end sub
+
+
+
+
+
+
+
+

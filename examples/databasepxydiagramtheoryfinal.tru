@@ -1,0 +1,86 @@
+option nolet
+print
+print "-------------------------------------------------"
+print " build: Pxy diagram (version 1.0) (cte=temp)     "
+print " use : Psat = exp(A -B/(T+C)) ,T='K' Psat='kPa'  "
+print "-------------------------------------------------"
+print " A,B,C =cte :pure product (Benzene,Toluene)      "
+print "-------------------------------------------------"
+print " peter.vlasschaert@gmail,27/08/2015              "
+print "-------------------------------------------------"
+! build matrix pressure , x values,y values
+!databasePXYDIAGRAMTHEORYfinal.tru
+nu = 2    ! number components
+dim Cp(1,3),Psat(1)
+mat redim Cp(nu,3),Psat(nu)
+dim w$(1)
+mat redim w$(nu)
+! to read data in the matrix { psat(),cp(,)}
+!********************************************
+!********************************************
+for i=1 to nu
+  read w$(i)
+next i
+for i=1 to nu
+ read temp
+next i
+for i=1 to nu
+for j=1 to 3
+ read cp(i,j)
+next j
+next i
+! **** end data *****************************
+!********************************************
+print
+print "  = Antoine Coef. = >  at ";temp; " °K"
+mat print w$
+print "****************************************"
+mat print cp
+print "****************************************"
+p=psat(1) ! temperature for calculation pxy diagram
+print
+print "***********************************"
+print " construct pxy diagram at ";temp;" °K"
+print "***********************************"
+call Antoine_pxy(nu,Cp(,),temp,p,psat(),xx,yy,0)
+z1 = psat(2)  ! start by xx=0
+z2 = psat(1)
+nv = 10
+dim database_b(1,3)
+print  "pressure"," x values "," y values "
+i=0
+for ii=z1 to z2 step (z2-z1)/nv
+    i=i+1
+    call Antoine_pxy(nu,Cp(,),temp,ii,psat(),xx,yy,1)
+    mat redim database_b(i,3)
+    database_b(i,1)=ii
+    database_b(i,2)=xx
+    database_b(i,3)=yy
+    print ii,xx,yy
+next ii
+print
+print " number values in the database = ";i
+mat print database_b
+data benzene,toluene
+data 400,400
+data 14.1603,2948.78,-44.5633
+data 14.2515,3242.38,-47.1806
+end
+
+sub Antoine_pxy(nu,Cp(,),temp,p,psat(),xx,yy,s1)
+if s1=1 then
+j=1
+for i=1 to nu
+ psat(i)=exp(cp(i,j)- cp(i,j+1)/(temp + cp(i,j+2)))
+next i
+!!!!!z1 = psat(2)  -> xx=0 !!!!!!!!
+xx=(p-psat(2))/(psat(1)-psat(2))
+yy=(Psat(1)/p)*xx
+else
+! to find start value for p range 
+j=1
+for i=1 to nu
+ psat(i)=exp(cp(i,j)- cp(i,j+1)/(temp + cp(i,j+2)))
+next i
+end if
+end sub

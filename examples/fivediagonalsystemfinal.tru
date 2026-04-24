@@ -1,0 +1,239 @@
+option nolet
+! fivediagonalsystemfinal.tru
+print "--------------------------------------------"
+print "five diagonal matrices: A=L*R,solve Ax=bb   "
+print " find = L,R from A=a(nu,nu)                 "
+print " algo :five diagonal syst.  (version 1.0)   "
+print " peter.vlasschaert@gmail.com ,15/08/2015    "
+print "--------------------------------------------"
+print
+!*****************************************************************
+! info : ?   Gisela Engeln-Mullges
+!            Numerical algorithms with fortran
+!            Springer
+!*****************************************************************
+!*****************************************************************
+!use :1e) A strongly nonsingular 
+!*****************************************************************
+!*****************************************************************
+!    |l(1,1)               |         |1      r(1,2)   r(1,3)|
+! L= |l(2,1) l(2,2)        |     R = |0      1        r(2,3)| 
+!    |l(3,1) l(3,2) l(3,3) |         |0      0        1     |
+!*****************************************************************
+nu = 7
+! input
+dim a(1,1),b(1,1)
+mat redim a(nu,nu),b(nu,nu) 
+print " A matrix => "
+! two above : diagonals => 1e) e(i) ,2e) f(i)
+dim e(1),f(1)
+mat redim e(nu-1),f(nu-2)
+! leading diagonal = main diagonal => d(i)
+dim d(1)
+mat redim d(nu)
+! two below : diagonals => 1e) h(i) ,2e) g(i)
+dim h(1),g(1)
+mat redim h(2 to nu ),g(3 to nu)
+!***********************************
+!           f: 14,15,16,17,18   => 5
+!           e: 8,9,10,11,12,13  => 6
+! example : d: 1,2,3,4,5,6,7    => 7
+!           h: 19,20,21,22,23,24=> 6
+!           g: 25,26,27,28,29   => 5
+!***********************************
+! leading diagonal
+for i = 1 to nu
+ d(i) = i
+next i
+for i=1 to nu
+  a(i,i) = d(i)
+next i
+!***********************************
+! above
+!***********************************
+! first diagonal
+!***************
+! input : value
+for i=1 to nu-1
+  e(i)= i+d(nu)
+next i
+! input in a
+for i=1 to nu-1
+  j=i+1 
+  a(i,j)=e(i) 
+next i
+! second diagonal
+!****************
+!input : value
+for i=1 to nu-2
+  f(i)=e(nu-1)+i
+next i
+! input in a
+for i=1 to nu-2
+  j=i+2
+  a(i,j)=f(i)
+next i
+!**********************************
+! below
+!**********************************
+! first diagonal
+!***************
+! input : value
+for i=2 to nu
+   h(i)=f(nu-2)+i-1
+next i
+! input in a
+for i=2 to nu
+  j=i-1 
+ a(i,j)=h(i)
+next i
+!second diagonal
+!***************
+! input : value
+for i=3 to nu
+   g(i)=h(nu)+i-2
+next i
+! input a
+for i=3 to nu
+  j=i-2
+ a(i,j)=g(i)
+next i
+print "output = 'five-diagonal matrix' => "
+print
+mat print a
+!--------------
+! A = L * R
+!--------------
+!-------------------------------------
+! L = below include 'leading diagonal'
+!-------------------------------------
+dim l(1,1),r(1,1)
+mat redim l(nu,nu),r(nu,nu)
+!*******
+! below 
+!*******
+! l1: leading diagonal
+! l2: first diagonal  below l1
+! l3: second diagonal below l1
+!******************************
+dim l1(1),l2(1),l3(1)
+mat redim l1(nu),l2(2 to nu),l3(3 to nu)
+!-------------------------------------
+! R = above include 'I = unit diagonal'
+!-------------------------------------
+!*******
+! above
+!*******
+! unit diagonal
+!--------------
+for i=1 to nu
+   r(i,i) = 1
+next i
+!--------------
+! l4 : first diagonal below unit diagonal
+! l5 : second diagonal below unit diagonal
+!*****************************************
+dim l4(1),l5(1)
+mat redim l4(nu-1),l5(nu-2)
+!****************************
+! algo : five-diagonal system
+!****************************
+! step 1 !
+l1(1)=d(1)
+l4(1)=e(1)/l1(1)
+l5(1)=f(1)/l1(1)
+l2(2)=h(2)
+l1(2)=d(2)-l2(2)*l4(1)
+l4(2)=(e(2)-l2(2)*l5(1))/l1(2)
+l5(2)=f(2)/l1(2)
+for i=3 to nu-2
+  l2(i)=h(i)-g(i)*l4(i-2)
+  l1(i)=d(i)-g(i)*l5(i-2)-l2(i)*l4(i-1)
+  l4(i)=(e(i)-l2(i)*l5(i-1))/l1(i)
+  l5(i)=f(i)/l1(i)
+next i
+l2(nu-1)=h(nu-1)-g(nu-1)*l4(nu-3)
+l1(nu-1)=d(nu-1)-g(nu-1)*l5(nu-3)-l2(nu-1)*l4(nu-2)
+l4(nu-1)=(e(nu-1)-l2(nu-1)*l5(nu-2))/l1(nu-1)
+l2(nu)=h(nu)-g(nu)*l4(nu-2)
+l1(nu)=d(nu)-g(nu)*l5(nu-2)-l2(nu)*l4(nu-1)
+for i=3 to nu
+  l3(i)=g(i)
+next i
+! mat print l1,l2,l3,l4,l5
+print " L lower diagonals = "
+!**************************************
+! input in l
+! LD= leading diagonal
+for i=1 to nu
+ l(i,i) = l1(i)
+next i
+! first below LD
+for i=2 to nu
+  j=i-1 
+ l(i,j)=l2(i)
+next i
+! second below LD
+for i=3 to nu
+  j=i-2
+ l(i,j)=l3(i)
+next i
+!**************************************
+print
+mat print l
+print " R upper diagonals = "
+!**************************************
+! input in r
+! U= unit diagonal (main)
+! first diagonal
+!***************
+! input in r
+for i=1 to nu-1
+  j=i+1 
+  r(i,j)=l4(i) 
+next i
+! second diagonal
+!****************
+! input in r
+for i=1 to nu-2
+  j=i+2
+  r(i,j)=l5(i)
+next i
+print
+mat print r
+dim cc(1),bb(1)
+mat redim cc(nu),bb(nu)
+print " A*x=bb ,bb = "
+bb(1)=2
+bb(2)=-5
+bb(3)=4
+bb(4)=9
+bb(5)=30
+bb(6)=-5
+bb(7)=6
+ mat print bb
+! step 2 !
+print " L*cc = bb => find 'cc ' "
+  cc(1)=bb(1)/l1(1)
+  cc(2)=(bb(2)-l2(2)*cc(1))/l1(2)
+  for i=3 to n
+      cc(i)=(bb(i)-l3(i)*cc(i-2)-l2(i)*cc(i-1))/l1(i)
+  next i
+print
+mat print cc
+! step 3 !
+dim xx(1)
+mat redim xx(nu)
+print " R*xx = cc => find 'xx ' "
+xx(nu)=cc(nu)
+xx(nu-1)=cc(nu-1)-l4(nu-1)*xx(nu)
+for i=nu-2 to 1 step -1
+ xx(i)=cc(i)-l4(i)*xx(i+1)-l5(i)*xx(i+2)
+next i
+print
+mat print xx
+end
+
+
+
+

@@ -1,0 +1,83 @@
+option nolet
+! serie : analytical chemistry
+print "************************************************"
+print "* calculation : relation between buffer index  *"
+print "* Beta(buffer monoprotic acid/salt: HA/MA)added*"
+print "* strong acid (HCl) ? Ph   A=Ac'(-)' ,M=Na'(+)'*"
+print "* ( version 1.0 )                              *"
+print "************************************************"
+print "------------------------------------------------"
+print " peter.vlaschaert@gmail.com,09/09/2016          "
+print "------------------------------------------------"
+print " Beta = dCb/dpH = - dCa/dpH   'buffer index'    "
+print "************************************************"
+print " monoprotic acid: HA = H(+) + A(-) => ka        "
+print "************************************************"
+! HA monoprotic weak acid ( example = HAc )
+print "******************************************************"
+print "* ka = ([H(+)][A(-)])/[HA]  (1)                      *"
+print "* Cb = moles NaOH = [Na(+)],Ca = moles HCl = [Cl(-)] *"
+print "* C = [HA]+[A(-)]           (2)                      *"
+print "* (1) and (2) [A(-)] = C*ka/([H(+)]+ ka)       (3)   *"
+print "******************************************************"
+print " Charge Balance :                                    *"
+print "[H(+)]+[Na(+)] = [OH(-)]+[Cl(-)]+[A(-)]        (4)   *"
+print " Cb=Ca+kw/[H(+)]-[H(+)]+C*ka/([H(+)]+ ka)      (5)   *"
+print "******************************************************"
+print " rem : pH = - log(10)[H(+)] = -1/ln(10) * ln[H(+)]   *"
+print " *****************************************************"
+print " Beta = dCb/dpH = dCb/d[H(+)]*d[H(+)]/dpH             "
+print "***********************************************************"
+print "*Beta = ln(10)*(kw/[H(+)]+[H(+)]+C*ka*[H(+)]/(ka+[H(+)])^2*"
+print "***********************************************************"
+print " del_pH = -del_Ca/Beta                                     "
+print "***********************************************************"
+print " pH=pka + log([HA])/([A(-)]) + del_pH =pH_buffer + del_pH  "
+print "***********************************************************"
+!file :Bufferindexweakacidversusstongacidfinalversion1.tru
+print
+print "*********"
+print " given = "
+print "*********"
+ka     =1.75E-5 ! ka from HAc equilibrium
+print " ka from HA          = ";ka
+Ca = ad_HCL
+ad_HCL = 0.001
+print " added (strong acid) = ";ad_HCl;" mole"
+print
+print "***********"
+print "*Buffer pH*"
+print "***********"
+MA = 0.010 
+print " NaAc 'Sodium acetate' = ";MA;" M"
+HA = 0.010
+print " HAc  'Acetic acid   ' = ";HA;" M"
+ratio = HA/MA
+C = HA + MA ! see above NaAc -> Na(+) + Ac(-)
+x=ka*ratio
+print " [H(+)] concentration 'buffer' = ";x
+pH_buffer = -(1/log(10))*log(x)
+print " pH                   'buffer' = ";pH_buffer
+call beta_index(x,ka,C,Beta)
+print
+print " Beta (index) = ";Beta
+print "************************************"
+print "*pH = Buffer +  added (strong Acid)*"
+print "************************************"
+del_pH = - ad_HCL/Beta
+print " change in pH = ";del_pH
+pH = pH_buffer + del_pH
+print "******************************"
+print " pH after added strong acid = ";pH
+print "******************************"
+get key done
+end
+
+sub beta_index(x,ka,C,Beta)
+kw = 1E-14
+q1 = C*ka*x
+q2 =(ka+x)^2
+q=q1/q2
+Beta = log(10)*(kw/x+x+q)
+end  sub
+

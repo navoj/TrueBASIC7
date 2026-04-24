@@ -1,0 +1,68 @@
+option nolet
+print "***************************************"
+print "* sort parallel arrays (2d,matrix)    *"
+print "***************************************"
+print " peter.vlasschaert@gmail.com,24/10/2016"
+print "***************************************"
+print
+ns = 6 !number of data from one column
+print " number data ,first  column = ";ns
+print " number data ,second column = ";ns
+dim data_b(1,2)
+mat redim data_b(ns,2)
+for i=1 to 6
+  read data_b(i,1)
+next i
+for i=1 to 6
+  read data_b(i,2)
+next i
+h1=1
+print
+print " sort based on first column = ";h1
+print
+print "***************"
+print " before sort =>"
+print "***************"
+print
+mat print data_b
+call sort_qp(ns,h1,data_b(,))
+print "***************"
+print " after sort  =>"
+print "***************"
+print
+mat print data_b
+data 2,4,1,6,7,5
+data 1,2,3,4,5,6
+end
+
+sub sort_qp(ns,h1,aq(,))
+!****************************************
+!****************************************
+! algo:bubble sort
+!****************************************
+! small to big
+!****************************************
+!****************************************
+flag=0
+do
+  flag=1 ! otherwise exit do
+   for i=1 to ns-1
+      if aq(i,h1)> aq(i+1,h1) then  !
+         call swap(aq(,),i,h1)
+      ! parallel array (one column=second column)
+         call swap(aq(,),i,2)
+               flag=0      
+      end if   
+  next i
+loop while (flag=0)
+!****************************************
+end sub
+
+sub swap(aq(,),i,h1)
+!===swap======= 
+    temp  =aq(i,h1)
+    aq(i,h1)  =aq(i+1,h1)
+    aq(i+1,h1)=temp
+!==============
+end sub
+

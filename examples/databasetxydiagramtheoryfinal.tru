@@ -1,0 +1,96 @@
+option nolet
+print
+print "-------------------------------------------------"
+print " build: Txy diagram (version 1.0)                "
+print " use : Psat = exp(A -B/(T+C)) ,T='K' Psat='kPa'  "
+print "-------------------------------------------------"
+print " A,B,C =cte :pure product (Benzene,Toluene)      "
+print "-------------------------------------------------"
+print " peter.vlasschaert@gmail,27/08/2015              "
+print "-------------------------------------------------"
+! build matrix temperature , x values,y values
+!databaseTXYDIAGRAMTHEORYfinal.tru
+nu = 2    ! number components
+dim Cp(1,3),Tb(1),Psat(1)
+mat redim Cp(nu,3),Tb(nu),Psat(nu)
+dim w$(1)
+mat redim w$(nu)
+! to read data in the matrix { psat(),cp(,)}
+!********************************************
+!********************************************
+for i=1 to nu
+  read w$(i)
+next i
+for i=1 to nu
+ read psat(i)
+next i
+for i=1 to nu
+for j=1 to 3
+ read cp(i,j)
+next j
+next i
+! **** end data *****************************
+!********************************************
+p=psat(1)
+print
+print "  = Antoine Coef. = >  at ";psat(1); " kPa"
+mat print w$
+print "****************************************"
+mat print cp
+print "****************************************"
+p=psat(1) ! pressure for calculation txy diagram
+print
+print "***********************************"
+print " construct txy diagram at ";p;" kPa"
+print "***********************************"
+call Antoine_Tb_Psat(nu,Cp(,),Tb(),Psat(),temp,1)
+! data info (pure products)
+print "boiling point = ";tab(3),w$(1),w$(2)
+print "temperature  = ",tb(1),tb(2)," kelvin"
+z1 = min(tb(1),tb(2))
+z2 = max(tb(1),tb(2))
+dim kk(1)
+mat redim kk(nu)
+nv = 10
+dim database_b(1,3)
+print  "temperature"," x values "," y values "
+i=0
+for ii=z1 to z2 step (z2-z1)/nv
+    i=i+1
+    call Antoine_k(nu,Cp(,),ii,p,kk(),xx,yy)
+    mat redim database_b(i,3)
+    database_b(i,1)=ii
+    database_b(i,2)=xx
+    database_b(i,3)=yy
+    print ii,xx,yy
+next ii
+print
+print " number values in the database = ";i
+mat print database_b
+data benzene,toluene
+data 200,200
+data 14.1603,2948.78,-44.5633
+data 14.2515,3242.38,-47.1806
+end
+
+sub Antoine_Tb_Psat(nu,Cp(,),Tb(),Psat(),temp,s1)
+j=1
+if s1=1 then
+for i=1 to nu
+ tb(i)=(cp(i,j+1)/(cp(i,j)-log(psat(i))))-cp(i,j+2)
+next i
+else
+for i=1 to nu
+  psat(i) =exp(cp(i,j) - cp(i,j+1)/(Tb(i)+cp(i,j+2)))
+next i
+end if
+end sub
+
+sub Antoine_k(nu,Cp(,),temp,p,kk(),xx,yy)
+j=1
+for i=1 to nu
+ kk(i)=exp(cp(i,j)- cp(i,j+1)/(temp + cp(i,j+2)))/p
+next i
+xx=(1-kk(2))/(kk(1)-kk(2))
+yy=kk(1)*xx
+end sub

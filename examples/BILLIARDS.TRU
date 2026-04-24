@@ -1,0 +1,178 @@
+! motion of a billiard in stadium   
+! H. Nakanishi
+OPTION NOLET
+
+PROGRAM billiards
+    CALL initialize(r,alpha,x0,y0,vx0,vy0,nstep)
+    CALL calculate(r,alpha,x0,y0,vx0,vy0,nstep)
+END
+
+! initialize variables
+SUB initialize(r,alpha,x0,y0,vx0,vy0,nstep)
+    OPTION ANGLE degrees
+    PRINT "Billiards in a stadium; radius of circular part = 1"
+    r = 1
+    v0 = 1
+    INPUT prompt "elongation factor alpha -> ": alpha
+    INPUT prompt "initial x position -> ": x0
+    INPUT prompt "initial y position -> ": y0
+    INPUT prompt "initial angle (degrees) -> ": theta0
+    vx0 = v0*cos(theta0)
+    vy0 = v0*sin(theta0)
+    INPUT prompt "how many bounces? -> ": nstep
+    aspect = 1.333
+    SET WINDOW -(1+alpha)*r*aspect,(1+alpha)*r*aspect,-(1+alpha)*r,(1+alpha)*r
+    SET BACKGROUND COLOR "white"
+    SET COLOR "black"
+    CLEAR
+    PLOT -(1+alpha)*r*aspect,0;(1+alpha)*r*aspect,0
+    PLOT 0,(1+alpha)*r;0,-(1+alpha)*r
+    SET COLOR "green"
+    PLOT -alpha*r,r;alpha*r,r;
+    x = alpha*r
+    FOR i=1 to 100
+        x = x+r/100
+        dx = i*r/100
+        PLOT x,sqr(r^2-dx^2);
+    NEXT i
+    FOR i=1 to 100
+        x = x-r/100
+        dx = r-i*r/100
+        PLOT x,-sqr(r^2-dx^2);
+    NEXT i
+    PLOT alpha*r,-r;-alpha*r,-r;
+    x = -alpha*r
+    FOR i=1 to 100
+        x = x-r/100
+        dx = i*r/100
+        PLOT x,-sqr(r^2-dx^2);
+    NEXT i
+    FOR i=1 to 100
+        x = x+r/100
+        dx = r-i*r/100
+        PLOT x,sqr(r^2-dx^2);
+    NEXT i
+    PLOT
+    SET COLOR "green"
+    PLOT AREA: -alpha*r-0.01,0.01;-alpha*r+0.01,0.01;-alpha*r+0.01,-0.01;-alpha*r-0.01,0-0.01
+    PLOT AREA: alpha*r-0.01,0.01;alpha*r+0.01,0.01;alpha*r+0.01,-0.01;alpha*r-0.01,0-0.01
+    SET COLOR "red"
+    PLOT AREA: x0-0.01,y0+0.01;x0+0.01,y0+0.01;x0+0.01,y0-0.01;x0-0.01,y0-0.01
+END SUB
+
+! use exact method
+SUB calculate(r,alpha,x0,y0,vx0,vy0,nstep)
+    SET COLOR "blue"
+    PLOT x0,y0;
+    vx1 = vx0
+    vy1 = vy0
+    x1 = x0
+    y1 = y0
+    FOR i=1 to nstep
+        IF vy1>0 then
+           x = (r-y1)*vx1/vy1+x1
+           IF -alpha*r <= x and x <= alpha*r then
+              y = r
+              vx = vx1
+              vy = -vy1
+           ELSE IF x>alpha*r then
+              a = 1+(vx1/vy1)^2
+              b = 2*vx1/vy1*(x1-alpha*r-vx1/vy1*y1)
+              c = (x1-alpha*r-vx1/vy1*y1)^2-r^2
+              y = (-b+sqr(b^2-4*a*c))/(2*a)
+              x = sqr(r^2-y^2)+alpha*r
+              nx = (x-alpha*r)/sqr((x-alpha*r)^2+y^2)
+              ny = y/sqr((x-alpha*r)^2+y^2)
+              vperpx = (vx1*nx+vy1*ny)*nx
+              vperpy = (vx1*nx+vy1*ny)*ny
+              vparx = vx1-vperpx
+              vpary = vy1-vperpy
+              vx = vparx-vperpx
+              vy = vpary-vperpy
+           ELSE
+              a = 1+(vx1/vy1)^2
+              b = 2*vx1/vy1*(x1+alpha*r-vx1/vy1*y1)
+              c = (x1+alpha*r-vx1/vy1*y1)^2-r^2
+              y = (-b+sqr(b^2-4*a*c))/(2*a)
+              x = -sqr(r^2-y^2)-alpha*r
+              nx = (x+alpha*r)/sqr((x+alpha*r)^2+y^2)
+              ny = y/sqr((x+alpha*r)^2+y^2)
+              vperpx = (vx1*nx+vy1*ny)*nx
+              vperpy = (vx1*nx+vy1*ny)*ny
+              vparx = vx1-vperpx
+              vpary = vy1-vperpy
+              vx = vparx-vperpx
+              vy = vpary-vperpy
+           END IF
+        ELSE IF vy1<0 then
+           x = -(r+y1)*vx1/vy1+x1
+           IF -alpha*r <= x and x <= alpha*r then
+              y = -r
+              vx = vx1
+              vy = -vy1
+           ELSE IF x>alpha*r then
+              a = 1+(vx1/vy1)^2
+              b = 2*vx1/vy1*(x1-alpha*r-vx1/vy1*y1)
+              c = (x1-alpha*r-vx1/vy1*y1)^2-r^2
+              y = (-b-sqr(b^2-4*a*c))/(2*a)
+              x = sqr(r^2-y^2)+alpha*r
+              nx = (x-alpha*r)/sqr((x-alpha*r)^2+y^2)
+              ny = y/sqr((x-alpha*r)^2+y^2)
+              vperpx = (vx1*nx+vy1*ny)*nx
+              vperpy = (vx1*nx+vy1*ny)*ny
+              vparx = vx1-vperpx
+              vpary = vy1-vperpy
+              vx = vparx-vperpx
+              vy = vpary-vperpy
+           ELSE
+              a = 1+(vx1/vy1)^2
+              b = 2*vx1/vy1*(x1+alpha*r-vx1/vy1*y1)
+              c = (x1+alpha*r-vx1/vy1*y1)^2-r^2
+              y = (-b-sqr(b^2-4*a*c))/(2*a)
+              x = -sqr(r^2-y^2)-alpha*r
+              nx = (x+alpha*r)/sqr((x+alpha*r)^2+y^2)
+              ny = y/sqr((x+alpha*r)^2+y^2)
+              vperpx = (vx1*nx+vy1*ny)*nx
+              vperpy = (vx1*nx+vy1*ny)*ny
+              vparx = vx1-vperpx
+              vpary = vy1-vperpy
+              vx = vparx-vperpx
+              vy = vpary-vperpy
+           END IF
+        ELSE
+           IF vx1>0 then
+              y = y1
+              x = alpha*r+sqr(r^2-y1^2)
+              nx = (x-alpha*r)/sqr((x-alpha*r)^2+y^2)
+              ny = y/sqr((x-alpha*r)^2+y^2)
+              vperpx = (vx1*nx+vy1*ny)*nx
+              vperpy = (vx1*nx+vy1*ny)*ny
+              vparx = vx1-vperpx
+              vpary = vy1-vperpy
+              vx = vparx-vperpx
+              vy = vpary-vperpy
+           ELSE IF vx1<0 then
+              y = y1
+              x = -alpha*r-sqr(r^2-y1^2)
+              nx = (x+alpha*r)/sqr((x+alpha*r)^2+y^2)
+              ny = y/sqr((x+alpha*r)^2+y^2)
+              vperpx = (vx1*nx+vy1*ny)*nx
+              vperpy = (vx1*nx+vy1*ny)*ny
+              vparx = vx1-vperpx
+              vpary = vy1-vperpy
+              vx = vparx-vperpx
+              vy = vpary-vperpy
+           ELSE
+              SET COLOR "red"
+              PRINT "billiard is stopped!"
+              EXIT SUB
+           END IF
+        END IF
+        x1 = x
+        y1 = y
+        vx1 = vx
+        vy1 = vy
+        PLOT x,y;
+    NEXT i
+    PLOT
+END SUB

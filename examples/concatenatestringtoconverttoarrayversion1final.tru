@@ -1,0 +1,107 @@
+option nolet
+print
+print "****************************************************"
+print "* CONCATENATEstring convert to array version 1.0   *"
+print "* peter.vlasschaert@gmail.com,    02/03/2017       *"
+print "****************************************************"
+!filename:concatenatestringtoconverttoarrayversion1final.tru
+print
+!**************************************************
+! find out which elements play role reaction system
+!**************************************************
+print "***************************************"
+print " first ,second,third,fourth            "
+print "***************************************"
+print "1e)    K4Fe(CN)6   =>  input K,Fe,C,N  "
+print "2e)    H2SO4       =>  input H,S,O     "
+print "3e)    HNO3        =>  input H,N,O     "
+print "4e)    KMnO4       =>  input K,Mn,O    "
+print "***************************************"
+print
+! input of the above products =>
+dim a$(1)
+np=4
+print " number of products = ";np
+print
+mat redim a$(np)
+for i=1 to np
+ print " product(";i;" )   => "
+ line input prompt " name  =  ":a$(i)
+next i
+print 
+mat print a$
+!*****************************
+! concatenate strings (plural)
+!*****************************
+for i=1 to np-1
+    call concatenate_string(a$(1),a$(i+1))
+next i
+!**************************
+! print ' string '
+!**************************
+! print a$(1)
+!*******************************************
+! find length of the string ' len command  '
+!*******************************************
+element$ = a$(1)
+n_string = len(element$)
+print " elements string         = ";element$
+print " length   string         = ";n_string
+!*******************************************
+! find number comma's and position
+!*******************************************
+dim commas(1)
+call pos_commas(n_string,element$,k,commas())
+print " number of comma's       = ";k
+print "********************************"
+print " position array from comma's => "
+print "********************************"
+mat print commas 
+dim elements$(1)
+!****************************
+! even : 1,2,3,4
+! odd  : 1,2,3,4,5
+!****************************
+mat redim elements$(k+1)
+!****************************
+! parse the string 'element$'
+!****************************
+call list_elements(k,n_string,element$,commas(),elements$())
+print "**********************************************"
+print " list of all elements from reaction system => "
+print "**********************************************"
+mat print elements$
+end
+
+sub list_elements(k,n_string,element$,commas(),elements$())
+!****************************************************
+! find elements from the string put them in the array 
+! ,elements$()
+!****************************************************
+elements$(1) = element$[1:commas(1)-1]
+for i=2 to k
+   elements$(i) = element$[commas(i-1)+1:commas(i)-1]
+next i
+elements$(k+1) = element$[commas(k)+1:n_string]
+end sub
+
+sub pos_commas(n_string,element$,k,commas())
+! find position of commas in the string element$
+k=0
+for i=1 to n_string 
+  if element$[i:i] = "," then    
+     k=k+1
+     mat redim commas(k)
+     commas(k)=i     
+  end if
+next i
+end sub
+
+sub concatenate_string(result$,new$)
+!****************************************
+! combine two strings and a comma between
+!****************************************
+result$ = result$ & "," & new$ 
+end sub
+
+

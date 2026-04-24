@@ -1,0 +1,72 @@
+option nolet
+print
+print "****************************************************"
+print "* CONCATENATE ARRAY (principles) 'version 1.0',sub *"
+print "* peter.vlasschaert@gmail.com,    01/03/2017       *"
+print "****************************************************"
+!filename : CONCATENATEfinalversion1
+print
+!**************************************************
+!The CONCATENATE function joins two (text ,array$)
+!strings into one text string.
+!**************************************************
+dim array1$(3),array2$(3)
+! read first string array1$
+for i=1 to 3
+    read array1$(i)
+next i
+! read second string array2$
+for i=1 to 3
+    read array2$(i)
+next i
+data a,b,c,d,e,f
+print "******************"
+print "*start = array =>*"
+print "******************"
+print
+mat print array1$
+print "*******************"
+print "* array to connect*"
+print "*******************"
+print
+mat print array2$
+!***********************
+! connecting two array's
+!***********************
+call concatenate_str_array(array1$(),array2$())
+print
+print "********************"
+print " result 'array1$' = "
+print "********************"
+print
+mat print array1$
+dim array3$(4)
+for i=1 to 4
+  read array3$(i)
+next i
+data g,h,i,l
+print
+!*************************************************
+!'new array1$' from before to connect with array3$
+!*************************************************
+call concatenate_str_array(array1$(),array3$())
+print
+print "********************"
+print " result 'array1$' = "
+print "********************"
+print
+mat print array1$
+end
+
+sub concatenate_str_array(result$(),new$())
+for i=1 to size(new$)
+    value$ = new$(i)   
+    !***********************************************
+    !*expantion of the array  with the new elements*
+    !***********************************************
+    mat redim result$(size(result$)+1)
+    result$(size(result$))=value$  
+    print " result_1_$ = ";i,value$
+next i
+end sub
+

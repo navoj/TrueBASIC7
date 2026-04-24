@@ -1,0 +1,203 @@
+option nolet
+print
+!sub version
+print "**********************************************"
+print "* build graphic paper(sub): (x,y) = (lin,log)*"
+print "* peter.vlasschaert@gmail.com,25/01/2017     *"
+print "**********************************************"
+!**********************************************
+! use : box lines ' to draw box on the canvas '
+! filename :paperlinlogxyfinalsubfinal.tru
+!**********************************************
+!input prompt  " title of the graph = ":tit$
+!input prompt  " legend :x axis     = ":xl$
+!input prompt  " legend :y axis     = ":yl$
+tit$ = " (x,y) -> lin-log paper "
+xl$  = " x-lin axis "
+yl$  = " y-log axis "
+print
+pause 3
+clear
+!******************
+! first : log scale
+!******************
+!         <1e)first division>
+dim h(1)
+mat redim h(10)
+call first_div(h())
+!************************************
+!        <  range: ymin < y < ymax  >
+!************************************
+ymin = 1
+ymax = 10000
+div_y = log10(abs(ymax))
+dim hl(0:1)
+call horiz_line(ymin,div_y,n,h(),hl())
+! print " number of lines                    = ";n+1
+!mat print hl
+!*****************************
+! values corresponding with hl
+!*****************************
+dim hv(0:1)
+mat redim hv(0:n)
+mat hv=0
+hv(0)=ymin
+hv(n)=ymax
+!*****************************
+! values: 1,10,100
+!*****************************
+call big_div_yaxis(div_y,hv())
+!*****************************
+!values between: i=0->1,10
+!values between: i=1->10,100
+!values between: i=2->100,1000
+!*****************************
+call small_div_yaxis(div_y,hv())
+!mat print hv
+! <  vertical lines x axes >
+xmax = 200
+! number of vertical lines
+nv    = 6
+div_x = xmax/nv
+open #0:screen 0,1,0,1
+window #0
+sp = 2*2
+hg = div_y*10
+!*************
+!*draw a box *
+!*************
+x1 = 10   ! first point box:x value
+y1 = sp/2 ! first point box:y value
+set window 0,xmax+2*x1,0,sp+hg
+!*****************************
+! <legend>
+!*****************************
+set color "black"
+auth$ = "peter.vlasschaert@gmail.com,25/01/2017"
+call horiz_txt(auth$,tit$,xl$,x1,xmax,sp,hg)
+call vertical_txt(yl$,x1,sp,hg)
+! < end legend >
+!*************
+!* draw a box*
+!*************
+set color "blue"
+! <draw first horizontal line> => zero line
+!************************************
+!*how big box ? width=xmax,heigth=hg*
+!************************************
+call draw_box(x1,y1,xmax,hg)
+call draw_horz_line(x1,xmax,sp,n,hl())
+call draw_vertical_line(div_x,x1,nv,sp,hg)
+!***************************
+! < set values on the axis >
+! truncate(12036.125,number)
+!***************************
+! < begin values on the axis >
+set color "black"
+! < x-values>
+call draw_x_values(nu,x1,div_x,sp,nv)
+! < y-values>
+call draw_y_values(x1,y1,div_y,hl(),hv())
+! <end :values on the axis>
+get key k
+end
+
+sub first_div(h())
+for i=1 to size(h)
+    h(i) = log10(i)*10
+next i
+end sub
+
+sub horiz_line(ymin,div_y,n,h(),hl())
+! <  horizontal lines y axes >
+hl(0) = log10(ymin)
+n=0
+for j=1 to div_y
+ for i=2 to 10
+   n=n+1
+ mat redim hl(0:n)
+ hl(n)= (j-1)*10+h(i)
+ next i
+next j
+end sub
+
+sub big_div_yaxis(div_y,hv())
+for i=1 to div_y-1
+       hv(i*9) = 10^i
+next i
+end sub
+
+sub small_div_yaxis(div_y,hv())
+for i=0 to div_y-1
+    for j=1 to 8
+      hv(j+i*9)=(j+1)*10^i
+    next j
+next i
+end sub
+
+sub horiz_txt(auth$,tit$,xl$,x1,xmax,sp,hg)
+!-------------------------
+!  < horizontal draw :txt>
+!-------------------------
+! Author
+plot text,at x1,hg+sp/2+sp/4:auth$
+set color "red"
+! title
+ltit = len(tit$)  ! length title string
+plot text,at xmax-ltit,hg+sp/2+sp/4:tit$
+! x-axis
+lxl  = len(xl$)
+plot text,at xmax-lxl,sp/4:xl$
+end sub
+
+sub vertical_txt(yl$,x1,sp,hg)
+!--------------------------
+!  < vertical draw   :txt>
+!--------------------------
+! y-axis
+! <  plot text,at ?,? : yl$ >
+lyl = len(yl$)
+for i=1 to lyl
+if yl$(i:i) = "-" then
+   yl$(i:i) = "|"
+end if
+plot text,at x1/2,(sp/2+hg)-i:yl$(i:i)
+next i
+end sub
+
+sub draw_box(x1,y1,xmax,hg)
+box lines x1,x1+xmax,y1,y1+hg
+end sub
+
+sub draw_horz_line(x1,xmax,sp,n,hl())
+! <draw other horizontal lines> => 1 to n
+for i=1 to n
+ plot lines:x1,hl(i)+sp/2;x1+xmax,hl(i)+sp/2
+next i
+end sub
+
+sub draw_vertical_line(div_x,x1,nv,sp,hg)
+! <draw other vertical   lines> => 1 to nv
+! draw first vertical line in the box
+for i=1 to nv
+plot lines :x1+i*div_x,sp/2;x1+i*div_x,sp/2+hg
+next i
+end sub
+
+sub draw_x_values(nu,x1,div_x,sp,nv)
+nu = 2
+for i=0 to nv
+qx$ = str$(truncate(i*div_x,nu))
+ plot text,at x1+i*div_x,3/4*sp/2:qx$
+next i
+end sub
+
+sub draw_y_values(x1,y1,div_y,hl(),hv())
+plot text,at 0.1*x1,y1:str$(hv(0))
+for i=1 to div_y
+        hv(i*9) = 10^i
+plot text,at 0.1*x1,y1+hl(i*9):str$(hv(i*9))
+next i
+end sub
+
+

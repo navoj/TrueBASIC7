@@ -1,0 +1,101 @@
+option nolet
+! principal : Heat Exchanger
+! name : DynamicmodelCrossflowheatexfinalfinalfinal.tru
+print "**********************************************************"
+print " Dynamic Model of a Cross-Flow Heat Exchanger             "
+print " version 1.0                                              "
+print " peter.vlasschaert@gmail.com,08/03/2016                   "
+print "**********************************************************"
+print " Heat Balance =                                           "
+print " accumulation(heat):(1) volume element = Heat loss :(2)   "
+print " due enegy transfer to air + Heat gain:(3)(entering fluid)"
+print "**********************************************************"
+print
+!*****************************************************************
+!*****************************************************************
+! math :
+! you find pde for simulation from Heat Balance
+! pde = partial differential equation ( finite differences method)
+!*****************************************************************
+print " (1) : pi*D^2/4*dx*rho*cp*dt    T=temperature          "            
+print " (2) : F*cp*(T-(T+DT))*dt ,(3) : U*pi*dx*dt*(Ta-T(x,t))" 
+print
+!*****************************************************************
+!*****************************************************************
+! input parametric values (pipe and surroundings)
+Ta = 20          !  temperature (°C)'example Air
+U  = 40e3        !  Heat transfer coefficient (W/(m^2 K))               
+D  = 0.1         !  Pipe Diameter (m)
+rho = 1000       !  liquid Density (Kg/m^3)
+cp = 4200        !  Specefic Heat Capacity (J/(Kg*K))
+f  = 1           !  Flowrate(Kg/s)
+tl = 100         !  Liquid temperature (°C)
+dt = 0.01        !  Time Step      (s)
+dx = 0.04        !  distance Step  (m)
+l = 0.4          !  Length of pipe (m)
+no = l/dx        !  integer value  ?  always
+no_t = 10        !  how many time steps takes for simulation
+print " no ' number of elements divide the pipe ' = ";no
+print " liquid temperature                        = ";tl;"°C"
+print
+print " simulation (control) =>  "
+print " time step 'dt' (sec) = ";dt;"distance step 'dx' (m) = ";dx
+print
+dim temp(0,0)
+mat redim temp(0 to no_t,0 to no-1)
+!****************************************
+! time ( t=0) initial profile (temp = tl)
+! IC = initial condition( by t=0)
+!****************************************
+for i=0 to no-1
+  temp(0,i) = tl
+next i
+!************************************
+! BC = entering temperature of liquid
+!************************************
+! BC = Boundary Condition
+!************************************
+for i=0 to no_t
+  temp(i,0) = tl
+next i
+!******************************************************
+! pratical measure temp after dt (inside pipe:begin)
+! TC =temperature control device (start:value after dt)
+!******************************************************
+tc = tl-0.02 !read device
+for i=1 to no-1
+! reading TC from aperture ?
+  temp(1,i) = tc
+next i
+print " => after reading TC device = ";tc;"°C,after time step = ";dt;"s"
+print
+mat print temp
+!***************************************************
+! math :
+!***************************************************
+!***************************************************
+! use approximation first order for derivatives
+!***************************************************
+!  backward space :
+! example = d(temp)/dx = dtemp_dx *
+!  forward time   :
+! example => d(temp)/dt = (temp(j+1,i)-temp(j,i))/dt
+!***************************************************
+!***************************************************
+!***************************************************
+pipe = pi*d^2/4 * rho *cp
+fcp  = -f*cp
+upid = u*pi*d
+for i=1 to no-1
+        for j=1 to no_t-1
+            dtemp_dx=(temp(j,i)-temp(j,i-1))/dx ! *
+temp(j+1,i)=temp(j,i)+(dt/pipe)*(fcp*dtemp_dx+upid*(ta-temp(i,j)))
+        next j
+next i
+print "simulation 'temperature distribution':Heat Exchanger = ";no_t;" time steps"
+! to find steady state ? for long time
+print
+mat print temp
+end
+
+

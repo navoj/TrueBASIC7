@@ -1,0 +1,61 @@
+! magnetic field from a straight wire
+! Program to accompany "Computational Physics" by N. Giordano and H. Nakanishi
+! Copyright Prentice Hall 1997, 2006
+program straight_wire
+   option nolet
+   library "sgfunc.trc"
+   library "sglib.trc"
+   dim r(0),field(0)
+   lstart = .5
+   lfinish = 10
+   call initialize(r,field,max)
+   set background color "white"
+   call setcanvas("white")
+   set color "black"
+   length = lstart
+   i = 1
+   do 
+      call calculate(r,field,max,length)
+      if length = lstart then call display(r,field,max)
+      if length > lstart then call adddatagraph(r,field,4,0,"black")
+      i = i + 1
+      length = 3 * length
+   loop until length > lfinish
+   call exact(r,field)
+   get key z
+end
+! initialize variables
+sub initialize(r(),field(),max)
+   input prompt "number of grid steps -> ": max
+   mat redim field(max),r(max)
+end sub
+sub calculate(r(),field(),max,length)
+   for i = 1 to max
+      call calculate_field(field(i),i/max,max,length)
+      r(i) = i/max
+   next i
+end sub
+sub calculate_field(by,x,max,length)
+   dz = 0.1
+   by = 0
+   for z = -length to length step dz
+      r = sqr(x^2 + z^2)
+      by = by + dz * x / r^3
+   next z
+end sub
+sub display(r(),field(),max)
+   call settitle("Magnetic field from a straight wire")
+   call sethlabel("R")
+   call setvlabel("B")
+   call datagraph(r,field,3,0,"black")
+end sub
+sub exact(r(),field())
+   max = 100
+   mat redim r(max),field(max)
+   for i = 1 to max
+      r(i) = i / max
+      field(i) = 2 / r(i)
+   next i
+   call adddatagraph(r,field,1,1,"black")
+end sub
+      

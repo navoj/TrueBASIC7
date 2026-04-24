@@ -1,0 +1,74 @@
+! Planetary motion with the Euler-Cromer method
+! Program to accompany "Computational Physics" by N. Giordano and H. Nakanishi
+! Copyright Prentice Hall 1997, 2006
+
+program kepler
+   option nolet   ! don't need the graphics libraries for this program
+   call initialize(x,v_x,y,v_y,dt,beta,store$,r0,aspect)  ! set up initial conditions
+   call calculate(x,v_x,y,v_y,dt,beta,store$,r0,aspect)   ! do the calculation
+end
+! initialize variables
+sub initialize(x,v_x,y,v_y,dt,beta,store$,r0,aspect)
+   input prompt "initial x position (in AU) -> ": x
+   input prompt "initial y position (in AU) -> ": y
+   input prompt "initial x velocity (in AU/yr) -> ": v_x
+   input prompt "initial y velocity (in AU/yr) -> ": v_y
+   input prompt "time step (in yr) -> ": dt
+   input prompt "power law exponent beta -> ": beta
+   line input prompt "name of output file -> ": store$
+                          ! now set up window for plotting
+   aspect = 1.5         ! aspect ratio of screen - your's may be different
+   r0 = 1.2 * sqr(x^2+y^2) ! pick a scale a bit larger than the planet's radius
+   set window -r0*aspect,r0*aspect,-r0,r0        ! set window coordinates
+   set background color "white"
+   set color "black"
+   clear
+   plot -r0*aspect,0;r0*aspect,0                       ! plot axes
+   plot 0,-r0;0,r0
+end sub
+! x,y = position of planet
+! v_x,v_y = velocity of planet
+! dt = time step
+sub calculate(x,v_x,y,v_y,dt,beta,store$,r0,aspect)
+   if store$ <> "" then
+      open #1: name store$, organization text, create newold
+      erase #1
+      print #1: x," ",y
+   end if
+   a=0.006
+   b=a*1.1
+   set color "blue" 
+   box keep x-b,x+b,y-b,y+b in blue$
+   set color "red"
+   box area x-a,x+a,y-a,y+a
+   do                          ! use Euler-Cromer method
+      r = sqr(x^2 + y^2)
+      v_x = v_x - (4 * pi^2 * x * dt) / r^(beta+1)
+      v_y = v_y - (4 * pi^2 * y * dt) / r^(beta+1)
+      box show blue$ at x-b,y-b
+      x = x + v_x * dt
+      y = y + v_y * dt
+      set color "red"
+      box area x-a,x+a,y-a,y+a
+      if store$ <> "" then print #1: x," ",y
+      set cursor 1,1
+      print "Type c to clear, q to exit, anything else to pause ..."
+      t=t+dt
+      set cursor 2,1
+      print "Time = ";t
+      if key input then      ! loop until any key is hit
+         get key z
+         c$ = chr$(z)
+         if c$ = "c" then
+            set color "black"
+            clear
+            plot -r0*aspect,0;r0*aspect,0
+            plot 0,-r0;0,r0
+         else if c$ <> "q" then 
+            get key z
+         end if
+      end if
+   loop until c$ = "q"
+   if store$ <> "" then close #1
+end sub
+

@@ -1,0 +1,55 @@
+option nolet
+option base 0
+print "----------------------------------------------"
+print " peter.vlasschaert@gmail.com (03/12/2014)     "
+print "----------------------------------------------"
+print "----------------------------------------------"
+print " simpson rule 1/3 (integration)               "
+print "----------------------------------------------"
+print " test integration routine som(f(x)*dx)        "
+print " example f(x)=x*x*x........(n de )            "
+print "----------------------------------------------"
+print
+input prompt " input integer (n)     = ":n
+print " f(x)= x^(";str$(n-1);")"
+input prompt " upper value :integral = ":xx
+print
+print "integration(f(x),x=0...";str$(xx);")  =>      "
+print
+dd=xx^n/n
+print "exact integration (x^";str$(n-1);") = ";dd
+print
+dim x(0),y(0)
+for i=0 to (xx*10)-1
+mat redim x(i),y(i)
+ x(i)= (i)*.1
+ y(i)=(x(i))^(n-1)
+next i
+np=size(x)
+print " x    values -> "
+print
+mat print x
+print " f(x) values -> "
+print
+mat print y
+call integrate_simpson(y(),x(),np,som,xx)
+print "numerical integration(x^";str$(n-1);") = ";som
+print
+print " error(numerical integration ) = ";dd-som
+end
+
+sub integrate_simpson(y(),x(),np,som,xx)
+s2=0
+for i=1 to np/2
+s2=s2+y(2*i-1)
+next i
+s3=0
+for i=1 to np/2-1
+s3=s3+y(2*i)
+next i
+som=(xx-0)/np/3*(y(0)+4*s2+2*s3+y(np-1))
+end sub 
+
+
+
+

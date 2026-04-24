@@ -1,0 +1,280 @@
+option nolet
+print "-------------------------------------------------------"
+print " binary distillation rating program (version 1.0)      "
+print " system ( example ' methanol/aq ' ),given 'pressure'   "
+print "-------------------------------------------------------"
+print " given :: xb,xd ,given column :: nt plates and nf feed "
+print " method : interhalving method (dr/2)                   "
+print " result = calculation of rating  (= r )                "
+print "-------------------------------------------------------"
+print " peter.vlasschaert@gmail.com, 08/10/2015               "
+print "-------------------------------------------------------"
+input prompt  " output = 2 , nice( output) = 1  => ": m
+print
+! bindistratingfinaloutputfinal
+!***************************************************
+! input
+!*******************************
+! pressure => 14.7 psia = 1 atm
+!*******************************
+p = 17.0   ! pressure psia ' given pressure '
+!*******************************
+nc = 2     ! number of components (methanol,aq)
+nt = 40    ! number of trays
+! feed
+f = 2300   ! feed flowrate
+nf = 15    ! number of the feed trays ( 1 ->nf->nt)
+z = .8     !
+q = 1.0     ! quality of the feed  (lquid=q=1,q=vapor = 0)
+dim nam$(1)
+mat redim nam$(nc)
+dim c(1),d(1)
+mat redim c(nc),d(nc)
+call cox_coef(d(),c())
+!*************************************
+! read data ' names of the products '
+!*************************************
+for i=1 to nc
+ read  nam$(i)
+next i
+mat print nam$
+! read : coef cox equation
+for i=1 to nc
+  print i,c(i),d(i)
+next i
+!*************************************************
+! condition : nt=40,nf=15, find correct value =>
+! reflux ration (vapor leaving tray nt must be xd)
+!*************************************************
+ xb =0.0010
+ xd =0.9990
+!***********************************
+! van laar 2(= binary,nc=2) activity
+!***********************************
+dim gam(1)
+mat redim gam(nc)
+aaa = .85
+bbb = .24
+!***********************************
+! guess value: reflux ratio
+!***********************************
+r  = 1200.00
+dr = 1200.00/6 ! r=r+dr or r=r-dr (interhalving method)
+!***********************************
+! init values ( ...interhalving)
+!***********************************
+tel1 = 0
+flagm = 1
+flagp = 1
+!***********************************
+! initial guess of tray temperature
+!***********************************
+dim t(1)
+mat redim t(nt)
+! highest : bubblepoint of the two components
+tb = 100  ! aq.
+for i=1 to nt
+  t(i) = 80  ! initial temperature tray
+next i
+!****************************************
+!1e) tb
+!****************************************
+call van_laar2_activ( aaa,bbb,xb,gam())
+mat print gam
+call equil(nc,xb,yb,tb,p,gam(),c(),d())
+!print 0,xb,yb,tb
+!********************
+! calculation vr,lr *
+!********************
+! => ' f*z = dd*xd + bb*xb '
+dd = f*(z-xb)/(xd-xb)! component balance
+! => ' f = dd + bb '
+bb = f-dd            ! total mass balance
+dim x(1),y(1)
+mat redim x(nt),y(nt)
+do
+   call v_l(dd,r,q,f,vs,ls,vr,lr)
+   tel1=tel1+1
+ !  print vs
+    if tel1 > 50 then stop
+!********************
+! n = 1 :bottom tray
+!********************
+   x(1) = (bb*xb+vs*yb)/ls
+   call van_laar2_activ( aaa,bbb,x(1),gam())
+   call equil(nc,x(1),y(1),t(1),p,gam(),c(),d())
+!************************
+! n = 2..nf : (s)tripping
+!************************
+   for i=2 to nf
+       x(i)=(bb*xb+vs*y(i-1))/ls
+       call van_laar2_activ( aaa,bbb,x(i),gam())
+       call equil(nc,x(i),y(i),t(i),p,gam(),c(),d())
+   next i
+!*************************************
+! n = nf+1 : (r)ectifying,feed include
+!*************************************
+   x(nf+1) = (vr*y(nf)+bb*xb-f*z)/lr
+   do
+    if x(nf+1)< x(nf) then
+      call flag_p(flagp,flagm,r,dr)
+      exit do
+    else
+      call van_laar2_activ( aaa,bbb,x(nf+1),gam())
+      call equil(nc,x(nf+1),y(nf+1),t(nf+1),p,gam(),c(),d())
+    end if
+!*************************************
+! n = nf+2..nt : (r)ectifying,feed include
+!*************************************
+     for ii = nf+2 to nt
+         x(ii)=(vr*y(ii-1)+bb*xb-f*z)/lr
+         if x(ii)> xd then
+            call flag_m(flagp,flagm,r,dr)
+            exit do
+         end if
+      call van_laar2_activ( aaa,bbb,x(ii),gam())
+      call equil(nc,x(ii),y(ii),t(ii),p,gam(),c(),d())    
+     next ii
+ !*************************************
+     qq=y(nt)-xd
+     if abs(qq) < .0001 then
+        hg = 1 ! leave the second do loop
+        exit do
+     end if
+     if qq =< 0 then
+        call flag_p(flagp,flagm,r,dr) 
+        exit do
+     else
+        call flag_m(flagp,flagm,r,dr) 
+        exit do
+     end if
+  loop
+!*****print " result = "*******
+   if hg = 1 then
+      exit do
+   end if
+!******************************
+loop
+! output
+if m = 1 then
+call nice_output(nt,nf,f,xb,xd,tb,z,x(),y(),t(),r,vs)
+  else
+print " zero plate ,x(b),y(b),t(b) '(b)ottom' column  "
+print 0,xb,yb,tb
+print
+print " number of the plate distillation column           "
+dim plate(1)
+mat redim plate (nt)
+for i=1 to nt
+  plate(i) = i
+next i
+mat print plate
+print
+print " x values = "
+mat print x
+print " y values = "
+mat print y
+print " temperature values = "
+mat print t
+print " r= ";r," vs= ";vs,"f = ";f," xb = ";xb," xd = ";xd," z = ";z
+end if
+
+! read data
+data methanol(1),aq(2)
+end
+
+sub nice_output(nt,nf,f,xb,xd,tb,z,x(),y(),t(),r,vs)
+print  " data output => ' binary distillation rating (system :methanol/aq) ' "
+print  " feed composition = ";z," number of feed plate = ";nf
+print  "plate"," x = "," y = "," temp = "
+print 0,xb,yb,tb
+for i=1 to nt
+   print  i,x(i),y(i),t(i)
+next i
+print " r= ";r," vs= ";vs,"f = ";f," xb = ";xb," xd = ";xd," z = ";z
+end sub
+
+
+sub v_l(dd,r,q,f,vs,ls,vr,lr)
+vr = dd+r
+lr = r
+!********************
+! calculation vs,ls *
+!********************
+vs = vr-(1-q)*f
+ls = lr + q*f
+end sub
+
+
+
+sub flag_m(flagp,flagm,r,dr)
+if flagp < 0 then dr=dr/2
+r=r-dr
+flagp = -1
+end sub
+
+
+sub flag_p(flagp,flagm,r,dr)
+if flagm < 0 then dr=dr/2
+r=r+dr
+flagm = -1
+end sub
+
+sub van_laar2_activ( aaa,bbb,xq,gam())
+!*******************************************
+! x1 = light components
+! binary systems products (1:methanol,2:aq)
+!*******************************************
+x1=xq
+x2=1-xq
+m1=aaa/bbb
+m2=1/m1
+gam(1) = exp(aaa*x2^2/((m1*x1+x2)^2))
+gam(2) = exp(bbb*x1^2/((m2*x2+x1)^2))
+end sub
+
+sub equil(nc,xx,yy,temp,psia,gam(),c(),d())
+! pressure => input psia
+!************************
+dim ps(1)
+mat redim ps(nc)
+! ***********************
+x1=xx
+x2=1-xx
+p = psia * 760/14.7
+tel = 0
+do
+  tel = tel + 1
+  if tel > 50 then stop
+  call cox(nc,c(),d(),temp,ps())
+   p_cal = x1*ps(1)*gam(1) + x2*ps(2)*gam(2)
+  if abs(p-p_cal) < 0.0001 then
+    exit do
+      else
+    ! newton raphson
+    FF = p_cal-p
+    m_1 = -d(1)*ps(1)*x1*gam(1)
+    m_2 = -d(2)*ps(2)*x2*gam(2)
+    D_FF =(m_1+m_2)/((temp+273.15)^2)
+    temp = temp -(FF/D_FF)
+  end if
+loop
+yy = x1*ps(1)*gam(1)/p
+tr = temp
+end sub
+
+sub cox(nc,c(),d(),temp,ps())
+for j=1 to nc
+ ps(j) = exp(c(j)+d(j)/(temp+273.15))
+next j
+end sub
+
+sub cox_coef(d(),c())
+w1=log(2600/760)
+d(1) = -337.5*373.0*w1/35.5
+w2=log(760/145.4)
+d(2) = -332.4*373.0*w2/40.6
+ww=log(760)
+c(1) = ww - d(1)/337.5
+c(2) = ww - d(2)/373.0
+end sub

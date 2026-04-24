@@ -1,0 +1,103 @@
+! motion of a simple pendulum   
+! theta() = pendulum angle   omega() = pendulum angular velocity t() = time
+! length = length of string    dt = time step
+! Program to accompany "Computational Physics" by N. Giordano and H. Nakanishi
+! Copyright Prentice Hall 1997, 2006
+! Added a choice of approximations to use - H. Nakanishi
+
+program pendulum
+   option nolet
+   library "sgfunc.trc"
+   library "sglib.trc"
+   dim theta(5000), omega(5000), t(5000)
+   call initialize(theta,omega,t,length,dt,q,fd,drive,method)
+   call calculate(theta,omega,t,length,dt,q,fd,drive,method)
+   call display(theta,omega,t,length,dt,q,fd,drive,method)
+end
+
+! initialize variables
+! theta() = pendulum angle  omega() = pendulum angular velocity
+sub initialize(theta(),omega(),t(),length,dt,q,fd,drive,method)
+   input prompt "initial pendulum angle (in radians) -> ": theta(1)
+   input prompt "initial angular velocity of pendulum (in radians/s) -> ": omega(1)
+   t(1) = 0
+   input prompt "length of pendulum (in m) -> ": length
+   input prompt "time step -> ": dt
+   input prompt "damping constant -> ": q
+   input prompt "amplitude of driving force -> ": fd
+   input prompt "driving frequency -> ": drive
+   input prompt "method: Euler (1), Euler-Cromer (2), Runge-Kutta2 (3) -> ": method
+end sub
+
+! use the Euler or another chosen method
+sub calculate(theta(),omega(),t(),length,dt,q,fd,drive,method)
+   i = 0
+   g = 9.8
+   period = 2 * pi / sqr(g/length)    ! period of pendulum
+   do
+      i = i + 1
+      t(i+1) = t(i) + dt
+      select case method
+      case 1
+         call dv(omega(i),theta(i),t(i),g,length,q,fd,drive,domega,dtheta)
+         omega(i+1) = omega(i)+dt*domega  ! Euler method
+         theta(i+1) = theta(i)+dt*dtheta
+      case 2
+         call dv(omega(i),theta(i),t(i),g,length,q,fd,drive,domega,dtheta)
+         omega(i+1) = omega(i)+dt*domega
+         theta(i+1) = theta(i)+dt*omega(i+1)
+      case else
+         call dv(omega(i),theta(i),t(i),g,length,q,fd,drive,domega,dtheta)
+         omega1 = omega(i)+0.5*dt*domega 
+         theta1 = theta(i)+0.5*dt*dtheta 
+         t1 = t(i)+0.5*dt
+         call dv(omega1,theta1,t1,g,length,q,fd,drive,domega2,dtheta2)
+         omega(i+1) = omega(i)+dt*domega2
+         theta(i+1) = theta(i)+dt*dtheta2
+      end select
+   loop until (t(i+1) >= 10*period or i+1 >= 5000)  ! follow the oscillations for 10 periods
+   mat redim omega(i+1),theta(i+1),t(i+1)
+end sub
+
+sub dv(omega0,theta0,t0,g,length,q,fd,drive,domega,dtheta)
+   dtheta = omega0
+   domega = -g/length*sin(theta0)-q*omega0+fd*sin(drive*t0)
+end sub
+
+! display theta and omega in separate windows
+sub display(theta(),omega(),t(),length,dt,q,fd,drive,method)
+   set background color "white"
+   call setcanvas("white")
+!  set color "black"
+   clear
+   open #1: screen 0,.9,0,.45    ! bottom window
+   call settitle("Angular velocity vs. time")
+   call sethlabel("Time(s)")
+   call setvlabel("Omega")
+   call datagraph(t,omega,1,1,"black")
+   close #1
+   open #1: screen 0,.9,.49,.94    ! top window
+   call settitle("Theta vs. time")
+   call sethlabel("Time(s)")
+   call setvlabel("Theta")
+   call datagraph(t,theta,1,1,"black")
+   set cursor 3,10
+   print "length = "; length
+   set cursor 4,10
+   print "time step = "; dt
+   close #1
+   open #1: screen 0,.9,.94,1
+   set cursor 1,1
+   select case method
+   case 1
+      print "Approximation: Euler"
+   case 2
+      print "Approximation: Euler-Cromer"
+   case else
+      print "Approximation: Runge-Kutta 2"
+   end select
+   set cursor 2,1
+   print "damping="; q; ", driving force="; fd; ", driving freq="; drive
+   close #1
+end sub
+
