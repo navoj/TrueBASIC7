@@ -747,7 +747,7 @@ class TrueBASICInterpreter {
     has @.plot-boxes;
     has @.current-strip;       # current polyline being built by PLOT x,y;
     has %.window = x-min => 0e0, x-max => 1e0, y-min => 0e0, y-max => 1e0;
-    has Str $.graphics-mode is rw = 'gtk';  # gtk, web, svg, ascii
+    has Str $.graphics-mode is rw = 'auto';  # auto, gtk, web, svg, ascii
     has Str $.plot-file = 'plot.svg';
     has Int $.current-color = 4;      # default blue
     has Int $.bg-color = 0;           # background color
@@ -2122,7 +2122,17 @@ class TrueBASICInterpreter {
 
         $!graphics-shown = True;
 
-        given $!graphics-mode {
+        # Auto-detect: use GTK if DISPLAY available and stdin is a TTY, else SVG
+        my $mode = $!graphics-mode;
+        if $mode eq 'auto' {
+            if %*ENV<DISPLAY> && $*IN.t {
+                $mode = 'gtk';
+            } else {
+                $mode = 'svg';
+            }
+        }
+
+        given $mode {
             when 'gtk'           { self.show-gtk() }
             when 'web' | 'popup' { self.show-web() }
             when 'svg'           { self.render-svg($!plot-file); say "Saved: $!plot-file" }

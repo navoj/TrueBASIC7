@@ -17,7 +17,7 @@ my @errors;
 # Get all example files
 my @example-files = dir('examples').grep(*.ends-with('.TRU') || *.ends-with('.tru'));
 
-say "Testing {+@example-files} BASIC example programs...\n";
+say "Testing {+@example-files} TrueBASIC example programs...\n";
 
 for @example-files.sort -> $file {
     my $filename = $file.basename;
