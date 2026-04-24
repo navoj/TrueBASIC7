@@ -96,7 +96,7 @@ grammar TrueBASICGrammar {
     rule statement:sym<sub>       { :i 'SUB' <identifier> [ '(' <sub-param-list> ')' ]? }
     rule statement:sym<end-sub>   { :i 'END' 'SUB' }
     rule statement:sym<call>      { :i 'CALL' <identifier> [ '(' <call-arg-list> ')' ]? }
-    rule statement:sym<def>       { :i 'DEF' <identifier> [ '(' <param-list> ')' ]? '=' <expression> }
+    rule statement:sym<def>       { :i 'DEF' <identifier> [ '(' <sub-param-list> ')' ]? [ '=' <expression> ]? }
     rule statement:sym<declare>   { :i 'DECLARE' [ 'DEF' | 'SUB' ] <identifier> }
     rule statement:sym<local>     { :i 'LOCAL' <identifier>+ % ',' }
     rule statement:sym<end-function> { :i 'END' 'FUNCTION' }
@@ -308,11 +308,20 @@ class TrueBASICActions {
     # Subroutines
     method statement:sym<end-sub>($/) { make { type => 'end-sub' } }
     method statement:sym<def>($/) {
-        make {
-            type       => 'def',
-            name       => ~$<identifier>,
-            params     => $<param-list> ?? $<param-list>.made !! [],
-            expression => $<expression>.made,
+        if $<expression> {
+            make {
+                type       => 'def',
+                name       => ~$<identifier>,
+                params     => $<sub-param-list> ?? $<sub-param-list>.made !! [],
+                expression => $<expression>.made,
+            }
+        } else {
+            # Multi-line DEF (like FUNCTION...END FUNCTION)
+            make {
+                type   => 'function-def',
+                name   => ~$<identifier>,
+                params => $<sub-param-list> ?? $<sub-param-list>.made !! [],
+            }
         }
     }
     method statement:sym<declare>($/) { make { type => 'declare', name => ~$<identifier> } }
@@ -763,7 +772,7 @@ class TrueBASICInterpreter {
         %!functions<LEFT$>  = -> $s, $n { $s.substr(0, $n.Int) };
         %!functions<RIGHT$> = -> $s, $n { $s.substr(*-$n.Int) };
         %!functions<MID$>   = -> $s, $p, $n? { $n ?? $s.substr($p.Int - 1, $n.Int) !! $s.substr($p.Int - 1) };
-        %!functions<TAB>    = -> $n { ' ' x $n.Int };
+        %!functions<TAB>    = -> $n, $m? { ' ' x $n.Int };
         %!functions<USING$> = -> $fmt, $n { sprintf($fmt, $n) };
         %!functions<POS>    = -> $s, $t, $p? { my $idx = $s.index($t, ($p // 1).Int - 1); $idx.defined ?? $idx + 1 !! 0 };
         %!functions<ORD>    = -> $s { $s.ord };
@@ -782,6 +791,12 @@ class TrueBASICInterpreter {
     method load-program(Str $filename) {
         my $source = try { $filename.IO.slurp } // $filename.IO.slurp(:enc<latin1>);
         self.load-source($source);
+    }
+
+    method to-num($val) {
+        return $val if $val ~~ Numeric;
+        return +$val if $val ~~ Str && $val ~~ /^ <[0..9+\-.eE \t]>+ $/;
+        return 0;
     }
 
     method strip-inline-comment(Str $line --> Str) {
@@ -978,7 +993,7 @@ class TrueBASICInterpreter {
             when 'graphics'      { self.exec-set-graphics(%s<mode>) }
             when 'clear' | 'cls' { self.exec-clear() }
             when 'pause'         { self.exec-pause(%s<duration>) }
-            when 'get-key'       { }  # TODO
+            when 'get-key'       { %!variables{%s<variable>.uc} = 0 }  # Non-blocking stub
             when 'program'       { }  # no-op, just a label
             when 'open'          { }  # TODO: file I/O
             when 'close'         { }  # TODO: file I/O
@@ -1013,32 +1028,46 @@ class TrueBASICInterpreter {
                 given %expr<operator> {
                     when '+'   {
                         return ($l ~~ Str || $r ~~ Str) && !($l ~~ Numeric && $r ~~ Numeric)
-                            ?? $l ~ $r !! $l + $r
+                            ?? $l ~ $r !! self.to-num($l) + self.to-num($r)
                     }
-                    when '-'   { return $l - $r }
-                    when '*'   { return $l * $r }
-                    when '/'   { return $r == 0 ?? Inf !! $l / $r }
-                    when '^'   { return $l ** $r }
-                    when 'MOD' { return $l % $r }
+                    when '-'   { return self.to-num($l) - self.to-num($r) }
+                    when '*'   { return self.to-num($l) * self.to-num($r) }
+                    when '/'   { my $rn = self.to-num($r); return $rn == 0 ?? Inf !! self.to-num($l) / $rn }
+                    when '^'   { return self.to-num($l) ** self.to-num($r) }
+                    when 'MOD' { return self.to-num($l) % self.to-num($r) }
                     when '&'   { return $l ~ $r }
                 }
             }
             when 'unary' {
                 my $val = self.eval(%expr<operand>);
-                if %expr<operator> eq '-' { return -$val }
+                if %expr<operator> eq '-' { return -self.to-num($val) }
                 if %expr<operator> eq 'NOT' { return ($val ?? 0 !! 1) }
                 return $val;
             }
             when 'comparison' {
                 my $l = self.eval(%expr<left>);
                 my $r = self.eval(%expr<right>);
-                given %expr<operator> {
-                    when '=' | '==' { return ($l == $r ?? 1 !! 0) }
-                    when '<>' | '!=' { return ($l != $r ?? 1 !! 0) }
-                    when '<'  { return ($l <  $r ?? 1 !! 0) }
-                    when '>'  { return ($l >  $r ?? 1 !! 0) }
-                    when '<=' { return ($l <= $r ?? 1 !! 0) }
-                    when '>=' { return ($l >= $r ?? 1 !! 0) }
+                my $is-string = ($l ~~ Str && $l !~~ /^ <[0..9+\-.eE]>+ $/) ||
+                                ($r ~~ Str && $r !~~ /^ <[0..9+\-.eE]>+ $/);
+                if $is-string {
+                    given %expr<operator> {
+                        when '=' | '==' { return ($l eq $r ?? 1 !! 0) }
+                        when '<>' | '!=' { return ($l ne $r ?? 1 !! 0) }
+                        when '<'  { return ($l lt $r ?? 1 !! 0) }
+                        when '>'  { return ($l gt $r ?? 1 !! 0) }
+                        when '<=' { return ($l le $r ?? 1 !! 0) }
+                        when '>=' { return ($l ge $r ?? 1 !! 0) }
+                    }
+                } else {
+                    my $ln = +$l; my $rn = +$r;
+                    given %expr<operator> {
+                        when '=' | '==' { return ($ln == $rn ?? 1 !! 0) }
+                        when '<>' | '!=' { return ($ln != $rn ?? 1 !! 0) }
+                        when '<'  { return ($ln <  $rn ?? 1 !! 0) }
+                        when '>'  { return ($ln >  $rn ?? 1 !! 0) }
+                        when '<=' { return ($ln <= $rn ?? 1 !! 0) }
+                        when '>=' { return ($ln >= $rn ?? 1 !! 0) }
+                    }
                 }
             }
             when 'logical' {
@@ -1083,7 +1112,6 @@ class TrueBASICInterpreter {
                 # Special functions that need interpreter state
                 if $name eq 'SIZE' {
                     # SIZE(array-name, dim) — returns dimension size
-                    # First arg should be a variable that is an array name
                     my $arr-name = %expr<args>[0]<name>.uc // '';
                     my $dim = @args.elems > 1 ?? @args[1].Int !! 1;
                     if %!arrays{$arr-name}:exists {
@@ -1092,17 +1120,56 @@ class TrueBASICInterpreter {
                     }
                     return 0;
                 }
+                if $name eq 'UBOUND' || $name eq 'LBOUND' {
+                    my $arr-name = (%expr<args>[0]<name> // '').uc;
+                    my $dim = @args.elems > 1 ?? @args[1].Int !! 1;
+                    if $name eq 'LBOUND' {
+                        return $!option-base;
+                    }
+                    if %!arrays{$arr-name}:exists {
+                        my $a = %!arrays{$arr-name};
+                        if $dim == 1 {
+                            return $a.elems - 1;
+                        } elsif $dim == 2 && $a[1] ~~ Array {
+                            return $a[1].elems - 1;
+                        }
+                    }
+                    return 0;
+                }
+                if $name eq 'NUM' || $name eq 'NUM$' {
+                    return +@args[0] if @args;
+                    return 0;
+                }
+                if $name eq 'DET' {
+                    # Determinant of a 2D array
+                    my $arr-name = (%expr<args>[0]<name> // '').uc;
+                    if %!arrays{$arr-name}:exists {
+                        return self.matrix-det($arr-name);
+                    }
+                    return 0;
+                }
+                if $name eq 'DOT' {
+                    # Dot product of two arrays
+                    my $a-name = (%expr<args>[0]<name> // '').uc;
+                    my $b-name = (%expr<args>[1]<name> // '').uc;
+                    if (%!arrays{$a-name}:exists) && (%!arrays{$b-name}:exists) {
+                        my @a = %!arrays{$a-name}.flat;
+                        my @b = %!arrays{$b-name}.flat;
+                        return [+] (@a[1..*-1] Z* @b[1..*-1]);
+                    }
+                    return 0;
+                }
                 # Built-in
                 if %!functions{$name}:exists {
                     return %!functions{$name}.(|@args);
                 }
-                die X::AdHoc.new(message => "Unknown function: {%expr<name>}");
+                die "Unknown function: {%expr<name>}";
             }
             when 'array-ref' {
                 # Array reference — used in CALL args, just return the name
                 return %expr<name>;
             }
-            default { die X::AdHoc.new(message => "Unknown expression: {%expr<type>}") }
+            default { die "Unknown expression: {%expr<type>}" }
         }
     }
 
@@ -1667,6 +1734,45 @@ class TrueBASICInterpreter {
         my $a = %!arrays{$n};
         for @idx[0..*-2] -> $i { $a = $a[$i] }
         $a[@idx[*-1]] = $val;
+    }
+
+    method matrix-det($name) {
+        my $m = %!arrays{$name.uc};
+        return 0 unless $m;
+        my $n = $m.elems - 1;  # rows 1..n
+        # Copy to plain 2D array (1-indexed)
+        my @a;
+        for 1..$n -> $i {
+            @a[$i] = [];
+            for 1..$n -> $j {
+                @a[$i][$j] = ($m[$i] ~~ Array ?? $m[$i][$j] !! $m[$i]) + 0;
+            }
+        }
+        # LU decomposition in-place
+        my $det = 1e0;
+        for 1..$n -> $k {
+            if @a[$k][$k] == 0 {
+                # Pivot
+                my $found = False;
+                for ($k+1)..$n -> $i {
+                    if @a[$i][$k] != 0 {
+                        (@a[$k], @a[$i]) = (@a[$i], @a[$k]);
+                        $det = -$det;
+                        $found = True;
+                        last;
+                    }
+                }
+                return 0 unless $found;
+            }
+            $det *= @a[$k][$k];
+            for ($k+1)..$n -> $i {
+                my $factor = @a[$i][$k] / @a[$k][$k];
+                for ($k+1)..$n -> $j {
+                    @a[$i][$j] -= $factor * @a[$k][$j];
+                }
+            }
+        }
+        return $det;
     }
 
     # ── Graphics statement implementations ───────────────────────────────
