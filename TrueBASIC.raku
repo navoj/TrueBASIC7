@@ -52,8 +52,19 @@ grammar TrueBASICGrammar {
     rule statement:sym<input>     { :i 'INPUT' [ <string-expr> ';' ]? <identifier>+ % ',' }
     rule statement:sym<mat-print> { :i 'MAT' 'PRINT' <identifier> [ ';' | ',' ]? }
     rule statement:sym<mat-read>  { :i 'MAT' 'READ' <identifier> }
-    rule statement:sym<mat-redim> { :i 'MAT' 'REDIM' <identifier> '(' <expression-list> ')' }
+    rule statement:sym<mat-redim> { :i 'MAT' 'REDIM' <mat-redim-item>+ % ',' }
+    rule mat-redim-item           { <identifier> '(' <expression-list> ')' }
     rule statement:sym<mat-input> { :i 'MAT' 'INPUT' <identifier> }
+    rule statement:sym<mat-assign> { :i 'MAT' <identifier> '=' <mat-rhs> }
+    rule mat-rhs {
+        :i 'ZER' [ '(' <expression-list> ')' ]?
+        | 'CON' [ '(' <expression-list> ')' ]?
+        | 'IDN' [ '(' <expression-list> ')' ]?
+        | 'TRN' '(' <identifier> ')'
+        | 'INV' '(' <identifier> ')'
+        | <identifier> [ '*' <identifier> ]?
+        | <expression>
+    }
 
     # Control flow
     rule statement:sym<if-block>  { :i 'IF' <condition> 'THEN' $$ }
@@ -70,7 +81,7 @@ grammar TrueBASICGrammar {
     rule statement:sym<loop>      { :i 'LOOP' [ $<condition-type>=[ 'UNTIL' | 'WHILE' ] <condition> ]? }
     rule statement:sym<while>     { :i 'WHILE' <condition> }
     rule statement:sym<wend>      { :i 'WEND' }
-    rule statement:sym<exit>      { :i 'EXIT' [ 'DO' | 'FOR' | 'SUB' | 'FUNCTION' ]? }
+    rule statement:sym<exit>      { :i 'EXIT' $<kind>=[ 'DO' | 'FOR' | 'SUB' | 'FUNCTION' ]? }
 
     # Data
     rule statement:sym<dim>       { :i 'DIM' <dim-item>+ % ',' }
@@ -139,9 +150,9 @@ grammar TrueBASICGrammar {
     rule case-test                { <expression> [ :i 'TO' <expression> ]? }
     rule coord-pair               { <expression> ',' <expression> }
     rule param-list               { <identifier>+ % ',' }
-    rule sub-param               { <identifier> [ '(' ')' ]? }
+    rule sub-param               { <identifier> [ '(' ','? ')' ]? }
     rule sub-param-list          { <sub-param>+ % ',' }
-    rule call-arg                { <expression> | <identifier> '(' ')' }
+    rule call-arg                { <expression> | <identifier> '(' ','? ')' }
     rule call-arg-list           { <call-arg>+ % ',' }
     rule read-target             { <array-access> | <identifier> }
 
@@ -280,7 +291,7 @@ class TrueBASICActions {
     }
     method statement:sym<while>($/) { make { type => 'while', condition => $<condition>.made } }
     method statement:sym<wend>($/)  { make { type => 'wend' } }
-    method statement:sym<exit>($/)  { make { type => 'exit' } }
+    method statement:sym<exit>($/)  { make { type => 'exit', kind => ($<kind> ?? (~$<kind>).uc !! 'DO') } }
 
     method statement:sym<dim>($/) {
         my @dims;
@@ -518,10 +529,22 @@ class TrueBASICActions {
         make { type => 'mat-read', name => ~$<identifier> }
     }
     method statement:sym<mat-redim>($/) {
-        make { type => 'mat-redim', name => ~$<identifier>, dimensions => $<expression-list>.made }
+        make %(
+            type  => 'mat-redim',
+            items => $<mat-redim-item>.map({
+                %( name => ~$_<identifier>, dimensions => $_<expression-list>.made )
+            }).Array,
+        );
     }
     method statement:sym<mat-input>($/) {
         make { type => 'mat-input', name => ~$<identifier> }
+    }
+    method statement:sym<mat-assign>($/) {
+        make %(
+            type => 'mat-assign',
+            name => ~$<identifier>,
+            rhs  => ~$<mat-rhs>,
+        );
     }
     method statement:sym<set-back>($/) {
         make { type => 'set-back-color', color => ~$<color-spec> }
@@ -556,7 +579,8 @@ class TrueBASICActions {
 
     method sub-param($/) {
         my $name = ~$<identifier>;
-        make $name ~ ($/.Str ~~ /\(\)/ ?? '()' !! '');
+        my $suffix = $/.Str ~~ /\(\s*\,\s*\)/ ?? '(,)' !! ($/.Str ~~ /\(\s*\)/ ?? '()' !! '');
+        make $name ~ $suffix;
     }
     method sub-param-list($/) { make $<sub-param>>>.made }
 
@@ -564,7 +588,8 @@ class TrueBASICActions {
         if $<expression> {
             make $<expression>.made;
         } else {
-            make { type => 'array-ref', name => ~$<identifier> };
+            my $dims = $/.Str ~~ /\(\s*\,\s*\)/ ?? 2 !! 1;
+            make { type => 'array-ref', name => ~$<identifier>, dims => $dims };
         }
     }
     method call-arg-list($/) { make $<call-arg>>>.made }
@@ -755,7 +780,7 @@ class TrueBASICInterpreter {
     # ── Program loading ──────────────────────────────────────────────────
 
     method load-program(Str $filename) {
-        my $source = $filename.IO.slurp;
+        my $source = try { $filename.IO.slurp } // $filename.IO.slurp(:enc<latin1>);
         self.load-source($source);
     }
 
@@ -774,14 +799,20 @@ class TrueBASICInterpreter {
         my $grammar = TrueBASICGrammar;
         my $actions = TrueBASICActions.new;
 
-        my $match = $grammar.parse($source, :$actions);
+        # Try full parse with timeout to avoid hanging on complex files
+        my $match;
+        my $parsed = start { $grammar.parse($source, :$actions) };
+        await Promise.anyof($parsed, Promise.in(3));
+        if $parsed.status ~~ Kept {
+            $match = $parsed.result;
+        }
 
         if $match {
             @!program = $match.made;
             say "Parsed {+@!program} statements." if $!debug;
         } else {
             # Fallback: line-by-line parsing
-            say "Full parse failed, trying line-by-line..." if $!debug;
+            say "Full parse failed/timed out, trying line-by-line..." if $!debug;
             @!program = [];
             for $source.lines -> $raw-line {
                 next if $raw-line.trim eq '' || $raw-line.trim.starts-with('!');
@@ -838,10 +869,11 @@ class TrueBASICInterpreter {
                 CATCH {
                     when X::AdHoc {
                         given .message {
-                            when '__EXIT_DO__'  { $ctrl = 'exit-do' }
-                            when '__EXIT_FOR__' { $ctrl = 'exit-for' }
-                            when '__EXIT_SUB__' { $ctrl = 'exit-sub' }
-                            default { $err = .message }
+                            when '__EXIT_DO__'       { $ctrl = 'exit-do' }
+                            when '__EXIT_FOR__'      { $ctrl = 'exit-for' }
+                            when '__EXIT_SUB__'      { $ctrl = 'exit-sub' }
+                            when '__EXIT_FUNCTION__' { $ctrl = 'exit-function' }
+                            default { $err = ~$_ }
                         }
                     }
                     default { $err = $_ ~~ Exception ?? .message !! ~$_ }
@@ -851,9 +883,10 @@ class TrueBASICInterpreter {
             }
 
             given $ctrl {
-                when 'exit-do'  { self.skip-to-after-loop() }
-                when 'exit-for' { self.skip-to-after-next() }
-                when 'exit-sub' { self.return-from-sub() }
+                when 'exit-do'       { self.skip-to-after-loop() }
+                when 'exit-for'      { self.skip-to-after-next() }
+                when 'exit-sub'      { self.return-from-sub() }
+                when 'exit-function' { self.skip-to-end-function() }
             }
 
             if $err {
@@ -890,7 +923,13 @@ class TrueBASICInterpreter {
             when 'loop'          { self.exec-loop(%s<condition-type>, %s<condition>) }
             when 'while'         { self.exec-while(%s<condition>) }
             when 'wend'          { self.exec-wend() }
-            when 'exit'          { die X::AdHoc.new(message => '__EXIT_DO__') }
+            when 'exit'          {
+                my $kind = (%s<kind> // 'DO').uc;
+                if    $kind eq 'FOR'      { die '__EXIT_FOR__' }
+                elsif $kind eq 'SUB'      { die '__EXIT_SUB__' }
+                elsif $kind eq 'FUNCTION' { die '__EXIT_FUNCTION__' }
+                else                      { die '__EXIT_DO__' }
+            }
             when 'dim'           { self.exec-dim(%s<items>) }
             when 'read'          { self.exec-read(%s<targets>) }
             when 'data'          { }  # handled in prescan
@@ -911,8 +950,9 @@ class TrueBASICInterpreter {
             when 'end-if'        { }  # no-op, just marks end
             when 'mat-print'     { self.exec-mat-print(%s<name>) }
             when 'mat-read'      { self.exec-mat-read(%s<name>) }
-            when 'mat-redim'     { self.exec-mat-redim(%s<name>, %s<dimensions>) }
+            when 'mat-redim'     { self.exec-mat-redim-multi(%s<items>) }
             when 'mat-input'     { self.exec-mat-input(%s<name>) }
+            when 'mat-assign'    { self.exec-mat-assign(%s<name>, %s<rhs>) }
             when 'select'        { self.exec-select(%s<expression>) }
             when 'case'          { self.exec-case(%s<tests>) }
             when 'case-else'     { self.exec-case-else() }
@@ -977,7 +1017,7 @@ class TrueBASICInterpreter {
                     }
                     when '-'   { return $l - $r }
                     when '*'   { return $l * $r }
-                    when '/'   { return $r == 0 ?? die("Division by zero") !! $l / $r }
+                    when '/'   { return $r == 0 ?? Inf !! $l / $r }
                     when '^'   { return $l ** $r }
                     when 'MOD' { return $l % $r }
                     when '&'   { return $l ~ $r }
@@ -1094,8 +1134,8 @@ class TrueBASICInterpreter {
     method exec-input($prompt, $var) {
         if $prompt { print self.eval($prompt) }
         else       { print "? " }
-        my $in = $*IN.get.trim;
-        %!variables{$var.uc} = $in ~~ /^ <[0..9+\-.eE]>+ $/ ?? +$in !! $in;
+        my $raw = ($*IN.get // '').trim;
+        %!variables{$var.uc} = $raw ~~ /^ <[0..9+\-.eE]>+ $/ ?? +$raw !! ($raw eq '' ?? 0 !! $raw);
     }
 
     method exec-if(%s) {
@@ -1124,8 +1164,17 @@ class TrueBASICInterpreter {
 
     method exec-for($var, %start, %end, %step) {
         my $v = $var.uc;
-        %!variables{$v} = self.eval(%start);
-        @!for-stack.push({ var => $v, end => self.eval(%end), step => self.eval(%step), line => $!current-line });
+        my $start-val = self.eval(%start);
+        my $end-val = self.eval(%end);
+        my $step-val = self.eval(%step);
+        %!variables{$v} = $start-val;
+        # Check if loop should execute at all
+        my $enter = $step-val > 0 ?? $start-val <= $end-val !! $start-val >= $end-val;
+        if $enter {
+            @!for-stack.push({ var => $v, end => $end-val, step => $step-val, line => $!current-line });
+        } else {
+            self.skip-to-after-next();
+        }
     }
 
     method exec-next($var) {
@@ -1162,7 +1211,10 @@ class TrueBASICInterpreter {
     }
 
     method exec-loop($cond-type, $cond) {
-        die "LOOP without DO" unless @!do-stack;
+        unless @!do-stack {
+            # No matching DO — likely after EXIT DO, just continue past LOOP
+            return;
+        }
         my $do-line = @!do-stack[*-1];
         if $cond-type && $cond {
             my $val = self.eval($cond);
@@ -1193,7 +1245,8 @@ class TrueBASICInterpreter {
     method exec-dim(@items) {
         for @items -> %item {
             my @dims = %item<dimensions>.map({ self.eval($_).Int });
-            %!arrays{%item<name>.uc} = self.make-array(@dims);
+            my $is-string = %item<name>.ends-with('$');
+            %!arrays{%item<name>.uc} = self.make-array(@dims, :string($is-string));
         }
     }
 
@@ -1230,8 +1283,8 @@ class TrueBASICInterpreter {
         for @params.kv -> $i, $raw-p {
             last if $i >= @arg-exprs.elems;
             my $p = ~$raw-p;
-            my $is-array = $p.ends-with('()');
-            $p = $p.subst('()', '') if $is-array;
+            my $is-array = $p ~~ /\(\s*\,?\s*\)\s*$/;
+            $p = $p.subst(/\(\s*\,?\s*\)/, '') if $is-array;
             $p = $p.uc;
             my $arg = @arg-exprs[$i];
             if $is-array || ($arg ~~ Hash && ($arg<type> // '') eq 'array-ref') {
@@ -1249,8 +1302,8 @@ class TrueBASICInterpreter {
             line          => $!current-line,
             saved-vars    => %saved-vars,
             saved-arrays  => %saved-arrays,
-            params        => @params.map({ .subst('()', '').uc }).Array,
-            array-params  => @params.grep(*.ends-with('()')).map({ .subst('()', '').uc }).Array,
+            params        => @params.map({ .subst(/\(\s*\,?\s*\)/, '').uc }).Array,
+            array-params  => @params.grep(* ~~ /\(\s*\,?\s*\)\s*$/).map({ .subst(/\(\s*\,?\s*\)/, '').uc }).Array,
         });
         $!current-line = $sub-line;
     }
@@ -1374,6 +1427,8 @@ class TrueBASICInterpreter {
             $depth-- if $t eq 'loop';
             last if $depth == 0;
         }
+        # Pop DO stack entry so LOOP doesn't re-enter
+        @!do-stack.pop if @!do-stack;
     }
 
     method skip-to-after-next() {
@@ -1446,21 +1501,22 @@ class TrueBASICInterpreter {
         my $line = $*IN.get // '';
         my @vals = $line.split(',').map(*.trim);
         for @vars.kv -> $i, $var {
-            %!variables{$var.uc} = $i < @vals.elems ?? @vals[$i] !! 0;
+            my $raw = $i < @vals.elems ?? @vals[$i] !! '';
+            %!variables{$var.uc} = $raw ~~ /^ <[0..9+\-.eE]>+ $/ ?? +$raw !! ($raw eq '' ?? 0 !! $raw);
         }
     }
 
     method exec-mat-print($name) {
         my $n = $name.uc;
         if %!arrays{$n}:exists {
-            my @a = %!arrays{$n};
-            if @a[0] ~~ Array {
-                # 2D array
-                for @a -> @row {
-                    say @row.map({ ~$_ }).join(' ');
+            my $a = %!arrays{$n};
+            my &fmt = -> $v { $v ~~ Str ?? $v !! ($v // 0).fmt('%g') };
+            if $a[1] ~~ Array {
+                for 1..^$a.elems -> $r {
+                    say $a[$r][1..*-1].map(&fmt).join("\t");
                 }
             } else {
-                say @a.map({ ~$_ }).join(' ');
+                say $a[1..*-1].map(&fmt).join(' ');
             }
         } else {
             say "⚠ Array $n not defined";
@@ -1517,6 +1573,43 @@ class TrueBASICInterpreter {
         }
     }
 
+    method exec-mat-redim-multi(@items) {
+        for @items -> $item {
+            my $n = ($item ~~ Hash ?? $item<name> !! ~$item).uc;
+            my @dim-exprs = $item ~~ Hash ?? $item<dimensions>.flat !! [];
+            my @dims = @dim-exprs.map: { self.eval($_).Int };
+            if %!arrays{$n}:exists {
+                my @old = %!arrays{$n}.Array;
+                %!arrays{$n} = self.make-array(@dims);
+                # Copy old values for 1D
+                if @dims.elems == 1 {
+                    for ^min(@old.elems, @dims[0] + 1) -> $i {
+                        %!arrays{$n}[$i] = @old[$i];
+                    }
+                }
+            } else {
+                %!arrays{$n} = self.make-array(@dims);
+            }
+        }
+    }
+
+    method exec-mat-assign($name, $rhs-text) {
+        my $n = $name.uc;
+        my $rhs = $rhs-text.trim;
+        # MAT A = B (copy)
+        my $src = $rhs.uc;
+        if %!arrays{$src}:exists {
+            %!arrays{$n} = %!arrays{$src}.deepmap(* + 0);
+        }
+        # MAT A = ZER / CON / scalar
+        elsif $rhs ~~ /:i ^zer/ { %!arrays{$n} = %!arrays{$n}.deepmap({ 0 }) if %!arrays{$n}:exists }
+        elsif $rhs ~~ /:i ^con/ { %!arrays{$n} = %!arrays{$n}.deepmap({ 1 }) if %!arrays{$n}:exists }
+        elsif $rhs ~~ /^<[\d.\-]>+$/ {
+            my $val = +$rhs;
+            %!arrays{$n} = %!arrays{$n}.deepmap({ $val }) if %!arrays{$n}:exists;
+        }
+    }
+
     method skip-to-wend() {
         my $depth = 1;
         while $!current-line < @!program.elems - 1 {
@@ -1549,10 +1642,11 @@ class TrueBASICInterpreter {
 
     # ── Array helpers ────────────────────────────────────────────────────
 
-    method make-array(@dims) {
-        if @dims.elems == 1 { return [0 xx (@dims[0] + 1)] }
+    method make-array(@dims, :$string = False) {
+        my $default = $string ?? '' !! 0;
+        if @dims.elems == 1 { return [$default xx (@dims[0] + 1)] }
         my @a;
-        for 0..@dims[0] { @a.push(self.make-array(@dims[1..*])) }
+        for 0..@dims[0] { @a.push(self.make-array(@dims[1..*], :$string)) }
         return @a;
     }
 
