@@ -49,6 +49,7 @@ grammar TrueBASICGrammar {
     # I/O
     rule statement:sym<print>     { :i 'PRINT' <print-list>? }
     rule statement:sym<input-prompt> { :i 'INPUT' 'PROMPT' <expression> ':' <identifier>+ % ',' }
+    rule statement:sym<line-input> { :i 'LINE' 'INPUT' [ 'PROMPT' <expression> ':' ]? <identifier> }
     rule statement:sym<input>     { :i 'INPUT' [ <string-expr> ';' ]? <identifier>+ % ',' }
     rule statement:sym<mat-print> { :i 'MAT' 'PRINT' <identifier> [ ';' | ',' ]? }
     rule statement:sym<mat-read>  { :i 'MAT' 'READ' <identifier> }
@@ -122,7 +123,7 @@ grammar TrueBASICGrammar {
     rule statement:sym<window>    { :i 'WINDOW' <expression> ',' <expression> ',' <expression> ',' <expression> }
     rule statement:sym<line>      { :i 'LINE' <expression> ',' <expression> ',' <expression> ',' <expression> }
     rule statement:sym<circle>    { :i 'CIRCLE' <expression> ',' <expression> ',' <expression> }
-    rule statement:sym<box>       { :i 'BOX' [ 'LINES' | 'AREA' | 'CLEAR' ] <expression> ',' <expression> ',' <expression> ',' <expression> }
+    rule statement:sym<box>       { :i 'BOX' $<subtype>=[ 'LINES' | 'AREA' | 'CLEAR' | 'CIRCLE' ] <expression> ',' <expression> ',' <expression> ',' <expression> }
     rule statement:sym<flood>     { :i 'FLOOD' <expression> ',' <expression> }
     rule statement:sym<ask>       { :i 'ASK' <identifier> <identifier> }
 
@@ -134,6 +135,8 @@ grammar TrueBASICGrammar {
     rule statement:sym<cls>       { :i 'CLS' }
     rule statement:sym<pause>     { :i 'PAUSE' <expression>? }
     rule statement:sym<get-key>   { :i 'GET' 'KEY' <identifier> }
+    rule statement:sym<open-screen> { :i 'OPEN' '#' <expression> ':' 'SCREEN' <expression> ',' <expression> ',' <expression> ',' <expression> }
+    rule statement:sym<window-select> { :i 'WINDOW' '#' <expression> }
     rule statement:sym<open>      { :i 'OPEN' <expression> ':' <identifier> ',' <identifier> [ ',' <identifier> ]* }
     rule statement:sym<close>     { :i 'CLOSE' '#' <expression> }
     rule statement:sym<print-file> { :i 'PRINT' '#' <expression> ':' <print-list>? }
@@ -413,6 +416,7 @@ class TrueBASICActions {
     method statement:sym<box>($/) {
         make {
             type => 'box',
+            subtype => (~$<subtype>).uc,
             x1 => $<expression>[0].made, y1 => $<expression>[1].made,
             x2 => $<expression>[2].made, y2 => $<expression>[3].made,
         }
@@ -560,10 +564,28 @@ class TrueBASICActions {
     }
     method statement:sym<flood>($/)     { make { type => 'flood' } }
     method statement:sym<ask>($/)       { make { type => 'ask' } }
+    method statement:sym<open-screen>($/) {
+        make %(
+            type => 'open-screen',
+            channel => $<expression>[0].made,
+            x1 => $<expression>[1].made, x2 => $<expression>[2].made,
+            y1 => $<expression>[3].made, y2 => $<expression>[4].made,
+        );
+    }
+    method statement:sym<window-select>($/) {
+        make %( type => 'window-select', channel => $<expression>.made );
+    }
     method statement:sym<open>($/)      { make { type => 'open' } }
     method statement:sym<close>($/)     { make { type => 'close' } }
     method statement:sym<print-file>($/) { make { type => 'print-file' } }
     method statement:sym<input-file>($/) { make { type => 'input-file' } }
+    method statement:sym<line-input>($/) {
+        make %(
+            type => 'line-input',
+            prompt => $<expression> ?? $<expression>.made !! Nil,
+            variable => ~$<identifier>,
+        );
+    }
     method statement:sym<library>($/)   { make { type => 'library' } }
     method statement:sym<function>($/) {
         make { type => 'function-def', name => ~$<identifier>,
@@ -731,6 +753,8 @@ class TrueBASICInterpreter {
     has Bool $.graphics-shown = False;
     has Bool $.option-nolet = False;
     has Int $.option-base = 0;        # OPTION BASE 0 or 1
+    has %.viewports;                  # OPEN #n: screen viewports
+    has Int $.active-viewport = 0;    # current viewport channel
 
     method new(Bool :$debug = False) {
         my $obj = self.bless(:$debug);
@@ -995,10 +1019,13 @@ class TrueBASICInterpreter {
             when 'pause'         { self.exec-pause(%s<duration>) }
             when 'get-key'       { %!variables{%s<variable>.uc} = 0 }  # Non-blocking stub
             when 'program'       { }  # no-op, just a label
+            when 'open-screen'   { self.exec-open-screen(%s) }
+            when 'window-select' { self.exec-window-select(%s) }
             when 'open'          { }  # TODO: file I/O
             when 'close'         { }  # TODO: file I/O
             when 'print-file'    { }  # TODO: file I/O
             when 'input-file'    { }  # TODO: file I/O
+            when 'line-input'    { self.exec-line-input(%s) }
             when 'library'       { }  # no-op
             when 'end'           { $!running = False }
             when 'rem'           { }
@@ -1663,17 +1690,154 @@ class TrueBASICInterpreter {
     method exec-mat-assign($name, $rhs-text) {
         my $n = $name.uc;
         my $rhs = $rhs-text.trim;
+
+        # MAT C = A * B  (matrix multiply)
+        if $rhs ~~ /:i ^ (\w+) \s* '*' \s* (\w+) $ / {
+            my $an = (~$0).uc;
+            my $bn = (~$1).uc;
+            return unless (%!arrays{$an}:exists) && (%!arrays{$bn}:exists);
+            my $A = %!arrays{$an};
+            my $B = %!arrays{$bn};
+            my $ra = $A.elems - 1;  # rows of A (1-indexed)
+            my $ca = ($A[1] ~~ Array ?? $A[1].elems - 1 !! 1);
+            my $rb = $B.elems - 1;
+            my $cb = ($B[1] ~~ Array ?? $B[1].elems - 1 !! 1);
+            if $ca != $rb {
+                say "Warning: MAT multiply dimension mismatch: A is {$ra}x{$ca}, B is {$rb}x{$cb}" if $!debug;
+                return;
+            }
+            %!arrays{$n} = self.make-array([$ra, $cb]);
+            for 1..$ra -> $i {
+                for 1..$cb -> $j {
+                    my $sum = 0;
+                    for 1..$ca -> $k {
+                        my $aval = ($A[$i] ~~ Array ?? $A[$i][$k] !! $A[$i]);
+                        my $bval = ($B[$k] ~~ Array ?? $B[$k][$j] !! $B[$k]);
+                        $sum += self.to-num($aval) * self.to-num($bval);
+                    }
+                    %!arrays{$n}[$i][$j] = $sum;
+                }
+            }
+            return;
+        }
+
+        # MAT A = TRN(B)  (transpose)
+        if $rhs ~~ /:i ^ 'TRN' \s* '(' \s* (\w+) \s* ')' $ / {
+            my $sn = (~$0).uc;
+            return unless %!arrays{$sn}:exists;
+            my $S = %!arrays{$sn};
+            my $rows = $S.elems - 1;
+            my $cols = ($S[1] ~~ Array ?? $S[1].elems - 1 !! 1);
+            %!arrays{$n} = self.make-array([$cols, $rows]);
+            for 1..$rows -> $i {
+                for 1..$cols -> $j {
+                    my $val = ($S[$i] ~~ Array ?? $S[$i][$j] !! $S[$i]);
+                    %!arrays{$n}[$j][$i] = $val;
+                }
+            }
+            return;
+        }
+
+        # MAT A = INV(B)  (matrix inverse via Gauss-Jordan)
+        if $rhs ~~ /:i ^ 'INV' \s* '(' \s* (\w+) \s* ')' $ / {
+            my $sn = (~$0).uc;
+            return unless %!arrays{$sn}:exists;
+            my $S = %!arrays{$sn};
+            my $sz = $S.elems - 1;
+            # Build augmented matrix [S | I]
+            my @m;
+            for 1..$sz -> $i {
+                @m[$i] = [];
+                for 1..$sz -> $j {
+                    @m[$i][$j] = self.to-num($S[$i] ~~ Array ?? $S[$i][$j] !! $S[$i]);
+                }
+                for 1..$sz -> $j {
+                    @m[$i][$sz + $j] = ($i == $j ?? 1 !! 0);
+                }
+            }
+            # Gauss-Jordan elimination
+            for 1..$sz -> $k {
+                # Partial pivoting
+                my $max-val = @m[$k][$k].abs;
+                my $max-row = $k;
+                for ($k+1)..$sz -> $i {
+                    if @m[$i][$k].abs > $max-val { $max-val = @m[$i][$k].abs; $max-row = $i }
+                }
+                if $max-row != $k { (@m[$k], @m[$max-row]) = (@m[$max-row], @m[$k]) }
+                my $pivot = @m[$k][$k];
+                if $pivot.abs < 1e-15 {
+                    say "Warning: near-singular matrix in INV" if $!debug;
+                    return;  # leave result array unchanged
+                }
+                for 1..(2 * $sz) -> $j { @m[$k][$j] /= $pivot }
+                for 1..$sz -> $i {
+                    next if $i == $k;
+                    my $f = @m[$i][$k];
+                    for 1..(2 * $sz) -> $j { @m[$i][$j] -= $f * @m[$k][$j] }
+                }
+            }
+            %!arrays{$n} = self.make-array([$sz, $sz]);
+            for 1..$sz -> $i {
+                for 1..$sz -> $j {
+                    %!arrays{$n}[$i][$j] = @m[$i][$sz + $j];
+                }
+            }
+            return;
+        }
+
+        # MAT A = IDN  or MAT A = IDN(n)  (identity matrix)
+        if $rhs ~~ /:i ^ 'IDN' [ '(' (.+?) ')' ]? $ / {
+            my $sz;
+            if $0 {
+                $sz = self.to-num(~$0).Int;
+                %!arrays{$n} = self.make-array([$sz, $sz]);
+            } else {
+                return unless %!arrays{$n}:exists;
+                $sz = %!arrays{$n}.elems - 1;
+            }
+            for 1..$sz -> $i {
+                for 1..$sz -> $j {
+                    %!arrays{$n}[$i][$j] = ($i == $j ?? 1 !! 0);
+                }
+            }
+            return;
+        }
+
         # MAT A = B (copy)
         my $src = $rhs.uc;
         if %!arrays{$src}:exists {
             %!arrays{$n} = %!arrays{$src}.deepmap(* + 0);
+            return;
         }
+
         # MAT A = ZER / CON / scalar
-        elsif $rhs ~~ /:i ^zer/ { %!arrays{$n} = %!arrays{$n}.deepmap({ 0 }) if %!arrays{$n}:exists }
-        elsif $rhs ~~ /:i ^con/ { %!arrays{$n} = %!arrays{$n}.deepmap({ 1 }) if %!arrays{$n}:exists }
-        elsif $rhs ~~ /^<[\d.\-]>+$/ {
+        if $rhs ~~ /:i ^ 'ZER' [ '(' (.+?) ')' ]? $ / {
+            if $0 {
+                my @dims = (~$0).split(',').map({ self.to-num($_.trim).Int });
+                %!arrays{$n} = self.make-array(@dims);
+            } elsif %!arrays{$n}:exists {
+                %!arrays{$n} = %!arrays{$n}.deepmap({ 0 });
+            }
+        }
+        elsif $rhs ~~ /:i ^ 'CON' [ '(' (.+?) ')' ]? $ / {
+            if $0 {
+                my @dims = (~$0).split(',').map({ self.to-num($_.trim).Int });
+                %!arrays{$n} = self.make-array(@dims);
+                %!arrays{$n} = %!arrays{$n}.deepmap({ 1 });
+            } elsif %!arrays{$n}:exists {
+                %!arrays{$n} = %!arrays{$n}.deepmap({ 1 });
+            }
+        }
+        elsif $rhs ~~ /^ <[\d.\-]>+ $/ {
             my $val = +$rhs;
             %!arrays{$n} = %!arrays{$n}.deepmap({ $val }) if %!arrays{$n}:exists;
+        }
+        # MAT A = (expression) * B  — scalar multiply
+        elsif $rhs ~~ /:i ^ '(' (.+?) ')' \s* '*' \s* (\w+) $ / {
+            my $scalar = self.to-num(~$0);
+            my $sn = (~$1).uc;
+            return unless %!arrays{$sn}:exists;
+            %!arrays{$n} = %!arrays{$sn}.deepmap(-> $v { self.to-num($v) * $scalar });
         }
     }
 
@@ -1843,7 +2007,10 @@ class TrueBASICInterpreter {
     method exec-box(%s) {
         my ($x1, $y1) = self.eval(%s<x1>).Num, self.eval(%s<y1>).Num;
         my ($x2, $y2) = self.eval(%s<x2>).Num, self.eval(%s<y2>).Num;
-        @!plot-boxes.push: %( x1 => $x1, y1 => $y1, x2 => $x2, y2 => $y2, color => $!current-color );
+        my $sub = (%s<subtype> // 'LINES').uc;
+        @!plot-boxes.push: %( x1 => $x1, y1 => $y1, x2 => $x2, y2 => $y2,
+                              color => $!current-color, subtype => $sub,
+                              fill => ($sub eq 'AREA' || $sub eq 'CLEAR') );
         $!graphics-used = True;
     }
 
@@ -1873,6 +2040,30 @@ class TrueBASICInterpreter {
         my $secs = $dur-expr ?? self.eval($dur-expr) !! 0;
         if $secs > 0 { sleep $secs }
         else { print "Press Enter to continue..."; $*IN.get }
+    }
+
+    method exec-open-screen(%s) {
+        my $ch = self.eval(%s<channel>).Int;
+        my ($x1, $x2) = self.eval(%s<x1>).Num, self.eval(%s<x2>).Num;
+        my ($y1, $y2) = self.eval(%s<y1>).Num, self.eval(%s<y2>).Num;
+        %!viewports{$ch} = %( x1 => $x1, x2 => $x2, y1 => $y1, y2 => $y2 );
+        $!active-viewport = $ch;
+        $!graphics-used = True;
+    }
+
+    method exec-window-select(%s) {
+        my $ch = self.eval(%s<channel>).Int;
+        $!active-viewport = $ch;
+        $!graphics-used = True;
+    }
+
+    method exec-line-input(%s) {
+        if %s<prompt> {
+            my $p = self.eval(%s<prompt>);
+            print $p;
+        }
+        my $line = ($*IN.get // '');
+        %!variables{%s<variable>.uc} = $line;
     }
 
     # ── Graphics rendering dispatch ──────────────────────────────────────
