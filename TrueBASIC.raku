@@ -125,7 +125,9 @@ grammar TrueBASICGrammar {
     rule statement:sym<window>    { :i 'WINDOW' <expression> ',' <expression> ',' <expression> ',' <expression> }
     rule statement:sym<line>      { :i 'LINE' <expression> ',' <expression> ',' <expression> ',' <expression> }
     rule statement:sym<circle>    { :i 'CIRCLE' <expression> ',' <expression> ',' <expression> }
-    rule statement:sym<box>       { :i 'BOX' $<subtype>=[ 'LINES' | 'AREA' | 'CLEAR' | 'CIRCLE' ] <expression> ',' <expression> ',' <expression> ',' <expression> }
+    rule statement:sym<box>       { :i 'BOX' $<subtype>=[ 'LINES' | 'AREA' | 'CLEAR' | 'CIRCLE' | 'ELLIPSE' ] <expression> ',' <expression> ',' <expression> ',' <expression> }
+    rule statement:sym<box-keep>  { :i 'BOX' 'KEEP' <expression> ',' <expression> ',' <expression> ',' <expression> 'IN' <identifier> }
+    rule statement:sym<box-show>  { :i 'BOX' 'SHOW' <identifier> 'AT' <expression> ',' <expression> }
     rule statement:sym<flood>     { :i 'FLOOD' <expression> ',' <expression> }
     rule statement:sym<ask>       { :i 'ASK' <identifier> <identifier> }
 
@@ -419,8 +421,24 @@ class TrueBASICActions {
         make {
             type => 'box',
             subtype => (~$<subtype>).uc,
-            x1 => $<expression>[0].made, y1 => $<expression>[1].made,
-            x2 => $<expression>[2].made, y2 => $<expression>[3].made,
+            x1 => $<expression>[0].made, x2 => $<expression>[1].made,
+            y1 => $<expression>[2].made, y2 => $<expression>[3].made,
+        }
+    }
+    method statement:sym<box-keep>($/) {
+        make {
+            type => 'box-keep',
+            x1 => $<expression>[0].made, x2 => $<expression>[1].made,
+            y1 => $<expression>[2].made, y2 => $<expression>[3].made,
+            variable => ~$<identifier>,
+        }
+    }
+    method statement:sym<box-show>($/) {
+        make {
+            type => 'box-show',
+            variable => ~$<identifier>,
+            x => $<expression>[0].made,
+            y => $<expression>[1].made,
         }
     }
     method statement:sym<show>($/)     { make { type => 'show' } }
@@ -564,7 +582,7 @@ class TrueBASICActions {
     method statement:sym<set-back>($/) {
         make { type => 'set-back-color', color => ~$<color-spec> }
     }
-    method statement:sym<flood>($/)     { make { type => 'flood' } }
+    method statement:sym<flood>($/)     { make { type => 'flood', x => $<expression>[0].made, y => $<expression>[1].made } }
     method statement:sym<ask>($/)       { make { type => 'ask' } }
     method statement:sym<open-screen>($/) {
         make %(
@@ -685,18 +703,47 @@ class TrueBASICActions {
 # Color palette — True BASIC standard colors
 # ══════════════════════════════════════════════════════════════════════════════
 
-my @TB-COLORS = (
-    (0, 0, 0),          # 0 = black (background on dark)
-    (1, 1, 1),          # 1 = white
-    (1, 0, 0),          # 2 = red
-    (0, 0.8, 0),        # 3 = green
-    (0, 0, 1),          # 4 = blue
-    (0, 0.8, 0.8),      # 5 = cyan
-    (1, 0, 1),          # 6 = magenta
-    (1, 1, 0),          # 7 = yellow
-    (1, 0.5, 0),        # 8 = orange (custom for charts)
-    (0.5, 0.5, 0.5),    # 9 = gray
-);
+my @TB-COLORS = generate-tb-palette();
+
+sub generate-tb-palette() {
+    # True BASIC 256-color palette: 16 standard + 216 color cube + 24 grays
+    my @pal;
+
+    # 0–15: Standard CGA/VGA colors
+    @pal[0]  = (0, 0, 0);         # black
+    @pal[1]  = (1, 1, 1);         # white
+    @pal[2]  = (1, 0, 0);         # red
+    @pal[3]  = (0, 0.8, 0);       # green
+    @pal[4]  = (0, 0, 1);         # blue
+    @pal[5]  = (0, 0.8, 0.8);     # cyan
+    @pal[6]  = (1, 0, 1);         # magenta
+    @pal[7]  = (1, 1, 0);         # yellow
+    @pal[8]  = (1, 0.5, 0);       # orange
+    @pal[9]  = (0.5, 0.5, 0.5);   # gray
+    @pal[10] = (0.75, 0.75, 0.75); # light gray
+    @pal[11] = (0, 0, 0.5);       # dark blue
+    @pal[12] = (0.5, 0, 0);       # dark red
+    @pal[13] = (0, 0.5, 0);       # dark green
+    @pal[14] = (0.5, 0, 0.5);     # dark magenta
+    @pal[15] = (0, 0.5, 0.5);     # dark cyan
+
+    # 16–231: 6×6×6 color cube (matches xterm-256)
+    for 0..5 -> $r {
+        for 0..5 -> $g {
+            for 0..5 -> $b {
+                @pal[16 + $r*36 + $g*6 + $b] = ($r/5, $g/5, $b/5);
+            }
+        }
+    }
+
+    # 232–255: grayscale ramp
+    for 0..23 -> $i {
+        my $v = (8 + $i * 10) / 255;
+        @pal[232 + $i] = ($v, $v, $v);
+    }
+
+    return @pal;
+}
 
 my %COLOR-NAMES = (
     'black' => 0, 'white' => 1, 'red' => 2, 'green' => 3,
@@ -757,6 +804,8 @@ class TrueBASICInterpreter {
     has Int $.option-base = 0;        # OPTION BASE 0 or 1
     has %.viewports;                  # OPEN #n: screen viewports
     has Int $.active-viewport = 0;    # current viewport channel
+    has @.draw-log;                   # sequential drawing command log for animation
+    has %.box-strings;                # BOX KEEP stored image data (name → draw-log index)
 
     method new(Bool :$debug = False) {
         my $obj = self.bless(:$debug);
@@ -965,7 +1014,7 @@ class TrueBASICInterpreter {
 
         # Auto-show graphics if any were created and not already shown
         if $!graphics-used && !$!graphics-shown && (@!plot-points || @!plot-lines || @!plot-circles
-                               || @!plot-line-strips || @!plot-areas || @!plot-texts || @!plot-boxes) {
+                               || @!plot-line-strips || @!plot-areas || @!plot-texts || @!plot-boxes || @!draw-log) {
             self.execute-show();
         }
     }
@@ -1026,11 +1075,11 @@ class TrueBASICInterpreter {
             when 'end-select'    { self.exec-end-select() }
             # Graphics
             when 'window'        { self.exec-window(%s) }
-            when 'set-color'     { $!current-color = resolve-color(%s<color>) }
+            when 'set-color'     { $!current-color = resolve-color(%s<color>); @!draw-log.push: %( op => 'set-color', color => $!current-color ) }
             when 'set-cursor'    { }  # TODO
             when 'set-text-justify' { }  # TODO
             when 'set-back-color' { $!bg-color = resolve-color(%s<color>) }
-            when 'flood'         { }  # TODO
+            when 'flood'         { self.exec-flood(%s) }
             when 'ask'           { }  # TODO
             when 'plot'          { self.exec-plot(%s<x>, %s<y>, %s<continuation>) }
             when 'plot-end'      { self.exec-plot-end() }
@@ -1040,6 +1089,8 @@ class TrueBASICInterpreter {
             when 'line'          { self.exec-line-draw(%s) }
             when 'circle'        { self.exec-circle-draw(%s) }
             when 'box'           { self.exec-box(%s) }
+            when 'box-keep'      { self.exec-box-keep(%s) }
+            when 'box-show'      { self.exec-box-show(%s) }
             when 'show'          { self.execute-show() }
             when 'save'          { self.exec-save(%s<filename>) }
             when 'graphics'      { self.exec-set-graphics(%s<mode>) }
@@ -1993,6 +2044,7 @@ class TrueBASICInterpreter {
     method exec-window(%s) {
         %!window = x-min => self.eval(%s<x1>).Num, x-max => self.eval(%s<x2>).Num,
                    y-min => self.eval(%s<y1>).Num, y-max => self.eval(%s<y2>).Num;
+        @!draw-log.push: %( op => 'window', |%!window );
         $!graphics-used = True;
     }
 
@@ -2004,10 +2056,13 @@ class TrueBASICInterpreter {
         } else {
             if @!current-strip.elems > 0 {
                 @!current-strip.push: %( x => $x, y => $y );
+                my %op = ( op => 'plot-lines', points => @!current-strip.Array, color => $!current-color );
                 @!plot-line-strips.push: %( points => @!current-strip.Array, color => $!current-color );
+                @!draw-log.push: %op;
                 @!current-strip = ();
             } else {
                 @!plot-points.push: %( x => $x, y => $y, color => $!current-color );
+                @!draw-log.push: %( op => 'point', x => $x, y => $y, color => $!current-color );
             }
         }
         $!graphics-used = True;
@@ -2015,51 +2070,97 @@ class TrueBASICInterpreter {
 
     method exec-plot-end() {
         if @!current-strip.elems > 0 {
+            my %op = ( op => 'plot-lines', points => @!current-strip.Array, color => $!current-color );
             @!plot-line-strips.push: %( points => @!current-strip.Array, color => $!current-color );
+            @!draw-log.push: %op;
             @!current-strip = ();
         }
     }
 
     method exec-plot-lines(@coords) {
         my @pts = @coords.map({ %( x => self.eval($_<x>).Num, y => self.eval($_<y>).Num ) });
+        my %op = ( op => 'plot-lines', points => @pts, color => $!current-color );
         @!plot-line-strips.push: %( points => @pts, color => $!current-color );
+        @!draw-log.push: %op;
         $!graphics-used = True;
     }
 
     method exec-plot-area(@coords) {
         my @pts = @coords.map({ %( x => self.eval($_<x>).Num, y => self.eval($_<y>).Num ) });
+        my %op = ( op => 'plot-area', points => @pts, color => $!current-color );
         @!plot-areas.push: %( points => @pts, color => $!current-color );
+        @!draw-log.push: %op;
         $!graphics-used = True;
     }
 
     method exec-plot-text(%s) {
-        @!plot-texts.push: %(
+        my %op = %(
+            op => 'plot-text',
             x => self.eval(%s<x>).Num, y => self.eval(%s<y>).Num,
             text => self.eval(%s<text>), color => $!current-color,
         );
+        @!plot-texts.push: %op;
+        @!draw-log.push: %op;
         $!graphics-used = True;
     }
 
     method exec-line-draw(%s) {
         my ($x1, $y1) = self.eval(%s<x1>).Num, self.eval(%s<y1>).Num;
         my ($x2, $y2) = self.eval(%s<x2>).Num, self.eval(%s<y2>).Num;
-        @!plot-lines.push: %( x1 => $x1, y1 => $y1, x2 => $x2, y2 => $y2, color => $!current-color );
+        my %op = ( op => 'line', x1 => $x1, y1 => $y1, x2 => $x2, y2 => $y2, color => $!current-color );
+        @!plot-lines.push: %op;
+        @!draw-log.push: %op;
         $!graphics-used = True;
     }
 
     method exec-circle-draw(%s) {
         my ($x, $y, $r) = self.eval(%s<x>).Num, self.eval(%s<y>).Num, self.eval(%s<radius>).Num;
-        @!plot-circles.push: %( x => $x, y => $y, radius => $r, color => $!current-color );
+        my %op = ( op => 'circle', x => $x, y => $y, radius => $r, color => $!current-color );
+        @!plot-circles.push: %op;
+        @!draw-log.push: %op;
         $!graphics-used = True;
     }
 
     method exec-box(%s) {
         my ($x1, $y1) = self.eval(%s<x1>).Num, self.eval(%s<y1>).Num;
         my ($x2, $y2) = self.eval(%s<x2>).Num, self.eval(%s<y2>).Num;
-        my $sub = (%s<subtype> // 'LINES').uc;
-        @!plot-boxes.push: %( x1 => $x1, y1 => $y1, x2 => $x2, y2 => $y2,
-                              color => $!current-color, subtype => $sub,
-                              fill => ($sub eq 'AREA' || $sub eq 'CLEAR') );
+        my $sub = (%s<subtype> // 'LINES').uc.trim;
+        $sub = 'CIRCLE' if $sub eq 'ELLIPSE';
+        my $is-fill = ($sub eq 'AREA');
+        my $is-clear = ($sub eq 'CLEAR');
+        my %op = (
+            op => 'box', subtype => $sub,
+            x1 => $x1, y1 => $y1, x2 => $x2, y2 => $y2,
+            color => ($is-clear ?? $!bg-color !! $!current-color),
+            fill => ($is-fill || $is-clear),
+        );
+        @!plot-boxes.push: %op;
+        @!draw-log.push: %op;
+        $!graphics-used = True;
+    }
+
+    method exec-box-keep(%s) {
+        my ($x1, $y1) = self.eval(%s<x1>).Num, self.eval(%s<y1>).Num;
+        my ($x2, $y2) = self.eval(%s<x2>).Num, self.eval(%s<y2>).Num;
+        my $name = %s<variable>.uc;
+        # Store the current draw-log index so BOX SHOW can snapshot everything up to here
+        %!box-strings{$name} = %( log-index => @!draw-log.elems, x1 => $x1, y1 => $y1, x2 => $x2, y2 => $y2 );
+        @!draw-log.push: %( op => 'box-keep', variable => $name, x1 => $x1, y1 => $y1, x2 => $x2, y2 => $y2 );
+        # Also store as a string variable so BASIC code can reference it
+        %!variables{$name} = "__BOX_KEEP_{$name}__";
+        $!graphics-used = True;
+    }
+
+    method exec-box-show(%s) {
+        my $name = %s<variable>.uc;
+        my ($x, $y) = self.eval(%s<x>).Num, self.eval(%s<y>).Num;
+        @!draw-log.push: %( op => 'box-show', variable => $name, x => $x, y => $y );
+        $!graphics-used = True;
+    }
+
+    method exec-flood(%s) {
+        my ($x, $y) = self.eval(%s<x>).Num, self.eval(%s<y>).Num;
+        @!draw-log.push: %( op => 'flood', x => $x, y => $y, color => $!current-color );
         $!graphics-used = True;
     }
 
@@ -2083,10 +2184,12 @@ class TrueBASICInterpreter {
         @!plot-points = []; @!plot-lines = []; @!plot-circles = [];
         @!plot-line-strips = []; @!plot-areas = []; @!plot-texts = [];
         @!plot-boxes = [];
+        @!draw-log.push: %( op => 'clear' );
     }
 
     method exec-pause($dur-expr) {
         my $secs = $dur-expr ?? self.eval($dur-expr) !! 0;
+        @!draw-log.push: %( op => 'pause', duration => $secs );
         if $secs > 0 { sleep $secs }
         elsif $*IN.t { print "Press Enter to continue..."; $*IN.get }
         # Skip pause when stdin is not a TTY (non-interactive)
@@ -2120,7 +2223,7 @@ class TrueBASICInterpreter {
 
     method execute-show() {
         unless @!plot-points || @!plot-lines || @!plot-circles ||
-               @!plot-line-strips || @!plot-areas || @!plot-texts || @!plot-boxes {
+               @!plot-line-strips || @!plot-areas || @!plot-texts || @!plot-boxes || @!draw-log {
             say "No graphics data. Use PLOT, LINE, CIRCLE, etc.";
             return;
         }
@@ -2190,8 +2293,17 @@ class TrueBASICInterpreter {
         for @!plot-boxes -> %b {
             my ($bx, $by, $bw, $bh) = tx(%b<x1>), ty(%b<y2>), tx(%b<x2>) - tx(%b<x1>), ty(%b<y1>) - ty(%b<y2>);
             my $fill = %b<fill> ?? rgb(%b<color>) !! 'none';
-            my $opacity = %b<fill> ?? ' fill-opacity="0.5"' !! '';
-            @svg.push: qq[<rect x="$bx" y="$by" width="$bw" height="$bh" fill="$fill"$opacity stroke="{rgb(%b<color>)}" stroke-width="1.5"/>];
+            my $opacity = %b<fill> ?? ' fill-opacity="1.0"' !! '';
+            my $sub = %b<subtype> // 'LINES';
+            if $sub eq 'CIRCLE' {
+                my $cx = ($bx + $bx + $bw) / 2;
+                my $cy = ($by + $by + $bh) / 2;
+                my $rx = $bw.abs / 2;
+                my $ry = $bh.abs / 2;
+                @svg.push: qq[<ellipse cx="$cx" cy="$cy" rx="$rx" ry="$ry" fill="$fill"$opacity stroke="{rgb(%b<color>)}" stroke-width="1.5"/>];
+            } else {
+                @svg.push: qq[<rect x="$bx" y="$by" width="$bw" height="$bh" fill="$fill"$opacity stroke="{rgb(%b<color>)}" stroke-width="1.5"/>];
+            }
         }
 
         # Lines
@@ -2308,10 +2420,241 @@ class TrueBASICInterpreter {
 
     # ── Web/HTML5 Canvas display ─────────────────────────────────────────
 
+    method has-animation() {
+        @!draw-log.grep({ $_<op> eq any('box-keep', 'box-show', 'clear', 'flood') }).elems > 0;
+    }
+
     method show-web() {
         my $html-file = 'plot.html';
-        my $W = 800; my $H = 600; my $M = 60;
+        my $W = 800; my $H = 600; my $M = 0;
 
+        if self.has-animation() {
+            self.show-web-animated($html-file, $W, $H, $M);
+        } else {
+            self.show-web-static($html-file, $W, $H, 60);
+        }
+
+        say "Plot saved to $html-file";
+        self.open-file($html-file);
+    }
+
+    method show-web-animated(Str $html-file, Int $W, Int $H, Int $M) {
+        my @colors-js = @TB-COLORS.map({ my @c = $_.flat; "\"rgb({(@c[0]*255).Int},{(@c[1]*255).Int},{(@c[2]*255).Int})\"" });
+        my $colors-str = @colors-js.join(',');
+
+        # Serialize draw-log to JSON-like JS array
+        my @ops-js;
+        for @!draw-log -> %op {
+            given %op<op> {
+                when 'window' {
+                    @ops-js.push: "\{op:'window',xmin:{%op<x-min>},xmax:{%op<x-max>},ymin:{%op<y-min>},ymax:{%op<y-max>}\}";
+                }
+                when 'set-color' {
+                    @ops-js.push: "\{op:'setColor',c:{%op<color>}\}";
+                }
+                when 'box' {
+                    @ops-js.push: "\{op:'box',sub:'{%op<subtype>}',x1:{%op<x1>},y1:{%op<y1>},x2:{%op<x2>},y2:{%op<y2>},c:{%op<color>},fill:{%op<fill> ?? 'true' !! 'false'}\}";
+                }
+                when 'plot-lines' {
+                    my @pts = %op<points>.map({ "\{x:{$_<x>},y:{$_<y>}\}" });
+                    @ops-js.push: "\{op:'plotLines',pts:[{@pts.join(',')}],c:{%op<color>}\}";
+                }
+                when 'plot-area' {
+                    my @pts = %op<points>.map({ "\{x:{$_<x>},y:{$_<y>}\}" });
+                    @ops-js.push: "\{op:'plotArea',pts:[{@pts.join(',')}],c:{%op<color>}\}";
+                }
+                when 'line' {
+                    @ops-js.push: "\{op:'line',x1:{%op<x1>},y1:{%op<y1>},x2:{%op<x2>},y2:{%op<y2>},c:{%op<color>}\}";
+                }
+                when 'circle' {
+                    @ops-js.push: "\{op:'circle',x:{%op<x>},y:{%op<y>},r:{%op<radius>},c:{%op<color>}\}";
+                }
+                when 'point' {
+                    @ops-js.push: "\{op:'point',x:{%op<x>},y:{%op<y>},c:{%op<color>}\}";
+                }
+                when 'plot-text' {
+                    my $escaped = %op<text>.subst('"', '\\"', :g).subst("'", "\\'", :g);
+                    @ops-js.push: "\{op:'text',x:{%op<x>},y:{%op<y>},t:'{$escaped}',c:{%op<color>}\}";
+                }
+                when 'flood' {
+                    @ops-js.push: "\{op:'flood',x:{%op<x>},y:{%op<y>},c:{%op<color>}\}";
+                }
+                when 'box-keep' {
+                    @ops-js.push: "\{op:'boxKeep',v:'{%op<variable>}',x1:{%op<x1>},y1:{%op<y1>},x2:{%op<x2>},y2:{%op<y2>}\}";
+                }
+                when 'box-show' {
+                    @ops-js.push: "\{op:'boxShow',v:'{%op<variable>}',x:{%op<x>},y:{%op<y>}\}";
+                }
+                when 'clear' {
+                    @ops-js.push: "\{op:'clear'\}";
+                }
+                when 'pause' {
+                    @ops-js.push: "\{op:'pause',d:{%op<duration>}\}";
+                }
+            }
+        }
+
+        my $ops-str = @ops-js.join(",\n");
+
+        my $html = qq:to/END_HTML/;
+<!DOCTYPE html>
+<html><head><title>TrueBASIC Animation</title>
+<style>
+body \{ margin:20px; background:#222; font-family:sans-serif; color:#eee; text-align:center; \}
+canvas \{ border:1px solid #555; background:black; display:block; margin:10px auto; \}
+h3 \{ margin-bottom:5px; \}
+#controls \{ margin:8px; \}
+button \{ padding:6px 16px; margin:0 4px; cursor:pointer; \}
+</style></head>
+<body>
+<h3>TrueBASIC Animation</h3>
+<canvas id="plot" width="$W" height="$H"></canvas>
+<div id="controls">
+  <button onclick="replay()">▶ Replay</button>
+  <span id="status">Running...</span>
+</div>
+<script>
+var W=$W, H=$H, M=$M;
+var colors = [$colors-str];
+var canvas = document.getElementById('plot');
+var ctx = canvas.getContext('2d');
+var xmin=0, xmax=1, ymin=0, ymax=1;
+var boxImages = \{\};
+
+function tx(x) \{ return M + (x-xmin)/(xmax-xmin)*(W-2*M); \}
+function ty(y) \{ return H - M - (y-ymin)/(ymax-ymin)*(H-2*M); \}
+function sc(c) \{ return colors[Math.min(Math.max(0,c), colors.length-1)]; \}
+
+function drawBox(o) \{
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = ctx.fillStyle = sc(o.c);
+  if (o.sub === 'CIRCLE') \{
+    var cx = (tx(o.x1)+tx(o.x2))/2, cy = (ty(o.y1)+ty(o.y2))/2;
+    var rx = Math.abs(tx(o.x2)-tx(o.x1))/2, ry = Math.abs(ty(o.y1)-ty(o.y2))/2;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, 2*Math.PI);
+    if (o.fill) \{ ctx.fill(); \}
+    ctx.stroke();
+  \} else \{
+    var px = tx(o.x1), py = ty(o.y2);
+    var pw = tx(o.x2)-tx(o.x1), ph = ty(o.y1)-ty(o.y2);
+    if (o.fill) \{
+      ctx.fillRect(px, py, pw, ph);
+    \}
+    ctx.strokeRect(px, py, pw, ph);
+  \}
+\}
+
+function drawLine(o) \{
+  ctx.strokeStyle = sc(o.c); ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(tx(o.x1),ty(o.y1)); ctx.lineTo(tx(o.x2),ty(o.y2)); ctx.stroke();
+\}
+
+function drawPolyline(o) \{
+  ctx.strokeStyle = sc(o.c); ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  o.pts.forEach(function(p,i) \{ i===0 ? ctx.moveTo(tx(p.x),ty(p.y)) : ctx.lineTo(tx(p.x),ty(p.y)); \});
+  ctx.stroke();
+\}
+
+function drawArea(o) \{
+  ctx.fillStyle = sc(o.c);
+  ctx.beginPath();
+  o.pts.forEach(function(p,i) \{ i===0 ? ctx.moveTo(tx(p.x),ty(p.y)) : ctx.lineTo(tx(p.x),ty(p.y)); \});
+  ctx.closePath(); ctx.fill();
+\}
+
+function drawCircle(o) \{
+  ctx.strokeStyle = sc(o.c); ctx.lineWidth = 1.5;
+  var rxPx = o.r * (W-2*M) / (xmax-xmin);
+  ctx.beginPath(); ctx.arc(tx(o.x), ty(o.y), rxPx, 0, 2*Math.PI); ctx.stroke();
+\}
+
+function drawPoint(o) \{
+  ctx.fillStyle = sc(o.c);
+  ctx.beginPath(); ctx.arc(tx(o.x), ty(o.y), 2, 0, 2*Math.PI); ctx.fill();
+\}
+
+function drawText(o) \{
+  ctx.fillStyle = sc(o.c); ctx.font = '12px sans-serif';
+  ctx.fillText(o.t, tx(o.x), ty(o.y));
+\}
+
+function floodFill(sx, sy, fillColor) \{
+  var px = Math.round(tx(sx)), py = Math.round(ty(sy));
+  if (px < 0 || px >= W || py < 0 || py >= H) return;
+  var imgData = ctx.getImageData(0, 0, W, H);
+  var data = imgData.data;
+  var stack = [[px, py]];
+  var idx = (py * W + px) * 4;
+  var tr = data[idx], tg = data[idx+1], tb = data[idx+2], ta = data[idx+3];
+  // Parse fill color
+  var tmp = document.createElement('canvas'); tmp.width=tmp.height=1;
+  var tc = tmp.getContext('2d'); tc.fillStyle = fillColor; tc.fillRect(0,0,1,1);
+  var fd = tc.getImageData(0,0,1,1).data;
+  var fr = fd[0], fg = fd[1], fb = fd[2], fa = fd[3];
+  if (tr===fr && tg===fg && tb===fb && ta===fa) return;
+  while (stack.length > 0) \{
+    var p = stack.pop(), x = p[0], y = p[1];
+    if (x < 0 || x >= W || y < 0 || y >= H) continue;
+    var i = (y * W + x) * 4;
+    if (data[i]!==tr || data[i+1]!==tg || data[i+2]!==tb || data[i+3]!==ta) continue;
+    data[i]=fr; data[i+1]=fg; data[i+2]=fb; data[i+3]=fa;
+    stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+  \}
+  ctx.putImageData(imgData, 0, 0);
+\}
+
+var ops = [
+$ops-str
+];
+
+function sleep(ms) \{ return new Promise(function(r) \{ setTimeout(r, ms); \}); \}
+
+async function runOps() \{
+  ctx.fillStyle = 'black'; ctx.fillRect(0,0,W,H);
+  for (var i = 0; i < ops.length; i++) \{
+    var o = ops[i];
+    switch(o.op) \{
+      case 'window': xmin=o.xmin; xmax=o.xmax; ymin=o.ymin; ymax=o.ymax; break;
+      case 'setColor': break;
+      case 'box': drawBox(o); break;
+      case 'line': drawLine(o); break;
+      case 'plotLines': drawPolyline(o); break;
+      case 'plotArea': drawArea(o); break;
+      case 'circle': drawCircle(o); break;
+      case 'point': drawPoint(o); break;
+      case 'text': drawText(o); break;
+      case 'flood': floodFill(o.x, o.y, sc(o.c)); break;
+      case 'boxKeep':
+        var kx1=tx(o.x1), ky1=ty(o.y2), kw=tx(o.x2)-tx(o.x1), kh=ty(o.y1)-ty(o.y2);
+        boxImages[o.v] = ctx.getImageData(kx1, ky1, kw, kh);
+        break;
+      case 'boxShow':
+        if (boxImages[o.v]) ctx.putImageData(boxImages[o.v], tx(o.x), ty(o.y));
+        break;
+      case 'clear':
+        ctx.fillStyle = 'black'; ctx.fillRect(0, 0, W, H); break;
+      case 'pause':
+        if (o.d > 0) await sleep(o.d * 1000); break;
+    \}
+  \}
+  document.getElementById('status').textContent = 'Done';
+\}
+
+function replay() \{
+  document.getElementById('status').textContent = 'Running...';
+  runOps();
+\}
+
+runOps();
+</script></body></html>
+END_HTML
+
+        $html-file.IO.spurt($html);
+    }
+
+    method show-web-static(Str $html-file, Int $W, Int $H, Int $M) {
         my $xr = %!window<x-max> - %!window<x-min> || 1;
         my $yr = %!window<y-max> - %!window<y-min> || 1;
 
@@ -2352,10 +2695,15 @@ class TrueBASICInterpreter {
         # Boxes
         for @!plot-boxes -> %b {
             my $bx1 = %b<x1>; my $by1 = %b<y1>; my $bx2 = %b<x2>; my $by2 = %b<y2>;
-            my $fill = %b<fill> ?? 'true' !! 'false';
+            my $sub = %b<subtype> // 'LINES';
             @js.push: "setColor(ctx,{%b<color>}); ctx.lineWidth=1.5;";
-            @js.push: "ctx.beginPath(); ctx.rect(tx({$bx1}),ty({$by2}),tx({$bx2})-tx({$bx1}),ty({$by1})-ty({$by2}));";
-            @js.push: ($fill eq 'true' ?? "ctx.globalAlpha=0.5; ctx.fill(); ctx.globalAlpha=1.0; ctx.stroke();" !! "ctx.stroke();");
+            if $sub eq 'CIRCLE' {
+                @js.push: "ctx.beginPath(); ctx.ellipse((tx({$bx1})+tx({$bx2}))/2,(ty({$by1})+ty({$by2}))/2,Math.abs(tx({$bx2})-tx({$bx1}))/2,Math.abs(ty({$by1})-ty({$by2}))/2,0,0,2*Math.PI);";
+                @js.push: (%b<fill> ?? "ctx.fill(); ctx.stroke();" !! "ctx.stroke();");
+            } else {
+                @js.push: "ctx.beginPath(); ctx.rect(tx({$bx1}),ty({$by2}),tx({$bx2})-tx({$bx1}),ty({$by1})-ty({$by2}));";
+                @js.push: (%b<fill> ?? "ctx.fill(); ctx.stroke();" !! "ctx.stroke();");
+            }
         }
 
         # Lines
@@ -2409,8 +2757,6 @@ canvas { border:1px solid #ccc; background:white; }</style></head>
 <script>' ~ $js-code ~ '</script></body></html>';
 
         $html-file.IO.spurt($html);
-        say "Plot saved to $html-file";
-        self.open-file($html-file);
     }
 
     # ── ASCII plot ───────────────────────────────────────────────────────
@@ -2511,9 +2857,7 @@ class PlotRenderer {
         sub tx($x) { $M + ($x - %win<x-min>) * $xs }
         sub ty($y) { $H - $M - ($y - %win<y-min>) * $ys }
         sub set-cr-color($cr, $c) {
-            my @colors = (0,0,0), (1,1,1), (1,0,0), (0,0.8,0), (0,0,1),
-                         (0,0.8,0.8), (1,0,1), (1,1,0), (1,0.5,0), (0.5,0.5,0.5);
-            my @rgb = @colors[$c min (@colors.elems - 1)].flat;
+            my @rgb = @TB-COLORS[$c min (@TB-COLORS.elems - 1)].flat;
             $cr.set-source-rgb(@rgb[0], @rgb[1], @rgb[2]);
         }
 
@@ -2556,8 +2900,21 @@ class PlotRenderer {
         $cr.set-line-width(1.5);
         for $.interp.plot-boxes -> %b {
             set-cr-color($cr, %b<color>);
-            $cr.rectangle(tx(%b<x1>).Num, ty(%b<y2>).Num,
-                          (tx(%b<x2>) - tx(%b<x1>)).Num, (ty(%b<y1>) - ty(%b<y2>)).Num);
+            my $sub = %b<subtype> // 'LINES';
+            if $sub eq 'CIRCLE' {
+                my $cx = ((tx(%b<x1>) + tx(%b<x2>)) / 2).Num;
+                my $cy = ((ty(%b<y1>) + ty(%b<y2>)) / 2).Num;
+                my $rx = ((tx(%b<x2>) - tx(%b<x1>)).abs / 2).Num;
+                my $ry = ((ty(%b<y1>) - ty(%b<y2>)).abs / 2).Num;
+                $cr.save;
+                $cr.translate($cx, $cy);
+                $cr.scale($rx max 0.001, $ry max 0.001);
+                $cr.arc(0, 0, 1.0, 0, 2 * pi);
+                $cr.restore;
+            } else {
+                $cr.rectangle(tx(%b<x1>).Num, ty(%b<y2>).Num,
+                              (tx(%b<x2>) - tx(%b<x1>)).Num, (ty(%b<y1>) - ty(%b<y2>)).Num);
+            }
             if %b<fill> { $cr.fill-preserve; }
             $cr.stroke;
         }

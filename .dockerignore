@@ -1,0 +1,17 @@
+.git
+.github
+.precomp
+lib/.precomp
+source/
+archive/
+*.svg
+*.html
+*.png
+plot.*
+web_plot.html
+test_output.html
+TEST.TRU
+TRANSLATION_SUMMARY.md
+IO_TRANSLATION_SUMMARY.md
+Dockerfile
+.dockerignore

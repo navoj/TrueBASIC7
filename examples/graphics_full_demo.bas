@@ -11,11 +11,11 @@ PLOT LINES: 0, -10; 0, 10
 
 ! Draw a filled box
 SET COLOR 1
-BOX AREA -9, -9, -5, -5
+BOX AREA -9, -5, -9, -5
 
 ! Draw an outlined box  
 SET COLOR 4
-BOX LINES -4, -9, 0, -5
+BOX LINES -4, 0, -9, -5
 
 ! Draw a circle
 SET COLOR 2

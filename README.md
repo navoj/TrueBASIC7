@@ -252,8 +252,8 @@ PLOT TEXT, AT 1, 7: "Title"
 ! Geometric primitives
 LINE 0, 0, 10, 10
 CIRCLE 5, 5, 3
-BOX LINES 0, 0, 10, 10           ! Outlined rectangle
-BOX AREA 2, 2, 8, 8              ! Filled rectangle
+BOX LINES 0, 10, 0, 10           ! Outlined rectangle
+BOX AREA 2, 8, 2, 8              ! Filled rectangle
 
 ! Viewports (split-screen graphics)
 OPEN #1: screen 0, 0.5, 0, 1     ! Left half
@@ -370,6 +370,66 @@ zef install Gnome::Gtk3 Gnome::Cairo
 
 # 4. Run a program
 raku TrueBASIC.raku examples/simple.bas
+```
+
+## Docker
+
+Run TrueBASIC7 in a container — no Raku installation required.
+
+### Build the Image
+
+```bash
+docker build -t truebasic7 .
+```
+
+### Run a BASIC Program
+
+```bash
+# Run an included example (ASCII output in terminal)
+docker run --rm truebasic7 --graphics=ascii examples/sine_plot.bas
+
+# Run an included example (text output)
+docker run --rm truebasic7 examples/simple.bas
+```
+
+### Run Your Own Programs
+
+Mount a local directory into the container:
+
+```bash
+# Run a local .bas file
+docker run --rm -v "$PWD":/data truebasic7 /data/myprogram.bas
+
+# Generate an SVG plot from a local file and save it back to host
+docker run --rm -v "$PWD":/data truebasic7 --graphics=svg /data/myplot.bas
+# The SVG file will be written inside the container; to retrieve it:
+docker run --rm -v "$PWD":/data -w /data truebasic7 --graphics=svg /data/myplot.bas
+```
+
+### Interactive REPL
+
+```bash
+docker run --rm -it truebasic7 --interactive
+```
+
+### Graphics in Docker
+
+| Mode    | Docker support | Notes                                     |
+|---------|----------------|-------------------------------------------|
+| `ascii` | ✅ Works       | Terminal output, no extra setup            |
+| `svg`   | ✅ Works       | Mount a volume to retrieve the SVG file    |
+| `web`   | ⚠️ Limited     | Generates HTML but cannot open a browser   |
+| `gtk`   | ⚠️ Advanced    | Requires X11 forwarding (see below)       |
+
+#### GTK with X11 Forwarding (Linux)
+
+```bash
+xhost +local:docker
+docker run --rm -it \
+    -e DISPLAY=$DISPLAY \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    truebasic7 --graphics=gtk examples/phase_diagram.bas
+xhost -local:docker
 ```
 
 ## Project Structure

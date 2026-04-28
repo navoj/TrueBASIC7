@@ -22,7 +22,7 @@ CIRCLE 0, 0, 5
 
 ! Draw a blue box
 SET COLOR 4
-BOX LINES -7, -7, 7, 7
+BOX LINES -7, 7, -7, 7
 
 ! Draw some colored points
 SET COLOR 5
