@@ -1,0 +1,14 @@
+RANDOMIZE
+SET WINDOW 0,20,0,20
+SET COLOR 5 ! Set the pen and text colour to 5 as true basic has 0-15 colours
+PRINT "Welcome To ..." !Print "Welcome To ..." on the user's screen. 
+
+DO !Begin the loop
+	LET x=rnd*20 !Let the value 'x' equal a random number between '0' and '20'
+	LET y=rnd*20 !Let the value 'y' equal a random number between '0' and '20'
+	Pause .1 !Waits 1/10 of a second
+	PLOT TEXT, at x, y: "Fabulous Wikipedia!" !Plot 'Fabulous Wikipedia!' at coordinates 'x' and 'y'
+LOOP !End the loop
+
+END !End the program
+
