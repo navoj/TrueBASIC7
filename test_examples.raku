@@ -24,22 +24,25 @@ for @example-files.sort -> $file {
     printf("%-30s ", $filename);
     
     # Try to compile with the interpreter
-    my $output = run(['raku', 'TrueBASICDecimal.raku', '--debug', $file.absolute],
-                     :out, :err).out.slurp-rest;
+    my $output = run(['raku', 'TrueBASIC.raku', '--debug', $file.absolute],
+                     :out, :err, :merge).out.slurp-rest;
     
     # Check if compilation succeeded
-    if $output ~~ /Compilation successful/ {
-        print "✓ Compilation successful\n";
-        @passed.push($filename);
-    } elsif $output ~~ /Compilation failed/ {
-        print "✗ Compilation failed\n";
-        @failed.push($filename);
-        
-        # Extract error messages if debug output is present
+    if $output ~~ /Parsed \d+ statements/ || $output ~~ /Full parse failed\/timed out, trying line-by-line/ {
+        # Check for errors or skipped lines
+        my $has_error = False;
         for $output.split("\n") -> $line {
-            if $line ~~ /⚠|✗|Error/ {
+            if $line ~~ /Runtime error|⚠ Skipped|Error/ {
+                $has_error = True;
                 @errors.push("  $filename: $line");
             }
+        }
+        if $has_error {
+            print "✗ Compilation failed\n";
+            @failed.push($filename);
+        } else {
+            print "✓ Compilation successful\n";
+            @passed.push($filename);
         }
     } else {
         print "? Unknown result\n";
