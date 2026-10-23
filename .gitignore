@@ -5,3 +5,4 @@ lib/.precomp/
 *.png
 lib/.precomp/
 TEST.TRU
+.aider*
