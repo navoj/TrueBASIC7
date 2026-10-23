@@ -1,0 +1,3 @@
+PRINT PI
+PRINT 2 * PI
+END

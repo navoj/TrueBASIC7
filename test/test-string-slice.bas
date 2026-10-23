@@ -1,0 +1,9 @@
+OPTION NOLET
+VALUE$ = "K4Fe1C6N6"
+DIM ITEMS$(1)
+ITEMS$(1) = VALUE$
+PRINT VALUE$[1:1]; VALUE$[2:4]; ITEMS$(1)[5:6]; VALUE$[9:8]
+IF VALUE$[4:4] = "e" THEN
+   PRINT "letter comparison ok"
+END IF
+END
