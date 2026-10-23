@@ -15,14 +15,6 @@ Based on Decimal BASIC by SHIRAISHI Kazuo
 
 use v6.d;
 
-# GTK/Cairo imports for graphics display
-use Gnome::Gtk3::Main;
-use Gnome::Gtk3::Window;
-use Gnome::Gtk3::DrawingArea;
-use Gnome::Cairo;
-use Gnome::Cairo::Types;
-use Gnome::Cairo::Enums;
-
 # ══════════════════════════════════════════════════════════════════════════════
 # Grammar for True BASIC language
 # ══════════════════════════════════════════════════════════════════════════════
@@ -48,13 +40,13 @@ grammar TrueBASICGrammar {
 
     # I/O
     rule statement:sym<print>     { :i 'PRINT' <print-list>? }
-    rule statement:sym<input-prompt> { :i 'INPUT' 'PROMPT' <expression> ':' <identifier>+ % ',' }
+    rule statement:sym<input-prompt> { :i 'INPUT' 'PROMPT' <expression> ':' <read-target>+ % ',' }
     rule statement:sym<line-input> { :i 'LINE' 'INPUT' [ 'PROMPT' <expression> ':' ]? <identifier> }
     rule statement:sym<input>     { :i 'INPUT' [ <string-expr> ';' ]? <identifier>+ % ',' }
     rule statement:sym<mat-print> { :i 'MAT' 'PRINT' <identifier> [ ';' | ',' ]? }
     rule statement:sym<mat-read>  { :i 'MAT' 'READ' <identifier> }
     rule statement:sym<mat-redim> { :i 'MAT' 'REDIM' <mat-redim-item>+ % ',' }
-    rule mat-redim-item           { <identifier> '(' <expression-list> ')' }
+    rule mat-redim-item           { <identifier> '(' <dimension-list> ')' }
     rule statement:sym<mat-input> { :i 'MAT' 'INPUT' <identifier> }
     rule statement:sym<mat-assign> { :i 'MAT' <identifier> '=' <mat-rhs> }
     rule mat-rhs {
@@ -141,10 +133,15 @@ grammar TrueBASICGrammar {
     rule statement:sym<get-key>   { :i 'GET' 'KEY' <identifier> }
     rule statement:sym<open-screen> { :i 'OPEN' '#' <expression> ':' 'SCREEN' <expression> ',' <expression> ',' <expression> ',' <expression> }
     rule statement:sym<window-select> { :i 'WINDOW' '#' <expression> }
-    rule statement:sym<open>      { :i 'OPEN' <expression> ':' <identifier> ',' <identifier> [ ',' <identifier> ]* }
+    rule statement:sym<open>      { :i 'OPEN' '#' <expression> ':' <open-spec> }
+    token open-spec               { <-[\n]>+ }
     rule statement:sym<close>     { :i 'CLOSE' '#' <expression> }
     rule statement:sym<print-file> { :i 'PRINT' '#' <expression> ':' <print-list>? }
-    rule statement:sym<input-file> { :i 'INPUT' '#' <expression> ':' <identifier>+ % ',' }
+    rule statement:sym<input-file> { :i 'INPUT' '#' <expression> ':' <read-target>+ % ',' }
+    rule statement:sym<line-input-file> { :i 'LINE' 'INPUT' '#' <expression> ':' <read-target> }
+    rule statement:sym<ask-file> { :i 'ASK' '#' <expression> ':' 'POINTER' <identifier> }
+    rule statement:sym<erase-file> { :i 'ERASE' '#' <expression> }
+    rule statement:sym<set-file-margin> { :i 'SET' '#' <expression> ':' 'MARGIN' <expression> }
     rule statement:sym<library>   { :i 'LIBRARY' <expression> }
 
     # Program structure
@@ -153,11 +150,13 @@ grammar TrueBASICGrammar {
     rule statement:sym<rem>       { :i 'REM' \N* }
 
     # Sub-rules
-    rule dim-item                 { <identifier> '(' <expression-list> ')' }
+    rule dim-item                 { <identifier> '(' <dimension-list> ')' }
+    rule dimension-list           { <dimension-bound>+ % ',' }
+    rule dimension-bound          { <expression> [ :i 'TO' <expression> ]? }
     rule case-test                { <expression> [ :i 'TO' <expression> ]? }
     rule coord-pair               { <expression> ',' <expression> }
     rule param-list               { <identifier>+ % ',' }
-    rule sub-param               { <identifier> [ '(' ','? ')' ]? }
+    rule sub-param               { <identifier> [ '(' ','* ')' ]? }
     rule sub-param-list          { <sub-param>+ % ',' }
     rule call-arg                { <expression> | <identifier> '(' ','? ')' }
     rule call-arg-list           { <call-arg>+ % ',' }
@@ -173,9 +172,11 @@ grammar TrueBASICGrammar {
     rule expression-list { <expression> [ ',' <expression> ]* }
 
     rule condition {
-        '(' <expression> <comparison-op> <expression> [ :i <logical-op> <expression> <comparison-op> <expression> ]* ')'
-        | <expression> <comparison-op> <expression> [ :i <logical-op> <expression> <comparison-op> <expression> ]*
-        | <expression>
+        '(' <condition-term> [ :i <logical-op> <condition-term> ]* ')'
+        | <condition-term> [ :i <logical-op> <condition-term> ]*
+    }
+    rule condition-term {
+        <expression> [ <comparison-op> <expression> ]?
     }
 
     token comparison-op { '<=' | '>=' | '<>' | '!=' | '<' | '>' | '=' }
@@ -191,6 +192,9 @@ grammar TrueBASICGrammar {
     rule unary-factor:sym<not>   { :i 'NOT' <factor> }
 
     proto rule factor { * }
+    rule factor:sym<key-input>  { :i 'KEY' 'INPUT' }
+    rule factor:sym<more-file>  { :i 'MORE' '#' <expression> }
+    rule factor:sym<string-slice> { [ <array-access> | <identifier> ] '[' <expression> ':' <expression> ']' }
     rule factor:sym<number>      { <number> }
     rule factor:sym<string>      { <string-literal> }
     rule factor:sym<function>    { <function-call> }
@@ -303,7 +307,12 @@ class TrueBASICActions {
     method statement:sym<dim>($/) {
         my @dims;
         for $<dim-item> -> $item {
-            @dims.push({ name => ~$item<identifier>, dimensions => $item<expression-list>.made });
+            my @bounds = $item<dimension-list><dimension-bound>.map({
+                my @expressions = $_<expression>.map(*.made);
+                %( lower => @expressions.elems > 1 ?? @expressions[0] !! { type => 'array-base' },
+                   upper => @expressions[*-1], explicit => @expressions.elems > 1 )
+            });
+            @dims.push({ name => ~$item<identifier>, dimensions => @bounds });
         }
         make { type => 'dim', items => @dims }
     }
@@ -514,6 +523,21 @@ class TrueBASICActions {
     method unary-factor:sym<pos>($/) { make $<factor>.made }
 
     method factor:sym<number>($/)     { make { type => 'number', value => +$<number> } }
+    method factor:sym<key-input>($/) { make { type => 'key-input' } }
+    method factor:sym<more-file>($/) {
+        make { type => 'more-file', channel => $<expression>.made }
+    }
+    method factor:sym<string-slice>($/) {
+        my $source = $<array-access>
+            ?? $<array-access>.made
+            !! { type => 'variable', name => ~$<identifier> };
+        make {
+            type => 'string-slice',
+            source => $source,
+            start => $<expression>[0].made,
+            end => $<expression>[1].made,
+        }
+    }
     method factor:sym<string>($/)     { make { type => 'string', value => ~$<string-literal>.substr(1, *-1) } }
     method factor:sym<identifier>($/) { make { type => 'variable', name => ~$<identifier> } }
     method factor:sym<array>($/)      { make $<array-access>.made }
@@ -545,7 +569,7 @@ class TrueBASICActions {
         make {
             type => 'input-prompt',
             prompt => $<expression>.made,
-            variables => $<identifier>>>.Str,
+            targets => $<read-target>>>.made,
         }
     }
     method statement:sym<if-block>($/) {
@@ -565,7 +589,12 @@ class TrueBASICActions {
         make %(
             type  => 'mat-redim',
             items => $<mat-redim-item>.map({
-                %( name => ~$_<identifier>, dimensions => $_<expression-list>.made )
+                my @bounds = $_<dimension-list><dimension-bound>.map({
+                    my @expressions = $_<expression>.map(*.made);
+                    %( lower => @expressions.elems > 1 ?? @expressions[0] !! { type => 'array-base' },
+                       upper => @expressions[*-1], explicit => @expressions.elems > 1 )
+                });
+                %( name => ~$_<identifier>, dimensions => @bounds )
             }).Array,
         );
     }
@@ -595,10 +624,33 @@ class TrueBASICActions {
     method statement:sym<window-select>($/) {
         make %( type => 'window-select', channel => $<expression>.made );
     }
-    method statement:sym<open>($/)      { make { type => 'open' } }
-    method statement:sym<close>($/)     { make { type => 'close' } }
-    method statement:sym<print-file>($/) { make { type => 'print-file' } }
-    method statement:sym<input-file>($/) { make { type => 'input-file' } }
+    method statement:sym<open>($/) {
+        make { type => 'open', channel => $<expression>.made, spec => ~$<open-spec> }
+    }
+    method statement:sym<close>($/) { make { type => 'close', channel => $<expression>.made } }
+    method statement:sym<print-file>($/) {
+        make { type => 'print-file', channel => $<expression>.made,
+               items => $<print-list> ?? $<print-list>.made !! [] }
+    }
+    method statement:sym<input-file>($/) {
+        make { type => 'input-file', channel => $<expression>.made,
+               targets => $<read-target>>>.made }
+    }
+    method statement:sym<line-input-file>($/) {
+        make { type => 'line-input-file', channel => $<expression>.made,
+               target => $<read-target>.made }
+    }
+    method statement:sym<ask-file>($/) {
+        make { type => 'ask-file', channel => $<expression>.made,
+               variable => ~$<identifier> }
+    }
+    method statement:sym<erase-file>($/) {
+        make { type => 'erase-file', channel => $<expression>.made }
+    }
+    method statement:sym<set-file-margin>($/) {
+        make { type => 'set-file-margin', channel => $<expression>[0].made,
+               margin => $<expression>[1].made }
+    }
     method statement:sym<line-input>($/) {
         make %(
             type => 'line-input',
@@ -630,7 +682,7 @@ class TrueBASICActions {
 
     method sub-param($/) {
         my $name = ~$<identifier>;
-        my $suffix = $/.Str ~~ /\(\s*\,\s*\)/ ?? '(,)' !! ($/.Str ~~ /\(\s*\)/ ?? '()' !! '');
+        my $suffix = $/.Str ~~ /(\(\s* ,* \s*\))/ ?? ~$0 !! '';
         make $name ~ $suffix;
     }
     method sub-param-list($/) { make $<sub-param>>>.made }
@@ -657,33 +709,25 @@ class TrueBASICActions {
     }
 
     method condition($/) {
-        if $<comparison-op> {
-            my $result = {
-                type     => 'comparison',
-                left     => $<expression>[0].made,
-                operator => ~$<comparison-op>[0],
-                right    => $<expression>[1].made,
+        my @terms = $<condition-term>.map(*.made);
+        my $result = @terms[0];
+        for $<logical-op>.kv -> $i, $operator {
+            $result = {
+                type => 'logical',
+                operator => (~$operator).uc,
+                left => $result,
+                right => @terms[$i + 1],
             };
-            # Handle chained conditions: a < b AND c > d
-            if $<logical-op> {
-                for $<logical-op>.kv -> $i, $lop {
-                    $result = {
-                        type     => 'logical',
-                        operator => (~$lop).uc,
-                        left     => $result,
-                        right    => {
-                            type     => 'comparison',
-                            left     => $<expression>[$i * 2 + 2].made,
-                            operator => ~$<comparison-op>[$i + 1],
-                            right    => $<expression>[$i * 2 + 3].made,
-                        },
-                    };
-                }
-            }
-            make $result;
-        } else {
-            make $<expression>[0].made;
         }
+        make $result;
+    }
+
+    method condition-term($/) {
+        my @expressions = $<expression>.map(*.made);
+        make $<comparison-op>
+            ?? { type => 'comparison', left => @expressions[0],
+                 operator => ~$<comparison-op>, right => @expressions[1] }
+            !! @expressions[0];
     }
 
     method unary-factor:sym<not>($/) {
@@ -796,16 +840,24 @@ class TrueBASICInterpreter {
     has %.window = x-min => 0e0, x-max => 1e0, y-min => 0e0, y-max => 1e0;
     has Str $.graphics-mode is rw = 'auto';  # auto, gtk, web, svg, ascii
     has Str $.plot-file = 'plot.svg';
+    has Str $.plot-title is rw = '';
+    has Str $.x-axis-label is rw = '';
+    has Str $.y-axis-label is rw = '';
     has Int $.current-color = 4;      # default blue
-    has Int $.bg-color = 0;           # background color
+    has Int $.bg-color = 1;           # background color
     has Bool $.graphics-used = False;
     has Bool $.graphics-shown = False;
     has Bool $.option-nolet = False;
-    has Int $.option-base = 0;        # OPTION BASE 0 or 1
+    has Int $.option-base = 1;        # OPTION BASE 0 or 1
+    has Bool $.angle-degrees = False;
     has %.viewports;                  # OPEN #n: screen viewports
     has Int $.active-viewport = 0;    # current viewport channel
     has @.draw-log;                   # sequential drawing command log for animation
     has %.box-strings;                # BOX KEEP stored image data (name → draw-log index)
+    has %.array-lower-bounds;
+    has %.array-upper-bounds;
+    has %.array-storage-lower-bounds;
+    has %.file-channels;
 
     method new(Bool :$debug = False) {
         my $obj = self.bless(:$debug);
@@ -814,11 +866,12 @@ class TrueBASICInterpreter {
     }
 
     method initialize-builtins() {
+        my $interpreter = self;
         %!functions<ABS>   = -> $x { abs($x) };
-        %!functions<ATN>   = -> $x { atan($x) };
-        %!functions<ACOS>  = -> $x { acos($x) };
-        %!functions<ASIN>  = -> $x { asin($x) };
-        %!functions<COS>   = -> $x { cos($x) };
+        %!functions<ATN>   = -> $x { $interpreter.angle-result(atan($x)) };
+        %!functions<ACOS>  = -> $x { $interpreter.angle-result(acos($x)) };
+        %!functions<ASIN>  = -> $x { $interpreter.angle-result(asin($x)) };
+        %!functions<COS>   = -> $x { cos($interpreter.angle-radians($x)) };
         %!functions<EXP>   = -> $x { exp($x) };
         %!functions<INT>   = -> $x { $x.floor };
         %!functions<IP>    = -> $x { $x.truncate };
@@ -832,10 +885,10 @@ class TrueBASICInterpreter {
         %!functions<RND>   = -> $x? { rand };
         %!functions<ROUND> = -> $x, $d? { $d ?? $x.round(10 ** -$d) !! $x.round };
         %!functions<SGN>   = -> $x { $x <=> 0 };
-        %!functions<SIN>   = -> $x { sin($x) };
+        %!functions<SIN>   = -> $x { sin($interpreter.angle-radians($x)) };
         %!functions<SQR>   = -> $x { sqrt($x) };
         %!functions<SQRT>  = -> $x { sqrt($x) };
-        %!functions<TAN>   = -> $x { tan($x) };
+        %!functions<TAN>   = -> $x { tan($interpreter.angle-radians($x)) };
         %!functions<PI>    = -> { pi };
         # String functions
         %!functions<LEN>   = -> $s { $s.chars };
@@ -850,6 +903,7 @@ class TrueBASICInterpreter {
         %!functions<TAB>    = -> $n, $m? { ' ' x $n.Int };
         %!functions<USING$> = -> $fmt, $n { sprintf($fmt, $n) };
         %!functions<POS>    = -> $s, $t, $p? { my $idx = $s.index($t, ($p // 1).Int - 1); $idx.defined ?? $idx + 1 !! 0 };
+        %!functions<POSR>   = -> $s, $t { my $idx = $s.rindex($t); $idx.defined ?? $idx + 1 !! 0 };
         %!functions<ORD>    = -> $s { $s.ord };
         %!functions<REPEAT$> = -> $s, $n { $s x $n.Int };
         %!functions<TRIM$>  = -> $s { $s.trim };
@@ -870,8 +924,12 @@ class TrueBASICInterpreter {
 
     method to-num($val) {
         return $val if $val ~~ Numeric;
-        return +$val if $val ~~ Str && $val ~~ /^ <[0..9+\-.eE \t]>+ $/;
+        return +$val if $val ~~ Str && self.is-numeric-string($val);
         return 0;
+    }
+
+    method is-numeric-string(Str $value --> Bool) {
+        return so $value.trim ~~ /^ <[+\-]>? [ \d+ [ '.' \d* ]? | '.' \d+ ] [ <[eE]> <[+\-]>? \d+ ]? $/;
     }
 
     method strip-inline-comment(Str $line --> Str) {
@@ -892,14 +950,22 @@ class TrueBASICInterpreter {
         my $check = $trimmed;
         $check = $check.subst(/^ \d+ \s+/, '');
         return ($line,) if $check ~~ /:i ^ [ 'OPEN' \s | 'PRINT' \s* '#' | 'INPUT' \s* '#'
+                                           | 'ASK' \s* '#'
+                                           | 'SET' \s* '#'
                                            | 'PLOT' \s+ [ 'TEXT' | 'LINES' | 'AREA' | 'POINTS' ]
                                            | 'INPUT' \s+ 'PROMPT' | 'LINE' \s+ 'INPUT' ] /;
         my @parts;
         my $current = '';
         my $in-string = False;
+        my $bracket-depth = 0;
         for $line.comb -> $ch {
             if $ch eq '"' { $in-string = !$in-string; $current ~= $ch }
-            elsif $ch eq ':' && !$in-string { @parts.push($current); $current = '' }
+            elsif !$in-string && $ch eq '[' { $bracket-depth++; $current ~= $ch }
+            elsif !$in-string && $ch eq ']' { $bracket-depth--; $current ~= $ch }
+            elsif $ch eq ':' && !$in-string && $bracket-depth == 0 {
+                @parts.push($current);
+                $current = '';
+            }
             else { $current ~= $ch }
         }
         @parts.push($current) if $current.trim ne '';
@@ -1000,7 +1066,11 @@ class TrueBASICInterpreter {
 
             given $ctrl {
                 when 'exit-do'       { self.skip-to-after-loop() }
-                when 'exit-for'      { self.skip-to-after-next() }
+                when 'exit-for'      {
+                    self.skip-to-after-next();
+                    @!for-stack.pop if @!for-stack;
+                    $!current-line++;
+                }
                 when 'exit-sub'      { self.return-from-sub() }
                 when 'exit-function' { self.skip-to-end-function() }
             }
@@ -1059,7 +1129,7 @@ class TrueBASICInterpreter {
             when 'def'           { self.exec-def(%s<name>, %s<params>, %s<expression>) }
             when 'declare'       { }  # no-op at runtime
             when 'local'         { }  # handled by sub frame
-            when 'input-prompt'  { self.exec-input-prompt(%s<prompt>, %s<variables>) }
+            when 'input-prompt'  { self.exec-input-prompt(%s<prompt>, %s<targets>) }
             when 'if-block'      { self.exec-if-block(%s<condition>) }
             when 'else'          { self.skip-to-end-if() }
             when 'elseif'        { self.skip-to-end-if() }
@@ -1100,10 +1170,14 @@ class TrueBASICInterpreter {
             when 'program'       { }  # no-op, just a label
             when 'open-screen'   { self.exec-open-screen(%s) }
             when 'window-select' { self.exec-window-select(%s) }
-            when 'open'          { }  # TODO: file I/O
-            when 'close'         { }  # TODO: file I/O
-            when 'print-file'    { }  # TODO: file I/O
-            when 'input-file'    { }  # TODO: file I/O
+            when 'open'          { self.exec-file-open(%s) }
+            when 'close'         { self.exec-file-close(%s) }
+            when 'print-file'    { self.exec-file-print(%s) }
+            when 'input-file'    { self.exec-file-input(%s) }
+            when 'line-input-file' { self.exec-file-line-input(%s) }
+            when 'ask-file'      { self.exec-file-ask(%s) }
+            when 'erase-file'    { self.exec-file-erase(%s) }
+            when 'set-file-margin' { }  # Text channels do not impose a record-width limit.
             when 'line-input'    { self.exec-line-input(%s) }
             when 'library'       { }  # no-op
             when 'end'           { $!running = False }
@@ -1118,12 +1192,27 @@ class TrueBASICInterpreter {
         given %expr<type> {
             when 'number'   { return +%expr<value> }
             when 'string'   { return %expr<value> }
+            when 'key-input' { return 0 }
+            when 'more-file' {
+                my $channel = self.file-channel-number(%expr<channel>);
+                die "File channel #$channel is not open" unless %!file-channels{$channel}:exists;
+                return %!file-channels{$channel}<position> < %!file-channels{$channel}<lines>.elems;
+            }
+            when 'string-slice' {
+                my $source = self.eval(%expr<source>).Str;
+                my $start = self.eval(%expr<start>).Int max 1;
+                my $end = self.eval(%expr<end>).Int;
+                return '' if $end < $start || $start > $source.chars;
+                return $source.substr($start - 1, $end - $start + 1);
+            }
             when 'variable' {
                 my $name = %expr<name>;
+                return pi if $name.uc eq 'PI';
                 return %!variables{$name} if %!variables{$name}:exists;
                 return %!variables{$name.uc} if %!variables{$name.uc}:exists;
                 return 0;
             }
+            when 'array-base' { return $!option-base }
             when 'array-access' {
                 my @idx = %expr<indices>.map({ self.eval($_).Int });
                 return self.get-array(%expr<name>, @idx);
@@ -1153,8 +1242,8 @@ class TrueBASICInterpreter {
             when 'comparison' {
                 my $l = self.eval(%expr<left>);
                 my $r = self.eval(%expr<right>);
-                my $is-string = ($l ~~ Str && $l !~~ /^ <[0..9+\-.eE]>+ $/) ||
-                                ($r ~~ Str && $r !~~ /^ <[0..9+\-.eE]>+ $/);
+                my $is-string = ($l ~~ Str && !self.is-numeric-string($l)) ||
+                                ($r ~~ Str && !self.is-numeric-string($r));
                 if $is-string {
                     given %expr<operator> {
                         when '=' | '==' { return ($l eq $r ?? 1 !! 0) }
@@ -1222,25 +1311,23 @@ class TrueBASICInterpreter {
                     my $dim = @args.elems > 1 ?? @args[1].Int !! 1;
                     if %!arrays{$arr-name}:exists {
                         my $a = %!arrays{$arr-name};
-                        return $a.elems - 1;  # True BASIC arrays are 0-based internally
+                        my @upper = (%!array-upper-bounds{$arr-name} // [$a.elems - 1]).flat;
+                        return @upper[$dim - 1] // ($a.elems - 1);
                     }
                     return 0;
                 }
                 if $name eq 'UBOUND' || $name eq 'LBOUND' {
                     my $arr-name = (%expr<args>[0]<name> // '').uc;
                     my $dim = @args.elems > 1 ?? @args[1].Int !! 1;
-                    if $name eq 'LBOUND' {
-                        return $!option-base;
-                    }
                     if %!arrays{$arr-name}:exists {
                         my $a = %!arrays{$arr-name};
-                        if $dim == 1 {
-                            return $a.elems - 1;
-                        } elsif $dim == 2 && $a[1] ~~ Array {
-                            return $a[1].elems - 1;
-                        }
+                        my @lower = (%!array-lower-bounds{$arr-name} // ($!option-base xx 1)).flat;
+                        my @upper = (%!array-upper-bounds{$arr-name} // (($a.elems - 1) xx 1)).flat;
+                        my $lower = @lower[$dim - 1] // $!option-base;
+                        return $lower if $name eq 'LBOUND';
+                        return @upper[$dim - 1] // ($lower + $a.elems - 1);
                     }
-                    return 0;
+                    return $name eq 'LBOUND' ?? $!option-base !! 0;
                 }
                 if $name eq 'NUM' || $name eq 'NUM$' {
                     return +@args[0] if @args;
@@ -1302,6 +1389,132 @@ class TrueBASICInterpreter {
             }
         }
         say $out;
+    }
+
+    method file-channel-number($expression) {
+        self.eval($expression).Int;
+    }
+
+    method exec-file-open(%s) {
+        my $channel = self.file-channel-number(%s<channel>);
+        my $spec = %s<spec>.trim;
+        my @options = $spec.split(',');
+        my $name-expr = @options[0].subst(/^:i 'name' \s+/, '');
+        die "OPEN #$channel requires a file name" unless $name-expr.defined;
+        my $filename = self.eval-expression-string($name-expr.trim).Str;
+        my $access = 'input';
+        my $access-explicit = False;
+        for @options -> $option {
+            if $option ~~ /:i 'access' \s+ (input|in|output|out|inout|outin)/ {
+                $access = ~$0.lc;
+                $access = 'input' if $access eq 'in';
+                $access = 'output' if $access eq 'out';
+                $access = 'inout' if $access eq 'outin';
+                $access-explicit = True;
+            }
+        }
+        $access = 'output' if !$access-explicit && $spec ~~ /:i 'create' \s+ 'new' ['old']?/;
+        my $append = $spec ~~ /:i 'append'/;
+        my $normalized = $filename.subst('\\', '/', :g);
+        $normalized = $normalized.split('/').tail if $normalized ~~ /^<[A..Za..z]> ':'/;
+        my $path = $normalized.IO;
+        if $access eq 'input' {
+            die "Cannot open input file '$filename' (OPEN #$channel)" unless $path.e;
+            %!file-channels{$channel} = {
+                path => $path, access => $access, lines => $path.lines.Array,
+                position => 0, output => '', dirty => False
+            };
+        } else {
+            die "Cannot open output file '$filename' (OPEN #$channel)" unless $path.parent.e;
+            my @lines = $access eq 'inout' && $path.e ?? $path.lines !! [];
+            my $initial = $append && $path.e ?? $path.slurp !! '';
+            %!file-channels{$channel} = {
+                path => $path, access => $access, lines => @lines.Array, position => 0,
+                output => $initial, dirty => $access eq 'output' || $append
+            };
+        }
+    }
+
+    method exec-file-close(%s) {
+        my $channel = self.file-channel-number(%s<channel>);
+        return unless %!file-channels{$channel}:exists;
+        my %state = %!file-channels{$channel};
+        %state<path>.spurt(%state<output>) if %state<dirty>;
+        %!file-channels{$channel}:delete;
+    }
+
+    method file-channel(%s) {
+        my $channel = self.file-channel-number(%s<channel>);
+        die "File channel #$channel is not open" unless %!file-channels{$channel}:exists;
+        %!file-channels{$channel};
+    }
+
+    method exec-file-print(%s) {
+        my $channel = self.file-channel-number(%s<channel>);
+        if %!viewports{$channel}:exists && !(%!file-channels{$channel}:exists) {
+            self.exec-print(%s<items>);
+            return;
+        }
+        my %state := self.file-channel(%s);
+        die "File channel is not open for output" if %state<access> eq 'input';
+        my $out = '';
+        for %s<items> -> $entry {
+            my %item = $entry ~~ Array ?? $entry[0] !! $entry;
+            $out ~= self.eval(%item<expr>);
+            $out ~= %item<separator> eq ';' ?? ' ' !! (%item<separator> eq ',' ?? "\t" !! '');
+        }
+        %state<output> ~= "$out\n";
+        %state<dirty> = True;
+    }
+
+    method file-read-field(%state) {
+        die "End of file on input channel" if %state<position> >= %state<lines>.elems;
+        my $line = %state<lines>[%state<position>++];
+        my @fields = $line.split(/<[,\s]>+/).grep(* ne '');
+        @fields;
+    }
+
+    method exec-file-input(%s) {
+        my %state := self.file-channel(%s);
+        die "File channel is not open for input" if %state<access> eq 'output';
+        my @fields = self.file-read-field(%state);
+        for %s<targets>.kv -> $i, $target {
+            if $i >= @fields.elems {
+                @fields.append(self.file-read-field(%state));
+            }
+            my $raw = @fields[$i] // '';
+            my $value = ($target<name> // '') ~~ /\$$/ ?? $raw !! +$raw;
+            if ($target<type> // '') eq 'array-access' {
+                self.set-array($target<name>, $target<indices>.map({ self.eval($_).Int }), $value);
+            } else {
+                %!variables{$target<name>.uc} = $value;
+            }
+        }
+    }
+
+    method exec-file-line-input(%s) {
+        my %state := self.file-channel(%s);
+        die "File channel is not open for input" if %state<access> eq 'output';
+        die "End of file on input channel" if %state<position> >= %state<lines>.elems;
+        my $value = %state<lines>[%state<position>++];
+        my %target = %s<target>;
+        if (%target<type> // '') eq 'array-access' {
+            self.set-array(%target<name>, %target<indices>.map({ self.eval($_).Int }), $value);
+        } else {
+            %!variables{%target<name>.uc} = $value;
+        }
+    }
+
+    method exec-file-ask(%s) {
+        my %state := self.file-channel(%s);
+        %!variables{%s<variable>.uc} = %state<position> >= %state<lines>.elems ?? 'END' !! '';
+    }
+
+    method exec-file-erase(%s) {
+        my %state := self.file-channel(%s);
+        die "File channel is not open for output" if %state<access> eq 'input';
+        %state<output> = '';
+        %state<dirty> = True;
     }
 
     method exec-input($prompt, $var) {
@@ -1417,9 +1630,8 @@ class TrueBASICInterpreter {
 
     method exec-dim(@items) {
         for @items -> %item {
-            my @dims = %item<dimensions>.map({ self.eval($_).Int });
             my $is-string = %item<name>.ends-with('$');
-            %!arrays{%item<name>.uc} = self.make-array(@dims, :string($is-string));
+            %!arrays{%item<name>.uc} = self.make-bounded-array(%item<name>, %item<dimensions>, :string($is-string));
         }
     }
 
@@ -1445,7 +1657,8 @@ class TrueBASICInterpreter {
 
     method exec-call($name, @arg-exprs) {
         my $sub-name = $name.uc;
-        die "SUB $sub-name not found" unless %!subroutines{$sub-name}:exists;
+        return self.exec-library-call($sub-name, @arg-exprs)
+            unless %!subroutines{$sub-name}:exists;
         # Get SUB definition line to read params
         my $sub-line = %!subroutines{$sub-name};
         my %sub-stmt = @!program[$sub-line]<statement>;
@@ -1453,11 +1666,12 @@ class TrueBASICInterpreter {
         # Evaluate arguments and bind params
         my %saved-vars;
         my %saved-arrays;
+        my @bindings;
         for @params.kv -> $i, $raw-p {
             last if $i >= @arg-exprs.elems;
             my $p = ~$raw-p;
-            my $is-array = $p ~~ /\(\s*\,?\s*\)\s*$/;
-            $p = $p.subst(/\(\s*\,?\s*\)/, '') if $is-array;
+            my $is-array = $p ~~ /\(\s* ,* \s*\)\s*$/;
+            $p = $p.subst(/\(\s* ,* \s*\)/, '') if $is-array;
             $p = $p.uc;
             my $arg = @arg-exprs[$i];
             if $is-array || ($arg ~~ Hash && ($arg<type> // '') eq 'array-ref') {
@@ -1465,30 +1679,220 @@ class TrueBASICInterpreter {
                 my $arr-name = ($arg ~~ Hash && $arg<name>) ?? $arg<name>.uc !! $p;
                 %saved-arrays{$p} = %!arrays{$p} if %!arrays{$p}:exists;
                 %!arrays{$p} = %!arrays{$arr-name} if %!arrays{$arr-name}:exists;
+                @bindings.push: %( param => $p, target => $arr-name, array => True );
             } else {
                 # Value parameter
                 %saved-vars{$p} = %!variables{$p} if %!variables{$p}:exists;
                 %!variables{$p} = self.eval($arg);
+                my %binding = %( param => $p );
+                if $arg ~~ Hash && ($arg<type> // '') eq 'variable' {
+                    %binding<target> = %($arg)<name>.uc;
+                } elsif $arg ~~ Hash && ($arg<type> // '') eq 'array-access' {
+                    %binding<array-target> = %($arg);
+                }
+                @bindings.push(%binding);
             }
         }
         @!call-stack.push({
             line          => $!current-line,
             saved-vars    => %saved-vars,
             saved-arrays  => %saved-arrays,
+            bindings      => @bindings,
             params        => @params.map({ .subst(/\(\s*\,?\s*\)/, '').uc }).Array,
-            array-params  => @params.grep(* ~~ /\(\s*\,?\s*\)\s*$/).map({ .subst(/\(\s*\,?\s*\)/, '').uc }).Array,
+            array-params  => @params.grep(* ~~ /\(\s* ,* \s*\)\s*$/).map({ .subst(/\(\s* ,* \s*\)/, '').uc }).Array,
         });
         $!current-line = $sub-line;
+    }
+
+    method exec-library-call(Str $name, @args) {
+        given $name {
+            when 'SETCANVAS' {
+                $!bg-color = resolve-color(self.eval(@args[0]));
+                $!graphics-used = True;
+            }
+            when 'SETTITLE' {
+                $!plot-title = self.eval(@args[0]).Str;
+            }
+            when 'SETHLABEL' {
+                $!x-axis-label = self.eval(@args[0]).Str;
+            }
+            when 'SETVLABEL' {
+                $!y-axis-label = self.eval(@args[0]).Str;
+            }
+            when 'DATAGRAPH' | 'ADDDATAGRAPH' {
+                self.exec-library-data-graph($name, @args);
+            }
+            when 'ADDLSGRAPH' {
+                self.exec-library-least-squares-graph(@args);
+            }
+            when 'FITLINE' {
+                my @x = self.library-array-values(@args[0]);
+                my @y = self.library-array-values(@args[1]);
+                my %fit = self.library-linear-fit(@x, @y);
+                self.write-call-result(@args[2], %fit<slope>);
+                self.write-call-result(@args[3], %fit<intercept>);
+            }
+            when 'VECTORGRAPH' {
+                self.exec-library-vector-graph(@args);
+            }
+            when 'TC_INIT' {
+                # TrueCtrl initialization has no equivalent state in the text/SVG backends.
+            }
+            when 'TC_WIN_SETTITLE' {
+                $!plot-title = self.eval(@args[1]).Str;
+            }
+            when 'SUPERVAL' {
+                self.exec-superval(@args);
+            }
+            default {
+                die "SUB $name not found (its LIBRARY file may be missing)";
+            }
+        }
+    }
+
+    method library-array-values($arg) {
+        die "Expected an array argument"
+            unless $arg ~~ Hash && ($arg<type> // '') eq any('array-ref', 'variable');
+        my $name = $arg<name>.uc;
+        my $values = %!arrays{$name};
+        die "Array {$arg<name>} is not dimensioned" unless $values ~~ Array;
+        return $values.Array;
+    }
+
+    method exec-library-data-graph(Str $name, @args) {
+        my @x = self.library-array-values(@args[0]);
+        my @y = self.library-array-values(@args[1]);
+        my $color = resolve-color(self.eval(@args[4]));
+        my @points;
+        for 1 ..^ (@x.elems min @y.elems) -> $i {
+            @points.push: %(x => @x[$i].Num, y => @y[$i].Num);
+        }
+        if $name eq 'ADDDATAGRAPH' {
+            @!plot-line-strips.push: %(points => @points.Array, color => $color);
+        } else {
+            @!plot-points.append: @points.map({ %(|$_, color => $color) });
+        }
+        @!draw-log.push: %(op => 'plot-lines', points => @points.Array, color => $color);
+        $!graphics-used = True;
+    }
+
+    method exec-library-vector-graph(@args) {
+        my @x = self.library-array-values(@args[0]);
+        my @y = self.library-array-values(@args[1]);
+        my @dx = self.library-array-values(@args[2]);
+        my @dy = self.library-array-values(@args[3]);
+        my $scale = self.eval(@args[4]).Num;
+        my $color = resolve-color(self.eval(@args[6]));
+        for 1 ..^ (@x.elems min @y.elems min @dx.elems min @dy.elems) -> $i {
+            my ($x1, $y1) = @x[$i].Num, @y[$i].Num;
+            my ($x2, $y2) = $x1 + @dx[$i].Num * $scale, $y1 + @dy[$i].Num * $scale;
+            @!plot-lines.push: %(x1 => $x1, y1 => $y1, x2 => $x2, y2 => $y2, color => $color);
+        }
+        $!graphics-used = True;
+    }
+
+    method exec-library-least-squares-graph(@args) {
+        my @x = self.library-array-values(@args[0]);
+        my @y = self.library-array-values(@args[1]);
+        my $color = resolve-color(self.eval(@args[3]));
+        my %fit = self.library-linear-fit(@x, @y);
+        my $slope = %fit<slope>;
+        my $intercept = %fit<intercept>;
+        my $x-min = %fit<x-min>;
+        my $x-max = %fit<x-max>;
+        @!plot-lines.push: %(
+            x1 => $x-min, y1 => $slope * $x-min + $intercept,
+            x2 => $x-max, y2 => $slope * $x-max + $intercept,
+            color => $color,
+        );
+        $!graphics-used = True;
+    }
+
+    method library-linear-fit(@x, @y) {
+        my @points;
+        for 1 ..^ (@x.elems min @y.elems) -> $i {
+            my ($x-value, $y-value) = @x[$i].Num, @y[$i].Num;
+            next unless $x-value.abs < Inf && $y-value.abs < Inf;
+            @points.push: [$x-value, $y-value];
+        }
+        die "FITLINE requires at least two finite data points" if @points.elems < 2;
+
+        my $n = @points.elems;
+        my $sum-x = [+] @points.map(*[0]);
+        my $sum-y = [+] @points.map(*[1]);
+        my $sum-xx = [+] @points.map({ $_[0] ** 2 });
+        my $sum-xy = [+] @points.map({ $_[0] * $_[1] });
+        my $denominator = $n * $sum-xx - $sum-x ** 2;
+        die "FITLINE requires distinct x values" if $denominator == 0;
+
+        my $slope = ($n * $sum-xy - $sum-x * $sum-y) / $denominator;
+        my $intercept = ($sum-y - $slope * $sum-x) / $n;
+        my $x-min = @points.map(*[0]).min;
+        my $x-max = @points.map(*[0]).max;
+        return %(slope => $slope, intercept => $intercept, x-min => $x-min, x-max => $x-max);
+    }
+
+    method eval-expression-string(Str $source) {
+        my $actions = TrueBASICActions.new;
+        my $match = TrueBASICGrammar.parse($source, :rule<expression>, :$actions);
+        die "Invalid expression in SUPERVAL: $source" unless $match;
+        return self.eval($match.made);
+    }
+
+    method write-call-result($target, $value) {
+        given $target<type> // '' {
+            when 'variable' { %!variables{$target<name>.uc} = $value }
+            when 'array-access' {
+                my @indices = $target<indices>.map({ self.eval($_).Int });
+                self.set-array($target<name>, @indices, $value);
+            }
+            when 'function' {
+                die "SUPERVAL result must be a variable or array element"
+                    unless %!arrays{$target<name>.uc}:exists;
+                my @indices = $target<args>.map({ self.eval($_).Int });
+                self.set-array($target<name>, @indices, $value);
+            }
+            default { die "SUPERVAL result must be a variable or array element" }
+        }
+    }
+
+    method exec-superval(@args) {
+        my $source = self.eval(@args[1]).Str.trim;
+        my $value;
+        if $source ~~ /^ (\w+) \s* '=' \s* (.+) $/ {
+            $value = self.eval-expression-string(~$1);
+            %!variables{~$0.uc} = $value;
+        } else {
+            $value = self.eval-expression-string($source);
+        }
+        self.write-call-result(@args[2], $value);
     }
 
     method return-from-sub() {
         die "RETURN without CALL" unless @!call-stack;
         my $frame = @!call-stack.pop;
         if $frame ~~ Hash && ($frame<line>:exists) {
-            # Restore value variables
+            my %keep-vars;
+            # BASIC SUB parameters are passed by reference when the caller supplies a variable.
+            for ($frame<bindings> // []).list -> %binding {
+                my $param = %binding<param>;
+                if %binding<array> {
+                    %keep-vars{$param} = True if %binding<target> eq $param;
+                } elsif %binding<target>:exists {
+                    %!variables{%binding<target>} = %!variables{$param} // 0;
+
+                    %keep-vars{$param} = True if %binding<target> eq $param;
+                } elsif %binding<array-target>:exists {
+                    my %target = %binding<array-target>;
+                    my @indices = %target<indices>.map({ self.eval($_).Int });
+                    self.set-array(%target<name>, @indices, %!variables{$param} // 0);
+                }
+            }
+            # Restore shadowed parameter variables, preserving same-name outputs.
             if $frame<saved-vars> {
                 for $frame<params>.flat -> $p {
                     next if $frame<array-params> && $p ∈ $frame<array-params>.flat;
+                    next if %keep-vars{$p};
                     if $frame<saved-vars>{$p}:exists { %!variables{$p} = $frame<saved-vars>{$p} }
                     else { %!variables{$p}:delete }
                 }
@@ -1502,6 +1906,7 @@ class TrueBASICInterpreter {
             # Restore arrays
             if $frame<saved-arrays> {
                 for $frame<saved-arrays>.kv -> $k, $v {
+                    next if %keep-vars{$k};
                     %!arrays{$k} = $v;
                 }
             }
@@ -1658,7 +2063,16 @@ class TrueBASICInterpreter {
         if $t ~~ /:i nolet/ { $!option-nolet = True }
         if $t ~~ /:i base \s+ 0/ { $!option-base = 0 }
         if $t ~~ /:i base \s+ 1/ { $!option-base = 1 }
-        # OPTION ANGLE DEGREES / RADIANS handled later if needed
+        if $t ~~ /:i angle \s+ degrees/ { $!angle-degrees = True }
+        if $t ~~ /:i angle \s+ radians/ { $!angle-degrees = False }
+    }
+
+    method angle-radians($value) {
+        $!angle-degrees ?? $value * pi / 180 !! $value;
+    }
+
+    method angle-result($value) {
+        $!angle-degrees ?? $value * 180 / pi !! $value;
     }
 
     method exec-if-block(%cond) {
@@ -1668,14 +2082,22 @@ class TrueBASICInterpreter {
         }
     }
 
-    method exec-input-prompt($prompt-expr, @vars) {
+    method exec-input-prompt($prompt-expr, @targets) {
         my $prompt = self.eval($prompt-expr);
         print $prompt;
         my $line = $*IN.get // '';
         my @vals = $line.split(',').map(*.trim);
-        for @vars.kv -> $i, $var {
+        for @targets.kv -> $i, $target {
             my $raw = $i < @vals.elems ?? @vals[$i] !! '';
-            %!variables{$var.uc} = $raw ~~ /^ <[0..9+\-.eE]>+ $/ ?? +$raw !! ($raw eq '' ?? 0 !! $raw);
+            my $value = $raw ~~ /^ <[0..9+\-.eE]>+ $/ ?? +$raw !! ($raw eq '' ?? 0 !! $raw);
+            if $target ~~ Hash && ($target<type> // '') eq 'array-access' {
+                my @indices = $target<indices>.map({ self.eval($_).Int });
+                self.set-array($target<name>, @indices, $value);
+            } elsif $target ~~ Hash && ($target<type> // '') eq 'variable' {
+                %!variables{$target<name>.uc} = $value;
+            } else {
+                die "INPUT PROMPT target must be a variable or array element";
+            }
         }
     }
 
@@ -1684,12 +2106,16 @@ class TrueBASICInterpreter {
         if %!arrays{$n}:exists {
             my $a = %!arrays{$n};
             my &fmt = -> $v { $v ~~ Str ?? $v !! ($v // 0).fmt('%g') };
+            my @lower = (%!array-lower-bounds{$n} // ($!option-base xx 1)).flat;
+            my @upper = (%!array-upper-bounds{$n} // (($a.elems - 1) xx @lower.elems)).flat;
+            my @storage = (%!array-storage-lower-bounds{$n} // (0 xx @lower.elems)).flat;
             if $a[1] ~~ Array {
-                for 1..^$a.elems -> $r {
-                    say $a[$r][1..*-1].map(&fmt).join("\t");
+                for @lower[0] .. @upper[0] -> $r {
+                    my $row = $a[$r - (@storage[0] // 0)];
+                    say (@lower[1] .. @upper[1]).map({ $row[$_ - (@storage[1] // 0)] }).map(&fmt).join("\t");
                 }
             } else {
-                say $a[1..*-1].map(&fmt).join(' ');
+                say (@lower[0] .. @upper[0]).map({ $a[$_ - (@storage[0] // 0)] }).map(&fmt).join(' ');
             }
         } else {
             say "⚠ Array $n not defined";
@@ -1699,21 +2125,20 @@ class TrueBASICInterpreter {
     method exec-mat-read($name) {
         my $n = $name.uc;
         return unless %!arrays{$n}:exists;
-        my @a = %!arrays{$n};
-        self.mat-read-fill($n, @a);
+        self.mat-read-fill($n);
     }
 
-    method mat-read-fill($name, @arr) {
-        # Fill array from DATA
-        if @arr[0] ~~ Array {
-            for @arr.kv -> $i, @sub {
-                self.mat-read-fill($name, @sub);
-            }
-        } else {
-            for @arr.keys -> $i {
-                die "Out of DATA" if $!data-pointer >= @!data-values.elems;
-                @arr[$i] = @!data-values[$!data-pointer++];
-            }
+    method mat-read-fill($name, @indices = [], Int $depth = 0) {
+        my $n = $name.uc;
+        my @lower = (%!array-lower-bounds{$n} // ($!option-base xx 1)).flat;
+        my @upper = (%!array-upper-bounds{$n} // ((%!arrays{$n}.elems - 1) xx @lower.elems)).flat;
+        if $depth >= @lower.elems {
+            die "Out of DATA" if $!data-pointer >= @!data-values.elems;
+            self.set-array($n, @indices, @!data-values[$!data-pointer++]);
+            return;
+        }
+        for @lower[$depth] .. @upper[$depth] -> $index {
+            self.mat-read-fill($n, [|@indices, $index], $depth + 1);
         }
     }
 
@@ -1749,19 +2174,45 @@ class TrueBASICInterpreter {
     method exec-mat-redim-multi(@items) {
         for @items -> $item {
             my $n = ($item ~~ Hash ?? $item<name> !! ~$item).uc;
-            my @dim-exprs = $item ~~ Hash ?? $item<dimensions>.flat !! [];
-            my @dims = @dim-exprs.map: { self.eval($_).Int };
-            if %!arrays{$n}:exists {
-                my @old = %!arrays{$n}.Array;
-                %!arrays{$n} = self.make-array(@dims);
-                # Copy old values for 1D
-                if @dims.elems == 1 {
-                    for ^min(@old.elems, @dims[0] + 1) -> $i {
-                        %!arrays{$n}[$i] = @old[$i];
-                    }
-                }
+            my @old = %!arrays{$n}:exists ?? %!arrays{$n}.Array !! [];
+            my @old-lower = (%!array-lower-bounds{$n} // (0 xx $item<dimensions>.elems)).flat;
+            my @old-upper = (%!array-upper-bounds{$n} // @old.map(*.elems - 1)).flat;
+            my @old-storage = (%!array-storage-lower-bounds{$n} // (0 xx $item<dimensions>.elems)).flat;
+            my $is-string = $n.ends-with('$');
+            %!arrays{$n} = self.make-bounded-array($n, $item<dimensions>, :string($is-string));
+            my @new-lower = %!array-lower-bounds{$n}.Array;
+            my @new-upper = %!array-upper-bounds{$n}.Array;
+            my @new-storage = %!array-storage-lower-bounds{$n}.Array;
+            if @old.elems && @old-lower.elems == @new-lower.elems {
+                self.copy-array-overlap(
+                    @old, %!arrays{$n},
+                    @old-lower, @old-upper, @old-storage,
+                    @new-lower, @new-upper, @new-storage,
+                );
+            }
+        }
+    }
+
+    method copy-array-overlap(
+        $old, $new, @old-lower, @old-upper, @old-storage,
+        @new-lower, @new-upper, @new-storage, Int $dimension = 0
+    ) {
+        my $first = max(@old-lower[$dimension], @new-lower[$dimension]);
+        my $last = min(@old-upper[$dimension], @new-upper[$dimension]);
+        return if $first > $last;
+
+        for $first..$last -> $index {
+            my $old-offset = $index - @old-storage[$dimension];
+            my $new-offset = $index - @new-storage[$dimension];
+            if $dimension == @old-lower.elems - 1 {
+                $new[$new-offset] = $old[$old-offset];
             } else {
-                %!arrays{$n} = self.make-array(@dims);
+                self.copy-array-overlap(
+                    $old[$old-offset], $new[$new-offset],
+                    @old-lower, @old-upper, @old-storage,
+                    @new-lower, @new-upper, @new-storage,
+                    $dimension + 1,
+                );
             }
         }
     }
@@ -1906,7 +2357,7 @@ class TrueBASICInterpreter {
         # MAT A = B (copy)
         my $src = $rhs.uc;
         if %!arrays{$src}:exists {
-            %!arrays{$n} = %!arrays{$src}.deepmap(* + 0);
+            %!arrays{$n} = %!arrays{$src}.deepmap({ $_ });
             return;
         }
 
@@ -1985,7 +2436,12 @@ class TrueBASICInterpreter {
         my $n = $name.uc;
         return 0 unless %!arrays{$n}:exists;
         my $a = %!arrays{$n};
-        for @idx -> $i { $a = $a[$i] // return 0 }
+        my @storage = (%!array-storage-lower-bounds{$n} // (0 xx @idx.elems)).flat;
+        for @idx.kv -> $dim, $i {
+            my $offset = $i - (@storage[$dim] // 0);
+            return 0 if $offset < 0 || $offset >= $a.elems;
+            $a = $a[$offset] // return 0;
+        }
         return $a;
     }
 
@@ -1994,10 +2450,37 @@ class TrueBASICInterpreter {
         unless %!arrays{$n}:exists {
             # Auto-DIM with default size 10 per dimension
             %!arrays{$n} = self.make-array(@idx.map({ max($_, 10) }));
+            %!array-lower-bounds{$n} = 0 xx @idx.elems;
+            %!array-upper-bounds{$n} = @idx.map({ max($_, 10) });
+            %!array-storage-lower-bounds{$n} = 0 xx @idx.elems;
         }
+        my @storage = (%!array-storage-lower-bounds{$n} // (0 xx @idx.elems)).flat;
         my $a = %!arrays{$n};
-        for @idx[0..*-2] -> $i { $a = $a[$i] }
-        $a[@idx[*-1]] = $val;
+        for @idx[0..*-2].kv -> $dim, $i {
+            $a = $a[$i - (@storage[$dim] // 0)];
+        }
+        $a[@idx[*-1] - (@storage[@idx.elems - 1] // 0)] = $val;
+    }
+
+    method make-bounded-array(Str $name, @bounds, :$string = False) {
+        my @ranges = @bounds.map(-> %bound {
+            my $lower = self.eval(%bound<lower>).Int;
+            my $upper = self.eval(%bound<upper>).Int;
+            my $explicit = %bound<explicit> // False;
+            if !$explicit && $upper < $lower {
+                $lower = 0;
+                $upper = 0;
+            }
+            die "Array upper bound $upper is below lower bound $lower" if $upper < $lower;
+            %(lower => $lower, upper => $upper,
+              storage-lower => $explicit ?? $lower !! 0,
+              length-minus-one => $explicit ?? $upper - $lower !! $upper)
+        });
+        my @lengths = @ranges.map(*<length-minus-one>);
+        %!array-lower-bounds{$name.uc} = @ranges.map(*<lower>).Array;
+        %!array-upper-bounds{$name.uc} = @ranges.map(*<upper>).Array;
+        %!array-storage-lower-bounds{$name.uc} = @ranges.map(*<storage-lower>).Array;
+        return self.make-array(@lengths, :$string);
     }
 
     method matrix-det($name) {
@@ -2266,7 +2749,9 @@ class TrueBASICInterpreter {
         my @svg;
         @svg.push: '<?xml version="1.0" encoding="UTF-8"?>';
         @svg.push: qq[<svg width="$W" height="$H" xmlns="http://www.w3.org/2000/svg">];
-        @svg.push: qq[<rect width="$W" height="$H" fill="white" stroke="#ccc"/>];
+        @svg.push: qq[<rect width="$W" height="$H" fill="{rgb($!bg-color)}" stroke="#ccc"/>];
+        @svg.push: qq[<text x="{ $W / 2 }" y="24" text-anchor="middle" font-size="15">{ $!plot-title }</text>]
+            if $!plot-title;
 
         # Axes
         my $plot-bottom = $H - $M;
@@ -2336,6 +2821,10 @@ class TrueBASICInterpreter {
         for @!plot-texts -> %t {
             @svg.push: qq[<text x="{tx(%t<x>)}" y="{ty(%t<y>)}" fill="{rgb(%t<color>)}" font-size="12">{%t<text>}</text>];
         }
+        @svg.push: qq[<text x="{ $W / 2 }" y="{ $H - 8 }" text-anchor="middle" font-size="12">{ $!x-axis-label }</text>]
+            if $!x-axis-label;
+        @svg.push: qq[<text transform="translate(14,{ $H / 2 }) rotate(-90)" text-anchor="middle" font-size="12">{ $!y-axis-label }</text>]
+            if $!y-axis-label;
 
         @svg.push: '</svg>';
         $file.IO.spurt(@svg.join("\n"));
@@ -2395,12 +2884,17 @@ class TrueBASICInterpreter {
         my $renderer = PlotRenderer.new(interp => self, width => $W, height => $H, margin => $M);
 
         try {
-            my Gnome::Gtk3::Main $main .= new;
-            my Gnome::Gtk3::Window $win .= new;
+            require ::('Gnome::Gtk3::Main');
+            require ::('Gnome::Gtk3::Window');
+            require ::('Gnome::Gtk3::DrawingArea');
+            require ::('Gnome::Cairo');
+
+            my $main = ::('Gnome::Gtk3::Main').new;
+            my $win = ::('Gnome::Gtk3::Window').new;
             $win.set-title('TrueBASIC Plot');
             $win.set-default-size($W, $H);
 
-            my Gnome::Gtk3::DrawingArea $da .= new;
+            my $da = ::('Gnome::Gtk3::DrawingArea').new;
             $da.register-signal($renderer, 'draw-cb', 'draw');
             $win.register-signal($renderer, 'quit-cb', 'destroy');
             $win.add($da);
@@ -2411,7 +2905,7 @@ class TrueBASICInterpreter {
 
             CATCH {
                 default {
-                    say "GTK failed ({.message}), opening SVG..." if $!debug;
+                    say "GTK unavailable ({.message}); using SVG output.";
                     self.open-file('plot.svg');
                 }
             }
@@ -2813,6 +3307,10 @@ canvas { border:1px solid #ccc; background:white; }</style></head>
 
     method open-file(Str $path) {
         my $abs = $path.IO.absolute;
+        unless $*IN.t && (%*ENV<DISPLAY> || %*ENV<WAYLAND_DISPLAY>) {
+            say "Open manually: $abs";
+            return;
+        }
         for <xdg-open firefox chromium-browser eog> -> $cmd {
             try {
                 my $proc = Proc::Async.new($cmd, $abs);
@@ -2837,16 +3335,16 @@ class PlotRenderer {
     has $.height is required;
     has $.margin is required;
 
-    method draw-cb(cairo_t $cr-native) {
-        my Gnome::Cairo $cr .= new(:native-object($cr-native));
+    method draw-cb($cr-native) {
+        my $cr = ::('Gnome::Cairo').new(:native-object($cr-native));
         self.render($cr);
     }
 
     method quit-cb() {
-        Gnome::Gtk3::Main.quit;
+        ::('Gnome::Gtk3::Main').quit;
     }
 
-    method render(Gnome::Cairo $cr) {
+    method render($cr) {
         my $W = $.width; my $H = $.height; my $M = $.margin;
         my %win = $.interp.window;
         my $xr = %win<x-max> - %win<x-min> || 1;

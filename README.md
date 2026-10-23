@@ -28,6 +28,18 @@ raku TrueBASIC.raku --graphics=ascii examples/sine_plot.bas
 raku TrueBASIC.raku --interactive
 ```
 
+## Pushing to GitHub
+
+Run `./navoj-push.sh` to switch GitHub CLI authentication to `navoj`, configure
+Git credentials, fetch `origin`, and push committed changes on `main` to
+`navoj/TrueBASIC7`. Requires `git`, `gh`, and an existing GitHub CLI login for
+`navoj` (`gh auth login --hostname github.com`).
+
+The script works from any working directory, leaves `navoj` as the active
+GitHub CLI account, and does not create commits or force-push. Commit changes
+first if you want them included. If the remote has diverged, reconcile it
+before rerunning the script.
+
 ## Command-Line Options
 
 | Flag              | Description                                    |
